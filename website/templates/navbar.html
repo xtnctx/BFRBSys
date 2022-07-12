@@ -1,0 +1,26 @@
+{% load static %}
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="{% static 'styles/navbar.css' %}">
+    <!-- <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"> -->
+</head>
+<body>
+
+    <div class="nav-container">
+        <nav>
+            <a href="{% url 'home' %}"><img src="{% static 'images/logo.png' %}"></a>
+            <h3>App</h3>
+            <div class="nav-links" id="navLinks">
+                <!-- <i class="fa fa-times"></i> -->
+                <ul>
+                    <li><a href="#">Home</a></li>
+                    <li><a href="#">Live plot</a></li>
+                    <li><a href="#">About</a></li>
+                    <li><a href="#">Login</a></li>
+                </ul>
+            </div>
+        </nav>
+    </div>
+
+</body>
+</html>
