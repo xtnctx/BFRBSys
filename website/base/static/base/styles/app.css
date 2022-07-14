@@ -2,4 +2,16 @@
     height: 100vh;
     display: grid;
     place-content: center;
+    row-gap: 5px;
+}
+
+.ble {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    column-gap: 10px;
+}
+
+.ble button {
+    padding: 0 10px;
 }

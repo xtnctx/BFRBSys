@@ -45,5 +45,21 @@
 .hero-btn:hover {
     border: 1px solid #6c2a20;
     background: #6c2a20;
-    transition: 0.5s;
+    transition: 0.4s;
+}
+
+.header2 {
+    height: 100vh;
+    width: 100%;
+    background-image: linear-gradient(rgba(4, 9, 30, 0.5), rgba(4, 9, 30, 0.5)), url("../images/banner2.jpg");
+    background-position: center;
+    background-size: cover;
+    position: relative;
+}
+
+@media(max-width:700px) {
+    .text-box h1 {
+        font-size: 30px;
+    }
+
 }
