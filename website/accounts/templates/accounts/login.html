@@ -24,6 +24,7 @@
                 <button type="submit">Login</button>
 
             </form>
+            <a href="{% url 'register' %}">Register</a>
         </div>
     {% else %}
         <p>You're already login. Would you like to <a href="{% url 'logout' %}">logout</a>?</p>
