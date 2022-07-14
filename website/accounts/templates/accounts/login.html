@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<body>
+    <!-- {% extends 'main.html' %} -->
+
+    {% block content %}
+
+    {% if not request.user.is_authenticated %}
+        <div style="margin-top: 30px;">
+            <form method="POST">{% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.GET.next }}" />
+                {% if error %}
+                    <p style="color: red;">{{ error }}</p>
+                {% endif %}
+                <div>
+                    <input type="text" name="username" placeholder="username">
+                </div>
+
+                <div>
+                    <input type="password" name="password" placeholder="password">
+                </div>
+
+                <button type="submit">Login</button>
+
+            </form>
+        </div>
+    {% else %}
+        <p>You're already login. Would you like to <a href="{% url 'logout' %}">logout</a>?</p>
+    {% endif %}
+
+    {% endblock %}
+</body>
+</html>
