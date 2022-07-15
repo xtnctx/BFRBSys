@@ -1,49 +1,33 @@
 {% load static %}
-<html lang="en">
-<head>
-    <link rel="stylesheet" href="{% static 'styles/navbar.css' %}">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
-</head>
-<body>
 
-    <div class="nav-container">
-        <nav>
-            <a href="{% url 'home' %}"><img src="{% static 'images/logo.png' %}"></a>
-            <h3>AppName</h3>
-            <div class="nav-links" id="navLinks">
-                
-                <i id="hideIcon" class="hide-container" onclick="hideMenu()">
-                    <div class="fa fa-times"></div>
-                </i>
+<link rel="stylesheet" href="{% static 'styles/navbar.css' %}">
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
 
-                <ul>
-                    <li><a href="{% url 'home' %}">Home</a></li>
-                    <li><a href="{% url 'app' %}">App</a></li>
-                    <li><a href="#">About</a></li>
-                    <li><a href="{% url 'login' %}">Login</a></li>
-                </ul>
-            </div>
-            <i class="fa fa-bars" onclick="showMenu()"></i>
-        </nav>
-    </div>
+{% block content %}
 
+<div id="navbar" class="nav-container">
+    <nav>
+        <a href="{% url 'home' %}"><img src="{% static 'images/logo.png' %}"></a>
+        <h3>AppName</h3>
 
+        <div class="nav-links" id="navLinks">
+            
+            <i id="hideIcon" class="hide-container" onclick="hideMenu()">
+                <div class="fa fa-times"></div>
+            </i>
 
-<!-- ######## -->
-    <script>
-        var navLinks = document.getElementById("navLinks");
-        var hideIcon = document.getElementById("hideIcon");
-        
-        function hideMenu() {
-            navLinks.style.right = "-120px"
-        }
+            <ul class="links">
+                <li><a href="{% url 'home' %}">Home</a></li>
+                <li><a href="{% url 'app' %}">App</a></li>
+                <li><a href="#">About</a></li>
+                <li><a href="{% url 'login' %}">Login</a></li>
+            </ul>
+        </div>
 
-        function showMenu() {
-            navLinks.style.right = "0"
-            hideIcon.style.margin = "0"
-        }
-    </script>
+        <i class="fa fa-bars" onclick="showMenu()"></i>
+    </nav>
+</div>
 
+{% endblock %}
+<script src="{% static 'scripts/navbar.js' %}"></script>
 
-</body>
-</html>
