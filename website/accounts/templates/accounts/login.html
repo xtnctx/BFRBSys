@@ -1,35 +1,38 @@
-<!DOCTYPE html>
-<html lang="en">
 
-<body>
-    <!-- {% extends 'main.html' %} -->
 
+<html>
+
+    {% extends 'main.html' %}
+    {% load static %}
+        
     {% block content %}
+    <link rel="stylesheet" href="{% static 'accounts/styles/accountsStyles.css' %}">
 
     {% if not request.user.is_authenticated %}
-        <div style="margin-top: 30px;">
-            <form method="POST">{% csrf_token %}
+        <div class="main-wrapper" style="margin-top: 30px;">
+            <form class="form-group" method="POST">{% csrf_token %}
                 <input type="hidden" name="next" value="{{ request.GET.next }}" />
                 {% if error %}
                     <p style="color: red;">{{ error }}</p>
                 {% endif %}
                 <div>
-                    <input type="text" name="username" placeholder="username">
+                    <input class="textinput textInput form-control" type="text" name="username" placeholder="username">
                 </div>
-
+    
                 <div>
-                    <input type="password" name="password" placeholder="password">
+                    <input class="textinput textInput form-control" type="password" name="password" placeholder="password">
                 </div>
-
-                <button type="submit">Login</button>
-
+    
+                <button class="btn btn-success" type="submit">Login</button>
+    
             </form>
             <a href="{% url 'register' %}">Register</a>
         </div>
     {% else %}
-        <p>You're already login. Would you like to <a href="{% url 'logout' %}">logout</a>?</p>
+        <div class="main-wrapper">
+            <p>You're already login. Would you like to <a href="{% url 'logout' %}">logout</a>?</p>
+        </div>
     {% endif %}
-
+    
     {% endblock %}
-</body>
 </html>

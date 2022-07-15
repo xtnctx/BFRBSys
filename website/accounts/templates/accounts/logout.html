@@ -1,24 +1,23 @@
-<!DOCTYPE html>
-<html lang="en">
 
-<body>
-    <!-- {% extends 'main.html' %} -->
+<html>
+    {% extends 'main.html' %}
+    {% load static %}
 
     {% block content %}
+        <link rel="stylesheet" href="{% static 'accounts/styles/accountsStyles.css' %}">
 
     {% if request.user.is_authenticated %}
-        <div style="margin-top: 30px;">
-            <form method="POST">{% csrf_token %}
+        <div class="main-wrapper" style="margin-top: 30px;">
+            <form class="main-wrapper" method="POST">{% csrf_token %}
                 <p>Are you sure you want to logout?</p>
-
                 <button type="submit">Yes, logout</button>
-
             </form>
         </div>
     {% else %}
+    <div class="main-wrapper">
         <p>You're not login. Would you like to <a href="{% url 'login' %}">login</a>?</p>
+    </div>
     {% endif %}
 
     {% endblock %}
-</body>
 </html>
