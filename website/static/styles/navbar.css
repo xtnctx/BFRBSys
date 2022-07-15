@@ -1,10 +1,12 @@
 
 .nav-container {
-    position: fixed;
+    position: fixed ;
     top: 0;
     left: 0;
     z-index: 9999;
     width: 100%;
+    transition: transform 0.5s;
+    transition-timing-function: ease-in-out;
 }
 
 nav {
@@ -63,6 +65,16 @@ nav .fa {
     display: none;
 }
 
+/* Dynamic */
+
+.nav-hidden {
+    transform: translateY(calc(-1 * 100px));
+}
+
+
+/*         */
+
+
 @media(max-width:700px) {
     .text-box h1 {
         font-size: 20px;
@@ -82,8 +94,6 @@ nav .fa {
         text-align: left;
         z-index: 2;
         transition: 0.35s;
-
-        
 
     }
 
