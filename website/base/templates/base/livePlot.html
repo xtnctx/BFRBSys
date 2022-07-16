@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+    {% load static %}
+        <link rel="stylesheet" href="{% static 'base/styles/app.css' %}">
+
+    {% include 'base/appNavbar.html' %}
+
+<body>
+
+    {% block content %}
+
+    <div class="mainapp">
+        <canvas id="mycanvas" width="700" height="400"></canvas>
+    </div>
+    
+    {% endblock %}
+
+    <script src="{% static 'base/scripts/smoothie.js' %}"></script>
+    <script src="{% static 'base/scripts/livePlot.js' %}"></script>
+
+</body>
+</html>

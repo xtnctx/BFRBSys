@@ -15,3 +15,13 @@
 .ble button {
     padding: 0 10px;
 }
+
+.smoothie-chart-tooltip {
+    background: #444;
+    padding: 1em;
+    margin-top: 20px;
+    font-family: consolas;
+    color: white;
+    font-size: 10px;
+    pointer-events: none;
+}
