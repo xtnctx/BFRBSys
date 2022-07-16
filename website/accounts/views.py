@@ -27,7 +27,7 @@ def logout_view(request):
     if request.method == 'POST':
         print(request)
         logout(request)
-        return redirect('login')
+        return redirect('home')
     context = {}
     return render(request, 'accounts/logout.html', context)
 
