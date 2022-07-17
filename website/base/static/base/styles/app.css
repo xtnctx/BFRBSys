@@ -5,6 +5,10 @@
     row-gap: 5px;
 }
 
+.mainapp h1 {
+    text-align: center;
+}
+
 .ble {
     display: flex;
     flex-direction: row;
@@ -14,6 +18,12 @@
 
 .ble button {
     padding: 0 10px;
+}
+
+#status-label {
+    font-size: small;
+    text-align: center;
+    padding-top: 10px;
 }
 
 .smoothie-chart-tooltip {
