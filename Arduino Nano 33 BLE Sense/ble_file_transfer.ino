@@ -67,6 +67,10 @@ BLECharacteristic transfer_status_characteristic(FILE_TRANSFER_UUID("3005"), BLE
 constexpr int32_t error_message_byte_count = 128;
 BLECharacteristic error_message_characteristic(FILE_TRANSFER_UUID("3006"), BLERead | BLENotify, error_message_byte_count);
 
+// Writing serial data to Web BLE
+constexpr int32_t data_size_count = 32;
+BLECharacteristic serial_write_characteristic(FILE_TRANSFER_UUID("3007"), BLERead | BLENotify, data_size_count);
+
 // Internal globals used for transferring the file.
 uint8_t file_buffers[2][file_maximum_byte_count];
 int finished_file_buffer_index = -1;
@@ -140,17 +144,6 @@ uint32_t crc32(const uint8_t* data, size_t data_length) {
     crc = table[table_index] ^ (crc >> 8);
   }
   return crc;
-}
-
-// This is a small test function for the CRC32 implementation, not normally called but left in
-// for debugging purposes. We know the expected CRC32 of [97, 98, 99, 100, 101] is 2240272485,
-// or 0x8587d865, so if anything else is output we know there's an error in the implementation.
-void testCrc32() {
-  constexpr int test_array_length = 5;
-  const uint8_t test_array[test_array_length] = {97, 98, 99, 100, 101};
-  const uint32_t test_array_crc32 = crc32(test_array, test_array_length);
-  Serial.println(String("CRC32 for [97, 98, 99, 100, 101] is 0x") + String(test_array_crc32, 16) + 
-    String(" (") + String(test_array_crc32) + String(")"));
 }
 
 void onFileTransferComplete() {
@@ -331,6 +324,8 @@ void setupBLEFileTransfer() {
   service.addCharacteristic(transfer_status_characteristic);
   service.addCharacteristic(error_message_characteristic);
 
+  service.addCharacteristic(serial_write_characteristic);
+
   // Start up the service itself.
   BLE.addService(service);
   BLE.advertise();
@@ -349,21 +344,49 @@ void updateBLEFileTransfer() {
 
 }  // namespace
 
+
+ #define RED 22     
+ #define LED_PWR 25
+
 void setup() {
   // Start serial
   Serial.begin(9600);
   Serial.println("Started");
+  
+//  setupBLEFileTransfer();
 
-  setupBLEFileTransfer();
+   pinMode(RED, OUTPUT);
+   pinMode(LED_PWR, OUTPUT);
+
+   digitalWrite(LED_PWR, LOW);
+
 }
 
 void onBLEFileReceived(uint8_t* file_data, int file_length) {
   // Do something here with the file data that you've received. The memory itself will
   // remain untouched until after a following onFileReceived call has completed, and
   // the BLE module retains ownership of it, so you don't need to deallocate it.
+  
+  String str_data = (char*)file_data;
+  
+  Serial.println(str_data);
+  Serial.println(file_length);
 }
 
 void loop() {
-  updateBLEFileTransfer();
+//  updateBLEFileTransfer();
   // Your own code here.
+//  BLE.hanldeEvents();
+
+//  int32_t myData = random(200);
+//  serial_write_characteristic.writeValue("-1000.123,-1000.123,-1000.123");
+//  Serial.println(sizeof(String));
+
+   
+    analogWrite(RED, 0);
+    delay(1000);
+    analogWrite(RED, 255);
+    delay(1000);
+  
+
 }
