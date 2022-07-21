@@ -345,20 +345,12 @@ void updateBLEFileTransfer() {
 }  // namespace
 
 
- #define RED 22     
- #define LED_PWR 25
-
 void setup() {
   // Start serial
   Serial.begin(9600);
   Serial.println("Started");
   
-//  setupBLEFileTransfer();
-
-   pinMode(RED, OUTPUT);
-   pinMode(LED_PWR, OUTPUT);
-
-   digitalWrite(LED_PWR, LOW);
+  setupBLEFileTransfer();
 
 }
 
@@ -374,19 +366,19 @@ void onBLEFileReceived(uint8_t* file_data, int file_length) {
 }
 
 void loop() {
-//  updateBLEFileTransfer();
+  updateBLEFileTransfer();
   // Your own code here.
 //  BLE.hanldeEvents();
 
-//  int32_t myData = random(200);
-//  serial_write_characteristic.writeValue("-1000.123,-1000.123,-1000.123");
+  int myData = random(200);
+  char cstr[data_size_count]; // buffer
+
+  char* val = itoa(myData, cstr, 10);
+  
+
+  serial_write_characteristic.writeValue(val);
+//  delay(1000);
 //  Serial.println(sizeof(String));
 
-   
-    analogWrite(RED, 0);
-    delay(1000);
-    analogWrite(RED, 255);
-    delay(1000);
-  
 
 }
