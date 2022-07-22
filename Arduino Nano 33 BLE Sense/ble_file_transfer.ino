@@ -19,6 +19,8 @@ limitations under the License.
 // onBLEFileReceived() is called when a file has been downloaded.
 
 #include <ArduinoBLE.h>
+#include <Arduino_LSM9DS1.h>
+
 
 // Comment this macro back in to log received data to the serial UART.
 //#define ENABLE_LOGGING
@@ -69,7 +71,8 @@ BLECharacteristic error_message_characteristic(FILE_TRANSFER_UUID("3006"), BLERe
 
 // Writing serial data to Web BLE
 constexpr int32_t data_size_count = 32;
-BLECharacteristic serial_write_characteristic(FILE_TRANSFER_UUID("3007"), BLERead | BLENotify, data_size_count);
+BLECharacteristic accelerometer_characteristic(FILE_TRANSFER_UUID("3007"), BLERead | BLENotify, data_size_count);
+BLECharacteristic gyroscope_characteristic(FILE_TRANSFER_UUID("3008"), BLERead | BLENotify, data_size_count);
 
 // Internal globals used for transferring the file.
 uint8_t file_buffers[2][file_maximum_byte_count];
@@ -324,7 +327,8 @@ void setupBLEFileTransfer() {
   service.addCharacteristic(transfer_status_characteristic);
   service.addCharacteristic(error_message_characteristic);
 
-  service.addCharacteristic(serial_write_characteristic);
+  service.addCharacteristic(accelerometer_characteristic);
+  service.addCharacteristic(gyroscope_characteristic);
 
   // Start up the service itself.
   BLE.addService(service);
@@ -352,6 +356,35 @@ void setup() {
   
   setupBLEFileTransfer();
 
+  if (!IMU.begin()) {
+    Serial.println("Failed to initialize IMU!");
+    while (1);
+  }
+
+}
+
+char *dtostrf (double val, signed char width, unsigned char prec, char *sout) {
+  char fmt[9];
+  sprintf(fmt, "%%%d.%df", width, prec);
+  sprintf(sout, fmt, val);
+  return sout;
+}
+
+
+char *IMU_read (float x, float y, float z, char *sout) {
+  char Xreadings[9]; // buffer
+  dtostrf(x, 0, 3, Xreadings);
+  
+  char Yreadings[9];
+  dtostrf(y, 0, 3, Yreadings);
+  
+  char Zreadings[9];
+  dtostrf(z, 0, 3, Zreadings);
+
+  sprintf(sout, "%s,%s,%s", Xreadings, Yreadings, Zreadings);
+
+  return sout;
+  
 }
 
 void onBLEFileReceived(uint8_t* file_data, int file_length) {
@@ -365,20 +398,38 @@ void onBLEFileReceived(uint8_t* file_data, int file_length) {
   Serial.println(file_length);
 }
 
+
 void loop() {
   updateBLEFileTransfer();
-  // Your own code here.
-//  BLE.hanldeEvents();
+  
+  float aX, aY, aZ, gX, gY, gZ;
+  if (IMU.accelerationAvailable() && IMU.gyroscopeAvailable()) {
+    IMU.readAcceleration(aX, aY, aZ);
+    char accReadings[data_size_count];
+    IMU_read(aX, aY, aZ, accReadings);
+    accelerometer_characteristic.writeValue(accReadings);
 
-  int myData = random(200);
-  char cstr[data_size_count]; // buffer
+    IMU.readGyroscope(gX, gY, gZ);
+    char gyroReadings[data_size_count];
+    IMU_read(gX, gY, gZ, gyroReadings);
+    gyroscope_characteristic.writeValue(gyroReadings);
 
-  char* val = itoa(myData, cstr, 10);
+    delay(100); // adds 0.1s for the webBLE to keep up - ( for smooth plotting )
+  }
+
+
   
 
-  serial_write_characteristic.writeValue(val);
-//  delay(1000);
-//  Serial.println(sizeof(String));
+
+  
+
+  
+
+  
+
+
+  
+      
 
 
 }
