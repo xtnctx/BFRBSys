@@ -16,6 +16,13 @@ const statusElement = document.getElementById('status-label');
 const view = document.getElementById('view');
 const serialData = document.getElementById('serialData');
 
+//  ################### Data to be sent ###################
+
+const contentString = '28';
+
+// #########################################################
+
+
 // Check that the browser supports WebBLE, and raise a warning if not.
 if (!("bluetooth" in navigator)) {
   msg('Browser not supported');
@@ -41,7 +48,7 @@ connectButton.addEventListener('click', async function(event) {
   transferFileButton.addEventListener('click', function(event) {
     msg('Trying to write file ...');
     // You'll want to replace this with the data you want to transfer.
-    let fileContents = prepareDummyFileContents(30 * 1024);
+    let fileContents = prepareDummyFileContents(contentString.length);
     transferFile(fileContents);
   });
   cancelTransferButton.addEventListener('click', function(event) {
@@ -91,6 +98,7 @@ function msg(m){
 function set(m){
   serialData.innerHTML = m;
 }
+
 
 // ------------------------------------------------------------------------------
 // This section has the public APIs for the transfer process, which you
@@ -143,11 +151,10 @@ function ab2str(buf) {
   return String.fromCharCode(...buf);
 }
 
-function onDataChanged(event) {
+export default function onDataChanged(event) {
   let value = new Uint8Array(event.target.value.buffer);
-  let data = ab2str(value)
-  console.log(event.target.value.buffer);
-  set(data);
+  let data = ab2str(value);
+  return data;
 }
 
 async function myValue() {
@@ -209,10 +216,10 @@ function onTransferStatusChanged(event) {
   }
 }
 
+
 function prepareDummyFileContents(fileLength) {
   let result = new ArrayBuffer(fileLength);
   let bytes = new Uint8Array(result);
-  const contentString = 'The quick brown fox jumped over the lazy dog. ';
   for (var i = 0; i < bytes.length; ++i) {
     var contentIndex = (i % contentString.length);
     bytes[i] = contentString.charCodeAt(contentIndex);
@@ -279,6 +286,4 @@ async function sendFileBlock(fileContents, bytesAlreadySent) {
   });
 }
 
-
-
-
+ 
