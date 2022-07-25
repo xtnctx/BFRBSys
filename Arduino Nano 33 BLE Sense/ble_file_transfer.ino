@@ -20,6 +20,8 @@ limitations under the License.
 
 #include <ArduinoBLE.h>
 #include <Arduino_LSM9DS1.h>
+#include <Arduino_APDS9960.h>
+#include <Arduino_HTS221.h>
 
 
 // Comment this macro back in to log received data to the serial UART.
@@ -73,6 +75,7 @@ BLECharacteristic error_message_characteristic(FILE_TRANSFER_UUID("3006"), BLERe
 constexpr int32_t data_size_count = 32;
 BLECharacteristic accelerometer_characteristic(FILE_TRANSFER_UUID("3007"), BLERead | BLENotify, data_size_count);
 BLECharacteristic gyroscope_characteristic(FILE_TRANSFER_UUID("3008"), BLERead | BLENotify, data_size_count);
+BLECharacteristic distance_characteristic(FILE_TRANSFER_UUID("3009"), BLERead | BLENotify, data_size_count);
 
 // Internal globals used for transferring the file.
 uint8_t file_buffers[2][file_maximum_byte_count];
@@ -84,6 +87,9 @@ uint8_t* in_progress_file_buffer = nullptr;
 int32_t in_progress_bytes_received = 0;
 int32_t in_progress_bytes_expected = 0;
 uint32_t in_progress_checksum = 0;
+
+// Training notification
+uint32_t on_training = 0;
 
 void notifyError(const String& error_message) {
   Serial.println(error_message);
@@ -329,6 +335,7 @@ void setupBLEFileTransfer() {
 
   service.addCharacteristic(accelerometer_characteristic);
   service.addCharacteristic(gyroscope_characteristic);
+  service.addCharacteristic(distance_characteristic);
 
   // Start up the service itself.
   BLE.addService(service);
@@ -358,6 +365,16 @@ void setup() {
 
   if (!IMU.begin()) {
     Serial.println("Failed to initialize IMU!");
+    while (1);
+  }
+
+  if (!APDS.begin()) {
+    Serial.println("Error initializing APDS-9960 sensor!");
+    while (1);
+  }
+
+  if (!HTS.begin()) {
+    Serial.println("Failed to initialize humidity temperature sensor!");
     while (1);
   }
 
@@ -403,6 +420,8 @@ void loop() {
   updateBLEFileTransfer();
   
   float aX, aY, aZ, gX, gY, gZ;
+  float temperature = HTS.readTemperature();
+  
   if (IMU.accelerationAvailable() && IMU.gyroscopeAvailable()) {
     IMU.readAcceleration(aX, aY, aZ);
     char accReadings[data_size_count];
@@ -417,19 +436,20 @@ void loop() {
     delay(100); // adds 0.1s for the webBLE to keep up - ( for smooth plotting )
   }
 
+  if (APDS.proximityAvailable()) {
+    // read the proximity
+    // - 0   => close
+    // - 255 => far
+    // - -1  => error
+    int32_t proximity = APDS.readProximity();
 
-  
+    distance_characteristic.writeValue(proximity);
 
+    Serial.println(proximity);
+  }
 
-  
-
-  
-
-  
-
-
-  
-      
-
+  Serial.print("Temperature = ");
+  Serial.print(temperature);
+  Serial.println(" °C");
 
 }
