@@ -1,0 +1,129 @@
+
+.nav-container {
+    position: fixed ;
+    top: 0;
+    left: 0;
+    z-index: 9999;
+    width: 100%;
+    transition: transform 0.5s;
+    transition-timing-function: ease-in-out;
+}
+
+nav {
+    display: flex;
+    padding: 0.1% 4%;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #20206c;
+}
+
+nav img {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 75px;
+}
+
+nav h3 {
+    color: rgb(255, 255, 255);
+}
+
+.nav-links {
+    flex: 1;
+    text-align: right;
+}
+
+.nav-links ul li {
+    list-style: none;
+    display: inline-block;
+    padding: 8px 12px;
+    position: relative;
+}
+
+.nav-links ul li a {
+    color: rgb(255, 255, 255);
+    text-decoration: none;
+    font-size: 15px;
+}
+
+.nav-links ul li::after {
+    content: '';
+    width: 0%;
+    height: 2px;
+    background: #d0351d;
+    display: block;
+    margin: auto;
+    transition: 0.3s;
+}
+
+.nav-links ul li:hover::after {
+    width: 100%;
+    
+}
+
+nav .fa {
+    display: none;
+}
+
+/* Dynamic */
+
+.nav-hidden {
+    transform: translateY(calc(-1 * 100px));
+}
+
+
+/*         */
+
+
+@media(max-width:700px) {
+    .text-box h1 {
+        font-size: 20px;
+    }
+    
+    .nav-links ul li {
+        display: block;
+    }
+
+    .nav-links {
+        position: absolute;
+        background: #6c2a20;
+        height: 100vh;
+        width: 120px;
+        top: 0;
+        right: -120px;
+        text-align: left;
+        z-index: 2;
+        transition: 0.35s;
+
+    }
+
+    nav .fa {
+        display: block;
+        color: #fff;
+        margin: 10px;
+        font-size: 22px;
+        cursor: pointer;
+    }
+
+    .hide-container {
+        display: grid;
+        place-items: center;
+        /* background-color: #20206c; */
+        /* border-bottom: 1px solid black; */
+        height: 72px;
+
+        border-width: 3px;
+        border-style: solid;
+        border-image: 
+            linear-gradient(
+            to right, 
+            #d0351d, 
+            rgba(0, 0, 0, 0)
+            ) 0 0 1 0
+    }
+
+    .nav-links ul {
+        padding: 30px 10px;
+    }
+
+}
