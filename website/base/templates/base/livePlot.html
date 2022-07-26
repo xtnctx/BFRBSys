@@ -21,9 +21,12 @@
             <button id="cancel-transfer-button">Cancel</button>
         </div>
         <div id="status-label">Click button to connect to the board</div>
-        <button id="view">view</button>
-        <div id="accData">None</div>
-        <div id="gyroData">None</div>
+        <div id="dstData">None</div>
+        <form method="POST">{% csrf_token %}
+            <input hidden id="data-field" type="text" name="data">
+            <button type="submit">Export</button>
+        </form>
+        <button onclick="beginTraining()">Begin</button>
 
     </div>
     

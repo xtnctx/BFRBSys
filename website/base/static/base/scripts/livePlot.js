@@ -9,14 +9,13 @@ const ERROR_MESSAGE_UUID = 'bf88b656-3006-4a61-86e0-769c741026c0';
 
 const ACC_DATA_UUID = 'bf88b656-3007-4a61-86e0-769c741026c0';
 const GYRO_DATA_UUID = 'bf88b656-3008-4a61-86e0-769c741026c0';
+const DIST_DATA_UUID = 'bf88b656-3009-4a61-86e0-769c741026c0';
      
 const connectButton = document.getElementById('connect-button');
 const transferFileButton = document.getElementById('transfer-file-button');
 const cancelTransferButton = document.getElementById('cancel-transfer-button');
 const statusElement = document.getElementById('status-label');
-const view = document.getElementById('view');
-const accData = document.getElementById('accData');
-const gyroData = document.getElementById('gyroData');
+const dstData = document.getElementById('dstData');
 
 //  ################### Data to be sent ###################
 
@@ -57,9 +56,6 @@ connectButton.addEventListener('click', async function(event) {
     msg('Trying to cancel transfer ...');
     cancelTransfer();
   });
-//   view.addEventListener('click', function(event) {
-    
-//   });
 
 });
 
@@ -95,13 +91,6 @@ function onErrorMessageChanged(event) {
 // for your page.
 function msg(m){
   statusElement.innerHTML = m;
-}
-
-function aset(m){
-    accData.innerHTML = m;
-}
-function gset(m){
-    gyroData.innerHTML = m;
 }
 
 
@@ -149,6 +138,10 @@ async function connect() {
   await gyroDataCharacteristic.startNotifications();
   gyroDataCharacteristic.addEventListener('characteristicvaluechanged', onGyroChanged);
 
+  distDataCharacteristic = await service.getCharacteristic(DIST_DATA_UUID);
+  await distDataCharacteristic.startNotifications();
+  distDataCharacteristic.addEventListener('characteristicvaluechanged', onDistChanged);
+
   isFileTransferInProgress = false;
   
   msg('Connected to device');
@@ -160,7 +153,6 @@ async function myValue() {
   let readValue = await serialDataCharacteristic.readValue()
   let readValueArray = new Uint32Array(readValue.buffer);
   let value = readValueArray[0];
-  aset(value);
   // return value
 }
 
@@ -286,7 +278,13 @@ async function sendFileBlock(fileContents, bytesAlreadySent) {
 }
 
  
+const rawData = []; // ax,ay,az, gx,gy,gz, temp, dist
 
+let csvContent = rawData.map(e => e.join(",")).join(";");
+const dataField = document.getElementById('data-field');
+
+// var encodedUri = encodeURI(csvContent);
+dataField.value = csvContent
 
 
 
@@ -303,17 +301,51 @@ var gX = new TimeSeries();
 var gY = new TimeSeries();
 var gZ = new TimeSeries();
 
+function dataPush() {
+  let ax = aX.data.slice(-1)[0][1];
+  let ay = aY.data.slice(-1)[0][1];
+  let az = aZ.data.slice(-1)[0][1];
+
+  let gx = gX.data.slice(-1)[0][1];
+  let gy = gY.data.slice(-1)[0][1];
+  let gz = gZ.data.slice(-1)[0][1];
+
+  rawData.push([ax, ay, az, gx, gy, gz])
+}
+
+function beginTraining() {  
+  const samples = 10;
+
+  for(let i = 0; i < samples; ++i) {
+    (function(i) {
+      setTimeout(() => {
+        dataPush()
+        console.log(i);
+
+        if(i+1 === samples){
+          console.log('done');
+        }
+        
+      }, 1000 * i);
+    })(i);
+  }
+}
 
 /* Parse the received data */
 function ab2str(buf) {
     return String.fromCharCode(...buf);
-  }
+}
+
+function onDistChanged(event) {
+  let distValue = new Uint8Array(event.target.value.buffer);
+  dstData.innerHTML = distValue[0];
+}
+
 
 function onAccChanged(event) {
     let avalue = new Uint8Array(event.target.value.buffer);
     let adata = ab2str(avalue);
     const adataArr = adata.split(",");
-    aset(adata)
 
     aX.append(new Date().getTime(), adataArr[0]);
     aY.append(new Date().getTime(), adataArr[1]);
@@ -324,7 +356,6 @@ function onGyroChanged(event) {
     let gvalue = new Uint8Array(event.target.value.buffer);
     let gdata = ab2str(gvalue);
     const gdataArr = gdata.split(",");
-    gset(gdata)
 
     gX.append(new Date().getTime(), gdataArr[0]);
     gY.append(new Date().getTime(), gdataArr[1]);
