@@ -1,27 +1,11 @@
-Name,City,Info
-name1,city1,some other info
-name2,city2,more info
-name1,city1,some other info
-name2,city2,more info
-name1,city1,some other info
-name2,city2,more info
-name1,city1,some other info
-name2,city2,more info
-name1,city1,some other info
-name2,city2,more info
-name1,city1,some other info
-name2,city2,more info
-name1,city1,some other info
-name2,city2,more info
-name1,city1,some other info
-name2,city2,more info
-name1,city1,some other info
-name2,city2,more info
-name1,city1,some other info
-name2,city2,more info
-name1,city1,some other info
-name2,city2,more info
-name1,city1,some other info
-name2,city2,more info
-name1,city1,some other info
-name2,city2,more info
+ax,ay,az,gx,gy,gz
+0.373,0.034,0.893,0.610,0.916,0.427
+0.365,0.030,0.914,1.953,0.671,-0.061
+0.199,-0.879,0.224,28.809,-112.244,-96.741
+0.048,0.031,0.953,3.967,-0.244,-0.916
+-0.010,-0.004,1.040,45.654,3.113,13.672
+0.112,-0.464,-0.343,-181.946,-5.249,-30.334
+0.130,-0.338,-0.256,-575.378,71.228,-73.547
+0.111,-0.040,1.015,45.410,60.181,25.879
+-0.050,-0.227,1.078,19.043,-0.366,-11.597
+0.138,0.125,0.510,-91.125,25.208,-35.950
