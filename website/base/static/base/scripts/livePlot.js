@@ -280,11 +280,7 @@ async function sendFileBlock(fileContents, bytesAlreadySent) {
  
 const rawData = []; // ax,ay,az, gx,gy,gz, temp, dist
 
-let csvContent = rawData.map(e => e.join(",")).join(";");
-const dataField = document.getElementById('data-field');
 
-// var encodedUri = encodeURI(csvContent);
-dataField.value = csvContent
 
 
 
@@ -313,7 +309,7 @@ function dataPush() {
   rawData.push([ax, ay, az, gx, gy, gz])
 }
 
-function beginTraining() {  
+function captureData() {  
   const samples = 10;
 
   for(let i = 0; i < samples; ++i) {
@@ -324,12 +320,36 @@ function beginTraining() {
 
         if(i+1 === samples){
           console.log('done');
+          let csvContent = rawData.map(e => e.join(",")).join(";");
+          const dataField = document.getElementById('data-field');
+          dataField.value = csvContent
         }
         
       }, 1000 * i);
     })(i);
   }
 }
+
+/* JQuery - AJAX */
+// Prevents page reload when submitting form
+$(document).on('submit', '#data-form', function(e) {
+  e.preventDefault();
+  
+  $.ajax({
+    type: 'POST',
+    url: 'export/',
+    data: {
+      data: $('#data-field').val(),
+      csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val()
+    },
+
+    success: function() {
+
+    }
+  })
+})
+
+
 
 /* Parse the received data */
 function ab2str(buf) {

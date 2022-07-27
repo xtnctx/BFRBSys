@@ -1,3 +1,4 @@
+from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.contrib.auth.decorators import login_required
 import pandas as pd
@@ -18,11 +19,18 @@ def app(request):
 
 
 def graph(request):
-    if request.method == 'POST':
-        csv_string = request.POST.get('data')
-        parsed_csv = list(csv.reader(csv_string.split(';')))
-        df = pd.DataFrame(parsed_csv, columns=['Name', 'City', 'Info'],)
-        df.to_csv('static/myfile.csv', index=False)
-        return redirect('graph')
     context = {}
     return render(request, 'base/livePlot.html', context)
+
+
+
+def export_data(request):
+    if request.method == 'POST':
+        data = request.POST.get('data')
+        print(data.split(';'))
+
+        # parsed_csv = list(csv.reader(data.split(';')))
+        # df = pd.DataFrame(parsed_csv, columns=['ax', 'ay', 'az', 'gx', 'gy', 'gz'])
+        # df.to_csv('static/myfile.csv', index=False)
+    
+    return HttpResponse('')
