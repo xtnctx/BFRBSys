@@ -1,21 +1,13 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.core.files.storage import FileSystemStorage
+from django.conf import settings
 
-class TData(models.Model):    
+
+class TModels(models.Model):    
     owner = models.ForeignKey(User, default=None, on_delete=models.CASCADE)
-
-    # Accelerometer
-    ax = models.FloatField()
-    ay = models.FloatField()
-    az = models.FloatField()
-
-    # Gyroscope
-    gx = models.FloatField()
-    gy = models.FloatField()
-    gz = models.FloatField()
-
-    # Distance
-
-    # Temperature
-
+    file = models.FileField(
+                            upload_to='TrainedModels', 
+                            default='settings.MEDIA_ROOT/default.jpg'
+                            )
     

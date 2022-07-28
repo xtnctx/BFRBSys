@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import TData
+from .models import TModels
 
 # Register your models here.
-admin.site.register(TData)
+admin.site.register(TModels)
