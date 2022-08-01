@@ -43,12 +43,15 @@ def export_data(request):
         >> classify on and off target soon ... 
         '''
 
-        PARAMS = ['ax', 'ay', 'az', 'gx', 'gy', 'gz']
+        PARAMS = ['ax', 'ay', 'az', 'gx', 'gy', 'gz', 'class']
         data = request.POST.get('data')
         parsed_csv = list(csv.reader(data.split(';')))
         df = pd.DataFrame(parsed_csv, columns=PARAMS)
 
-        HOTSPOT = ['loc'] # known location
+        print(df)
+        return HttpResponse('')
+
+        HOTSPOT = ['true', 'false'] # known location / class
         NUM_HOTSPOT = len(HOTSPOT)
 
         df['output'] = [1] * len(df)

@@ -277,16 +277,16 @@ async function sendFileBlock(fileContents, bytesAlreadySent) {
   });
 }
 
- 
-const rawData = []; // ax,ay,az, gx,gy,gz, temp, dist
 
 
-
-
-
-
+const dataField = document.getElementById('data-field'); // hidden
 
 /* Live plot */
+
+// ax,ay,az, gx,gy,gz, temp, dist
+const OnData = []; 
+const OffData = [];
+
 
 // Data
 var aX = new TimeSeries();
@@ -297,7 +297,7 @@ var gX = new TimeSeries();
 var gY = new TimeSeries();
 var gZ = new TimeSeries();
 
-function dataPush() {
+function dataPush(output) {
   let ax = aX.data.slice(-1)[0][1];
   let ay = aY.data.slice(-1)[0][1];
   let az = aZ.data.slice(-1)[0][1];
@@ -306,23 +306,46 @@ function dataPush() {
   let gy = gY.data.slice(-1)[0][1];
   let gz = gZ.data.slice(-1)[0][1];
 
-  rawData.push([ax, ay, az, gx, gy, gz])
+  if(output === 1){
+    OnData.push([ax, ay, az, gx, gy, gz, output])
+  } else {
+    OffData.push([ax, ay, az, gx, gy, gz, output])
+  }
 }
 
-function captureData() {  
-  const samples = 10;
 
+let onDataCsvContent = ""
+let offDataCsvContent = ""
+
+let checker = []
+
+function captureData(output) {  
+  const samples = 10;
   for(let i = 0; i < samples; ++i) {
     (function(i) {
       setTimeout(() => {
-        dataPush()
+        dataPush(output);
         console.log(i);
 
         if(i+1 === samples){
           console.log('done');
-          let csvContent = rawData.map(e => e.join(",")).join(";");
-          const dataField = document.getElementById('data-field');
-          dataField.value = csvContent
+          if(output === 1) {
+            onDataCsvContent = OnData.map(e => e.join(",")).join(";");
+          } else {
+            offDataCsvContent = OffData.map(e => e.join(",")).join(";");
+          }
+
+          if(!checker.includes(output)) {
+            checker.push(output);
+          }
+          
+          
+          if(checker.length === 2) {
+            dataField.value = onDataCsvContent + ';' + offDataCsvContent;
+            document.getElementById('trainBtn').disabled = false;
+          }
+          console.log(checker);
+          
         }
         
       }, 1000 * i);

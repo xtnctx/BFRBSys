@@ -22,11 +22,12 @@
         </div>
         <div id="status-label">Click button to connect to the board</div>
         <div id="dstData">None</div>
+        <button onclick="captureData(1)">ADD ON TARGET</button>
+        <button onclick="captureData(0)">ADD OFF TARGET</button>
         <form id="data-form" method="POST" enctype="multipart/form-data">{% csrf_token %}
             <input hidden id="data-field" type="text" name="data">
-            <input type="submit" value="Export">
+            <input id="trainBtn" type="submit" value="Train" disabled>
         </form>
-        <button onclick="captureData()">Begin</button>
 
     </div>
     
