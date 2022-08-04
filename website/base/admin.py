@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import TModels
+from .models import TrainedModel
 
 # Register your models here.
-admin.site.register(TModels)
+admin.site.register(TrainedModel)
