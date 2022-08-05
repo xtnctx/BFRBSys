@@ -19,7 +19,7 @@ const dstData = document.getElementById('dstData');
 
 //  ################### Data to be sent ###################
 
-const contentString = '28';
+var contentString = '';
 
 // #########################################################
 
@@ -49,8 +49,9 @@ connectButton.addEventListener('click', async function(event) {
   transferFileButton.addEventListener('click', function(event) {
     msg('Trying to write file ...');
     // You'll want to replace this with the data you want to transfer.
-    let fileContents = prepareDummyFileContents(contentString.length);
-    transferFile(fileContents);
+    let fileContents = prepareFileContents(contentString.length);
+    // transferFile(fileContents);
+    console.log(`File size is: ${contentString.length}`);
   });
   cancelTransferButton.addEventListener('click', function(event) {
     msg('Trying to cancel transfer ...');
@@ -208,7 +209,7 @@ function onTransferStatusChanged(event) {
 }
 
 
-function prepareDummyFileContents(fileLength) {
+function prepareFileContents(fileLength) {
   let result = new ArrayBuffer(fileLength);
   let bytes = new Uint8Array(result);
   for (var i = 0; i < bytes.length; ++i) {
@@ -284,8 +285,8 @@ const dataField = document.getElementById('data-field'); // hidden
 /* Live plot */
 
 // ax,ay,az, gx,gy,gz, temp, dist
-const OnData = []; 
-const OffData = [];
+var OnData = []; 
+var OffData = [];
 
 
 // Data
@@ -319,6 +320,21 @@ let offDataCsvContent = ""
 
 let checker = []
 
+function deleteData(output) {
+  if (output === 1) {
+    onDataCsvContent = "";
+    checker.splice(checker.indexOf(output), 1);
+    OnData = [];
+  } else {
+    offDataCsvContent = "";
+    checker.splice(checker.indexOf(output), 1);
+    OffData = [];
+  }
+
+  document.getElementById('trainBtn').disabled = true;
+  dataField.value = ""
+}
+
 function captureData(output) {  
   const samples = 10;
   for(let i = 0; i < samples; ++i) {
@@ -348,7 +364,7 @@ function captureData(output) {
           
         }
         
-      }, 1000 * i);
+      }, 1000 * i); // time interval per samples
     })(i);
   }
 }
@@ -366,10 +382,15 @@ $(document).on('submit', '#data-form', function(e) {
       csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val()
     },
 
-    success: function() {
 
+    // GET
+    success: function(response) {
+      // $('#data-field').val(response.model_string);
+      contentString = response.model_string
+      console.log(contentString);
     }
   })
+
 })
 
 
