@@ -22,8 +22,17 @@
         </div>
         <div id="status-label">Click button to connect to the board</div>
         <div id="dstData">None</div>
-        <button onclick="captureData(1)">ADD ON TARGET</button>
-        <button onclick="captureData(0)">ADD OFF TARGET</button>
+        
+        <div class="trainBtn-container">
+            <button onclick="captureData(1)">ADD ON TARGET</button>
+            <button onclick="deleteData(1)">Delete</button>
+        </div>
+
+        <div class="trainBtn-container">
+            <button onclick="captureData(0)">ADD OFF TARGET</button>
+            <button onclick="deleteData(0)">Delete</button>
+        </div>
+        
         <form id="data-form" method="POST" enctype="multipart/form-data">{% csrf_token %}
             <input hidden id="data-field" type="text" name="data">
             <input id="trainBtn" type="submit" value="Train" disabled>
