@@ -23,6 +23,40 @@ limitations under the License.
 #include <Arduino_APDS9960.h>
 #include <Arduino_HTS221.h>
 
+#include <TensorFlowLite.h>
+#include <tensorflow/lite/micro/all_ops_resolver.h>
+#include <tensorflow/lite/micro/micro_error_reporter.h>
+#include <tensorflow/lite/micro/micro_interpreter.h>
+#include <tensorflow/lite/schema/schema_generated.h>
+#include <tensorflow/lite/version.h>
+
+#include "model.h"
+
+
+// global variables used for TensorFlow Lite (Micro)
+tflite::MicroErrorReporter tflErrorReporter;
+
+// pull in all the TFLM ops, you can remove this line and
+// only pull in the TFLM ops you need, if would like to reduce
+// the compiled size of the sketch.
+tflite::AllOpsResolver tflOpsResolver;
+
+const tflite::Model* tflModel = nullptr;
+tflite::MicroInterpreter* tflInterpreter = nullptr;
+TfLiteTensor* tflInputTensor = nullptr;
+TfLiteTensor* tflOutputTensor = nullptr;
+
+// Create a static memory buffer for TFLM, the size may need to
+// be adjusted based on the model you are using
+constexpr int tensorArenaSize = 8 * 1024;
+byte tensorArena[tensorArenaSize] __attribute__((aligned(16)));
+
+// array to map gesture index to a name
+const char* HOTSPOT[] = {
+  "off_target",
+  "on_target"
+};
+
 
 // Comment this macro back in to log received data to the serial UART.
 //#define ENABLE_LOGGING
@@ -378,6 +412,23 @@ void setup() {
     while (1);
   }
 
+  // get the TFL representation of the model byte array
+  tflModel = tflite::GetModel(model);
+  if (tflModel->version() != TFLITE_SCHEMA_VERSION) {
+    Serial.println("Model schema mismatch!");
+    while (1);
+  }
+
+  // Create an interpreter to run the model
+  tflInterpreter = new tflite::MicroInterpreter(tflModel, tflOpsResolver, tensorArena, tensorArenaSize, &tflErrorReporter);
+
+  // Allocate memory for the model's input and output tensors
+  tflInterpreter->AllocateTensors();
+
+  // Get pointers for the model's input and output tensors
+  tflInputTensor = tflInterpreter->input(0);
+  tflOutputTensor = tflInterpreter->output(0);
+
 }
 
 char *dtostrf (double val, signed char width, unsigned char prec, char *sout) {
@@ -433,6 +484,35 @@ void loop() {
     IMU_read(gX, gY, gZ, gyroReadings);
     gyroscope_characteristic.writeValue(gyroReadings);
 
+
+    // normalize the IMU data between 0 to 1 and store in the model's
+    // input tensor
+    tflInputTensor->data.f[0] = (aX + 4.0) / 8.0;
+    tflInputTensor->data.f[1] = (aY + 4.0) / 8.0;
+    tflInputTensor->data.f[2] = (aZ + 4.0) / 8.0;
+    tflInputTensor->data.f[3] = (gX + 2000.0) / 4000.0;
+    tflInputTensor->data.f[4] = (gY + 2000.0) / 4000.0;
+    tflInputTensor->data.f[5] = (gZ + 2000.0) / 4000.0;
+
+
+    // Run inferencing
+    TfLiteStatus invokeStatus = tflInterpreter->Invoke();
+    if (invokeStatus != kTfLiteOk) {
+      Serial.println("Invoke failed!");
+      while (1);
+      return;
+    }
+
+
+
+    // Loop through the output tensor values from the model
+    for (int i = 0; i < 2; i++) {
+      Serial.print(HOTSPOT[i]);
+      Serial.print(": ");
+      Serial.println(tflOutputTensor->data.f[i], 6);
+    }
+    Serial.println();
+        
     delay(100); // adds 0.1s for the webBLE to keep up - ( for smooth plotting )
   }
 
