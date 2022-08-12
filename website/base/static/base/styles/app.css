@@ -35,3 +35,16 @@
     font-size: 10px;
     pointer-events: none;
 }
+
+
+.trainBtn-container {
+    display: grid;
+    grid-template-columns: 1.7fr 0.3fr;
+    grid-gap: 0.8rem;
+  }
+
+
+#data-form {
+    display: grid;
+    grid-template-columns: 1fr;
+}

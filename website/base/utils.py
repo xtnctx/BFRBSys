@@ -29,7 +29,6 @@ def rmv_file_spaces(file, exclude='') -> str:
         contents = stream.read()
         x = re.sub('\s$', '', contents, flags=re.MULTILINE)
 
-    exclude = 'unsigned char model[] = {'
     if exclude != '':
         start = len(exclude)
         z = x[start:]
