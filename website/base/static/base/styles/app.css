@@ -1,8 +1,30 @@
+.app-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+}
+
+
+.sidebar {
+    display: grid;
+    row-gap: 5px;
+}
+
+.sidebar h1 {
+    color: rgb(36, 47, 152);
+    margin-top: 120px;
+    text-align: center;
+}
+
+.sidebar div {
+    padding-left: 50px;
+}
+
 .mainapp {
     height: 100vh;
     display: grid;
     place-content: center;
     row-gap: 5px;
+    /* border: 1px solid black; */
 }
 
 .mainapp h1 {
@@ -41,10 +63,38 @@
     display: grid;
     grid-template-columns: 1.7fr 0.3fr;
     grid-gap: 0.8rem;
-  }
+}
 
 
 #data-form {
     display: grid;
     grid-template-columns: 1fr;
+}
+
+
+
+@media(max-width:700px) {
+    .sidebar h1 {
+        font-size: 15px;
+    }
+
+    .sidebar div {
+        padding-left: 10px;
+    }
+
+    .distance-container h2 {
+        font-size: 12px;
+    }
+
+    .distance-container div {
+        font-size: 10px;
+    }
+
+    .temperature-container h2 {
+        font-size: 12px;
+    }
+
+    .temperature-container div {
+        font-size: 10px;
+    }
 }

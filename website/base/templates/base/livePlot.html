@@ -11,33 +11,51 @@
 
     {% block content %}
 
-    <div class="mainapp">
-        <canvas id="accelerometerCanvas" width="400" height="100"></canvas>
-        <canvas id="gyroscopeCanvas" width="400" height="100"></canvas>
+    <div class="app-wrapper">
 
-        <div class="ble">
-            <button id="connect-button">Connect</button>
-            <button id="transfer-file-button">Transfer</button>
-            <button id="cancel-transfer-button">Cancel</button>
-        </div>
-        <div id="status-label">Click button to connect to the board</div>
-        <div id="dstData">None</div>
-        
-        <div class="trainBtn-container">
-            <button onclick="captureData(1)">ADD ON TARGET</button>
-            <button onclick="deleteData(1)">Delete</button>
+        <div class="sidebar">
+            <h1>Logs</h1>
+
+            <div class="distance-container">
+                <h2>Distance</h2>
+                <div id="dstData">None</div>
+            </div>
+
+            <div class="temperature-container">
+                <h2>Temperature</h2>
+                <div id="tempData">None</div>
+            </div>
+
+
         </div>
 
-        <div class="trainBtn-container">
-            <button onclick="captureData(0)">ADD OFF TARGET</button>
-            <button onclick="deleteData(0)">Delete</button>
+        <div class="mainapp">
+            <canvas id="accelerometerCanvas" width="400" height="100"></canvas>
+            <canvas id="gyroscopeCanvas" width="400" height="100"></canvas>
+    
+            <div class="ble">
+                <button id="connect-button">Connect</button>
+                <button id="transfer-file-button">Transfer</button>
+                <button id="cancel-transfer-button">Cancel</button>
+            </div>
+            <div id="status-label">Click button to connect to the board</div>
+            
+            <div class="trainBtn-container">
+                <button onclick="captureData(1)">ADD ON TARGET</button>
+                <button onclick="deleteData(1)">Delete</button>
+            </div>
+    
+            <div class="trainBtn-container">
+                <button onclick="captureData(0)">ADD OFF TARGET</button>
+                <button onclick="deleteData(0)">Delete</button>
+            </div>
+            
+            <form id="data-form" method="POST" enctype="multipart/form-data">{% csrf_token %}
+                <input hidden id="data-field" type="text" name="data">
+                <input id="trainBtn" type="submit" value="Train" disabled>
+            </form>
+    
         </div>
-        
-        <form id="data-form" method="POST" enctype="multipart/form-data">{% csrf_token %}
-            <input hidden id="data-field" type="text" name="data">
-            <input id="trainBtn" type="submit" value="Train" disabled>
-        </form>
-
     </div>
     
     {% endblock %}
