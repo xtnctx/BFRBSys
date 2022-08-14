@@ -44,6 +44,8 @@ def export_data(request):
         '''
 
         data = request.POST.get('data')
+        named_model = request.POST.get('model_name')
+
         parsed_csv = list(csv.reader(data.split(';')))
 
         df = pd.DataFrame(parsed_csv, columns=PARAMS)
@@ -140,7 +142,6 @@ def export_data(request):
         converter = tf.lite.TFLiteConverter.from_keras_model(model)
         converter.optimizations = [tf.lite.Optimize.OPTIMIZE_FOR_SIZE]
         tflite_model = converter.convert()
-        
 
         # Save as temporary
         with open('static/temp_model.h', 'w') as temp:
@@ -148,7 +149,11 @@ def export_data(request):
 
         # Then save to database
         with open('static/temp_model.h', 'rb') as f:
-            fs = TrainedModel(owner=request.user, file=File(f, name=os.path.basename(f.name)))
+            fs = TrainedModel(
+                owner=request.user, 
+                model_name=named_model, 
+                file=File(f, name=str(named_model).replace(" ", "_") + '.h')
+                )
             fs.save()
         
         model_string = rmv_file_spaces('static/temp_model.h', exclude='unsigned char model[] = {')
