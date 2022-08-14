@@ -50,7 +50,7 @@ connectButton.addEventListener('click', async function(event) {
     msg('Trying to write file ...');
     // You'll want to replace this with the data you want to transfer.
     let fileContents = prepareFileContents(contentString.length);
-    // transferFile(fileContents);
+    transferFile(fileContents);
     console.log(`File size is: ${contentString.length}`);
   });
   cancelTransferButton.addEventListener('click', function(event) {
@@ -379,6 +379,7 @@ $(document).on('submit', '#data-form', function(e) {
     url: 'export/',
     data: {
       data: $('#data-field').val(),
+      model_name: $('#name-field').val(),
       csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val()
     },
 
