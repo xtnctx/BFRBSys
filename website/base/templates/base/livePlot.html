@@ -52,6 +52,7 @@
             
             <form id="data-form" method="POST" enctype="multipart/form-data">{% csrf_token %}
                 <input hidden id="data-field" type="text" name="data">
+                <input id="name-field" type="text" name="model_name" placeholder="Model name">
                 <input id="trainBtn" type="submit" value="Train" disabled>
             </form>
     
