@@ -1,12 +1,18 @@
 .app-wrapper {
+    height: 100vh;
     display: grid;
     grid-template-columns: 1fr 2fr;
+    grid-template-rows: 6fr 1fr;
 }
 
+/* row 1 */
 
 .sidebar {
     display: grid;
     row-gap: 5px;
+    border: 1px solid black;
+    padding: 0 20px;
+
 }
 
 .sidebar h1 {
@@ -15,21 +21,40 @@
     text-align: center;
 }
 
-.sidebar div {
-    padding-left: 50px;
+.sidebar button {
+    height: 40px;
 }
 
+
 .mainapp {
-    height: 100vh;
     display: grid;
     place-content: center;
     row-gap: 5px;
-    /* border: 1px solid black; */
+    border: 1px solid black;
 }
 
 .mainapp h1 {
     text-align: center;
 }
+
+/* row 2 */
+.status-container {
+    display: grid;
+    grid-column: 1 / span 2;
+    border: 1px solid black;
+}
+
+.status-container h3 {
+    color: rgb(36, 47, 152);
+    text-align: center;
+}
+
+#status-label {
+    font-size: small;
+    text-align: center;
+    padding-top: 10px;
+}
+
 
 .ble {
     display: flex;
@@ -42,11 +67,6 @@
     padding: 0 10px;
 }
 
-#status-label {
-    font-size: small;
-    text-align: center;
-    padding-top: 10px;
-}
 
 .smoothie-chart-tooltip {
     background: #444;
@@ -71,30 +91,28 @@
     grid-template-columns: 1fr;
 }
 
+.prox-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-gap: 0.8rem;
+}
+
+.prox-container p {
+    text-align: right;
+}
+
+.train-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-gap: 0.5rem;
+}
+
+
+
 
 
 @media(max-width:700px) {
     .sidebar h1 {
         font-size: 15px;
-    }
-
-    .sidebar div {
-        padding-left: 10px;
-    }
-
-    .distance-container h2 {
-        font-size: 12px;
-    }
-
-    .distance-container div {
-        font-size: 10px;
-    }
-
-    .temperature-container h2 {
-        font-size: 12px;
-    }
-
-    .temperature-container div {
-        font-size: 10px;
     }
 }
