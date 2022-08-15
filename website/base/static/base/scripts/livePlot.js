@@ -146,6 +146,8 @@ async function connect() {
   isFileTransferInProgress = false;
   
   msg('Connected to device');
+  document.getElementById('connect-button').innerText = 'Connected';
+  document.getElementById('connect-button').disabled = true;
 }
 
 
@@ -282,6 +284,7 @@ async function sendFileBlock(fileContents, bytesAlreadySent) {
 
 const dataField = document.getElementById('data-field'); // hidden
 
+
 /* Live plot */
 
 // ax,ay,az, gx,gy,gz, temp, dist
@@ -314,6 +317,12 @@ function dataPush(output) {
   }
 }
 
+function setTrainingDisable(bool) {
+  document.getElementById('trainBtn').disabled = bool;
+  document.getElementById('name-field').disabled = bool;
+  document.getElementById('transfer-file-button').disabled = bool;
+  document.getElementById('cancel-transfer-button').disabled = bool;
+}
 
 let onDataCsvContent = ""
 let offDataCsvContent = ""
@@ -331,8 +340,9 @@ function deleteData(output) {
     OffData = [];
   }
 
-  document.getElementById('trainBtn').disabled = true;
-  dataField.value = ""
+  setTrainingDisable(true);
+  
+  dataField.value = "";
 }
 
 function captureData(output) {  
@@ -358,7 +368,7 @@ function captureData(output) {
           
           if(checker.length === 2) {
             dataField.value = onDataCsvContent + ';' + offDataCsvContent;
-            document.getElementById('trainBtn').disabled = false;
+            setTrainingDisable(false);
           }
           console.log(checker);
           
