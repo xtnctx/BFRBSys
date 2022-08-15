@@ -17,13 +17,9 @@ def home(request):
     context = {}
     return render(request, 'base/home.html', context)
 
+
 @login_required(login_url='login')
 def app(request):
-    context = {}
-    return render(request, 'base/app.html', context)
-
-
-def graph(request):
     context = {}
     return render(request, 'base/livePlot.html', context)
 
