@@ -42,7 +42,7 @@ if (!("bluetooth" in navigator)) {
 // The file transfer process is verified using a CRC32 checksum, which you can also
 // choose to read before sending a file if you want to tell if it's already been sent.
 
-
+var isConnected = false;
 
 connectButton.addEventListener('click', async function(event) {
   connect();
@@ -102,52 +102,72 @@ function msg(m){
 async function connect() {
   msg('Requesting device ...');
 
-  const device = await navigator.bluetooth.requestDevice({
-    filters: [{services: [SERVICE_UUID]}]
-  });
+  try {
+    const device = await navigator.bluetooth.requestDevice({
+      filters: [{services: [SERVICE_UUID]}]
+    });
 
-  msg('Connecting to device ...');
-  function onDisconnected(event) {
-    msg('Device ' + device.name + ' is disconnected.');
+    msg('Connecting to device ...');
+    function onDisconnected(event) {
+      msg('Device ' + device.name + ' is disconnected.');
+    }
+    device.addEventListener('gattserverdisconnected', onDisconnected);
+    const server = await device.gatt.connect();
+
+    msg('Getting primary service ...');
+    const service = await server.getPrimaryService(SERVICE_UUID);
+    
+    msg('Getting characteristics ...');
+    fileBlockCharacteristic = await service.getCharacteristic(FILE_BLOCK_UUID);
+    fileLengthCharacteristic = await service.getCharacteristic(FILE_LENGTH_UUID);
+    fileMaximumLengthCharacteristic = await service.getCharacteristic(FILE_MAXIMUM_LENGTH_UUID);
+    fileChecksumCharacteristic = await service.getCharacteristic(FILE_CHECKSUM_UUID);
+    commandCharacteristic = await service.getCharacteristic(COMMAND_UUID);
+
+    transferStatusCharacteristic = await service.getCharacteristic(TRANSFER_STATUS_UUID);
+    await transferStatusCharacteristic.startNotifications();
+    transferStatusCharacteristic.addEventListener('characteristicvaluechanged', onTransferStatusChanged);
+
+    errorMessageCharacteristic = await service.getCharacteristic(ERROR_MESSAGE_UUID);
+    await errorMessageCharacteristic.startNotifications();
+    errorMessageCharacteristic.addEventListener('characteristicvaluechanged', onErrorMessageChanged);
+
+    accDataCharacteristic = await service.getCharacteristic(ACC_DATA_UUID);
+    await accDataCharacteristic.startNotifications();
+    accDataCharacteristic.addEventListener('characteristicvaluechanged', onAccChanged);
+
+    gyroDataCharacteristic = await service.getCharacteristic(GYRO_DATA_UUID);
+    await gyroDataCharacteristic.startNotifications();
+    gyroDataCharacteristic.addEventListener('characteristicvaluechanged', onGyroChanged);
+
+    distDataCharacteristic = await service.getCharacteristic(DIST_DATA_UUID);
+    await distDataCharacteristic.startNotifications();
+    distDataCharacteristic.addEventListener('characteristicvaluechanged', onDistChanged);
+
+    isFileTransferInProgress = false;
+    
+    msg('Connected to device');
+    const connect_btn = document.getElementById('connect-button');
+    connect_btn.innerText = 'Connected';
+    connect_btn.disabled = true;
+    isConnected = true;
+
+  } catch(error) {
+    const t = 5;
+    for(let i = 0; i < t; ++i) {
+      (function(i) {
+        setTimeout(() => {
+          msg('Argh! ' + error);
+
+          if(i+1 === t) {
+            msg('Open your bluetooth and click the button to connect to the board');
+          }
+
+        }, 1000 * i); // time interval per samples
+      })(i);
+    }
+    
   }
-  device.addEventListener('gattserverdisconnected', onDisconnected);
-  const server = await device.gatt.connect();
-
-  msg('Getting primary service ...');
-  const service = await server.getPrimaryService(SERVICE_UUID);
-  
-  msg('Getting characteristics ...');
-  fileBlockCharacteristic = await service.getCharacteristic(FILE_BLOCK_UUID);
-  fileLengthCharacteristic = await service.getCharacteristic(FILE_LENGTH_UUID);
-  fileMaximumLengthCharacteristic = await service.getCharacteristic(FILE_MAXIMUM_LENGTH_UUID);
-  fileChecksumCharacteristic = await service.getCharacteristic(FILE_CHECKSUM_UUID);
-  commandCharacteristic = await service.getCharacteristic(COMMAND_UUID);
-
-  transferStatusCharacteristic = await service.getCharacteristic(TRANSFER_STATUS_UUID);
-  await transferStatusCharacteristic.startNotifications();
-  transferStatusCharacteristic.addEventListener('characteristicvaluechanged', onTransferStatusChanged);
-
-  errorMessageCharacteristic = await service.getCharacteristic(ERROR_MESSAGE_UUID);
-  await errorMessageCharacteristic.startNotifications();
-  errorMessageCharacteristic.addEventListener('characteristicvaluechanged', onErrorMessageChanged);
-
-  accDataCharacteristic = await service.getCharacteristic(ACC_DATA_UUID);
-  await accDataCharacteristic.startNotifications();
-  accDataCharacteristic.addEventListener('characteristicvaluechanged', onAccChanged);
-
-  gyroDataCharacteristic = await service.getCharacteristic(GYRO_DATA_UUID);
-  await gyroDataCharacteristic.startNotifications();
-  gyroDataCharacteristic.addEventListener('characteristicvaluechanged', onGyroChanged);
-
-  distDataCharacteristic = await service.getCharacteristic(DIST_DATA_UUID);
-  await distDataCharacteristic.startNotifications();
-  distDataCharacteristic.addEventListener('characteristicvaluechanged', onDistChanged);
-
-  isFileTransferInProgress = false;
-  
-  msg('Connected to device');
-  document.getElementById('connect-button').innerText = 'Connected';
-  document.getElementById('connect-button').disabled = true;
 }
 
 
@@ -320,8 +340,6 @@ function dataPush(output) {
 function setTrainingDisable(bool) {
   document.getElementById('trainBtn').disabled = bool;
   document.getElementById('name-field').disabled = bool;
-  document.getElementById('transfer-file-button').disabled = bool;
-  document.getElementById('cancel-transfer-button').disabled = bool;
 }
 
 let onDataCsvContent = ""
@@ -345,20 +363,27 @@ function deleteData(output) {
   dataField.value = "";
 }
 
-function captureData(output) {  
+function captureData(output) { 
+  if (!isConnected) {
+    alert('Please connect to the board.');
+    return;
+  }
+
   const samples = 10;
   for(let i = 0; i < samples; ++i) {
     (function(i) {
       setTimeout(() => {
         dataPush(output);
-        console.log(i);
+        msg(samples-i-1);
 
         if(i+1 === samples){
-          console.log('done');
+          msg('done');
           if(output === 1) {
             onDataCsvContent = OnData.map(e => e.join(",")).join(";");
+            document.getElementById('t-button__hiddenIcon').classList.add('t-button__showIcon');
           } else {
             offDataCsvContent = OffData.map(e => e.join(",")).join(";");
+            document.getElementById('f-button__hiddenIcon').classList.add('f-button__showIcon');
           }
 
           if(!checker.includes(output)) {
@@ -369,6 +394,8 @@ function captureData(output) {
           if(checker.length === 2) {
             dataField.value = onDataCsvContent + ';' + offDataCsvContent;
             setTrainingDisable(false);
+            msg('You can now train your board');
+
           }
           console.log(checker);
           
@@ -383,7 +410,8 @@ function captureData(output) {
 // Prevents page reload when submitting form
 $(document).on('submit', '#data-form', function(e) {
   e.preventDefault();
-  
+  msg('Please wait, we are training your model ...');
+
   $.ajax({
     type: 'POST',
     url: 'export/',
@@ -393,12 +421,13 @@ $(document).on('submit', '#data-form', function(e) {
       csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val()
     },
 
-
     // GET
     success: function(response) {
-      // $('#data-field').val(response.model_string);
       contentString = response.model_string
-      console.log(contentString);
+      $('#transfer-file-button').prop('disabled', false);
+      $('#cancel-transfer-button').prop('disabled', false);
+      alert('Success! Your data is ready to transfer.');
+      console.log(response.msg);
     }
   })
 
