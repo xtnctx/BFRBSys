@@ -65,8 +65,23 @@
 
 .ble button {
     padding: 0 10px;
+    height: 30px;
+    background: rgb(37, 55, 219);
+    color: #fff;
+    border: none;
+    outline: none;
+    border-radius: 3px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
 }
 
+.ble button:disabled,
+.ble button[disabled]{
+  border: 1px solid #999999;
+  background-color: #cccccc;
+  color: rgb(12, 107, 36);
+}
 
 .smoothie-chart-tooltip {
     background: #444;
@@ -107,7 +122,56 @@
     grid-gap: 0.5rem;
 }
 
+.train-container button {
+    border-radius: 5px;
+}
 
+
+._button {
+    display: grid;
+    padding: 0;
+    background: #009578;
+    border: none;
+    outline: none;
+    border-radius: 5px;
+    overflow: hidden;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    grid-template-columns: 3fr 1fr;
+}
+  
+._button:hover {
+    background: #008168;
+}
+  
+._button:active {
+    background: #006e58;
+}
+
+
+._button__text {
+    display: grid;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    height: 100%;
+}
+
+.t-button__hiddenIcon, .f-button__hiddenIcon {
+    display: none;
+}
+
+.t-button__showIcon, .f-button__showIcon{
+    display: grid;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+
+    font-size: 1.5em;
+    background: rgba(0, 0, 0, 0.08);
+    color: #fff;
+}
 
 
 
