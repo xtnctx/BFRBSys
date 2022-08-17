@@ -410,26 +410,62 @@ function captureData(output) {
 // Prevents page reload when submitting form
 $(document).on('submit', '#data-form', function(e) {
   e.preventDefault();
-  msg('Please wait, we are training your model ...');
 
-  $.ajax({
-    type: 'POST',
-    url: 'export/',
-    data: {
-      data: $('#data-field').val(),
-      model_name: $('#name-field').val(),
-      csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val()
-    },
+  trainModel();
+  var statusInterval = setInterval(getStatus, 100);
 
-    // GET
-    success: function(response) {
-      contentString = response.model_string
-      $('#transfer-file-button').prop('disabled', false);
-      $('#cancel-transfer-button').prop('disabled', false);
-      alert('Success! Your data is ready to transfer.');
-      console.log(response.msg);
-    }
-  })
+  function trainModel() {
+    $.ajax({
+      type: 'POST',
+      url: 'export/',
+      data: {
+        data: $('#data-field').val(),
+        model_name: $('#name-field').val(),
+        csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val()
+      },
+  
+      // GET MODEL
+      success: function(response) {
+        contentString = response.model_string
+        $('#transfer-file-button').prop('disabled', false);
+        $('#cancel-transfer-button').prop('disabled', false);
+        // alert('Success! Your data is ready to transfer.');
+        killInterval();
+        
+      }
+  
+    });
+  }
+
+  function getStatus() {
+    $.ajax({
+      type: 'POST',
+      url: 'status/',
+      data: {
+        csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val()
+      },
+  
+      success: function(response) {
+        msg(response.message_status);
+      }
+  
+    });
+  }
+
+
+  function delay(delayInms) {
+    return new Promise(resolve => {
+      setTimeout(() => {
+        resolve(2);
+      }, delayInms);
+    });
+  }
+
+  async function killInterval() {
+    let delayres = await delay(3000);
+    clearInterval(statusInterval)
+
+  }
 
 })
 
