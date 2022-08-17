@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from accounts.forms import RegisterForm
+from base.models import TrainingStatus
 
 # Create your views here.
 
@@ -36,7 +37,13 @@ def register_view(request):
 
         if form.is_valid():
             form.save()
-            login(request)
+            new_user = authenticate(
+                request, 
+                username=form.cleaned_data['username'], 
+                password=form.cleaned_data['password1']
+                )
+            TrainingStatus(owner=new_user, message_status='').save()
+            login(request, new_user)
             return redirect('home')
     else:
         form = RegisterForm()
