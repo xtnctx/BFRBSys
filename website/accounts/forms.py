@@ -1,6 +1,3 @@
-from email.policy import default
-from pydoc import visiblename
-from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django import forms
