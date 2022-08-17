@@ -1,9 +1,10 @@
 from django.http import HttpResponse, JsonResponse
 from django.contrib.auth.decorators import login_required
 from base.utils import hex_to_c_array, rmv_file_spaces
-from django.shortcuts import render
+from base.models import TrainedModel, TrainingStatus
 from django.core.files.base import File
-from base.models import TrainedModel
+from django.shortcuts import render
+from tensorflow import keras
 import tensorflow as tf
 import pandas as pd
 import numpy as np
@@ -26,7 +27,7 @@ def app(request):
 
 
 
-def export_data(request):
+def train_model(request):
     if request.method == 'POST':
 
         '''
@@ -41,6 +42,8 @@ def export_data(request):
 
         data = request.POST.get('data')
         named_model = request.POST.get('model_name')
+        if named_model == '':
+            named_model = request.user.username + '_no_name_model'
 
         parsed_csv = list(csv.reader(data.split(';')))
 
@@ -51,9 +54,16 @@ def export_data(request):
         HOTSPOT = [off_target, on_target] # known location / class
         NUM_HOTSPOT = len(HOTSPOT)
         ONE_HOT_ENCODED_HOTSPOT = np.eye(NUM_HOTSPOT)
+        N_EPOCH = 600
 
         inputs = []
         outputs = []
+
+        # -------------------- INFORM USER --------------------
+        msg = TrainingStatus.objects.get(owner=request.user)
+        msg.message_status = 'Normalizing data ...' 
+        msg.save()
+        # -----------------------------------------------------
 
         for hotspot_index in range(NUM_HOTSPOT):
 
@@ -83,11 +93,14 @@ def export_data(request):
                 inputs.append(tensor)
                 outputs.append(output)
 
+        msg.message_status = 'Randomizing data ...' 
+        msg.save()
+
         # convert the list to numpy array
         inputs = np.array(inputs)
         outputs = np.array(outputs)
 
-
+        
         # Randomize the order of the inputs, so they can be evenly distributed for training, testing, and validation
         # https://stackoverflow.com/a/37710486/2020087
         num_inputs = len(inputs)
@@ -105,15 +118,15 @@ def export_data(request):
         inputs_train, inputs_test, inputs_validate = np.split(inputs, [TRAIN_SPLIT, TEST_SPLIT])
         outputs_train, outputs_test, outputs_validate = np.split(outputs, [TRAIN_SPLIT, TEST_SPLIT])
 
-
         # build the model and train it
         model = tf.keras.Sequential()
         model.add(tf.keras.layers.Dense(50, activation='relu')) # relu is used for performance
         model.add(tf.keras.layers.Dense(15, activation='relu'))
         model.add(tf.keras.layers.Dense(NUM_HOTSPOT, activation='softmax')) # softmax is used, because we only expect one hotspot to occur per input
         model.compile(optimizer='rmsprop', loss='mse', metrics=['mae'])
-        history = model.fit(inputs_train, outputs_train, epochs=600, batch_size=1, 
-                            validation_data=(inputs_validate, outputs_validate))
+        history = model.fit(inputs_train, outputs_train, epochs=N_EPOCH, batch_size=1,
+                            validation_data=(inputs_validate, outputs_validate),
+                            callbacks=[CustomCallback(msg)])
 
 
         # print("Evaluate on test data")
@@ -133,6 +146,8 @@ def export_data(request):
         # # print the predictions and the expected ouputs
         # print("predictions =\n", np.round(predictions, decimals=3))
 
+        msg.message_status = 'Converting to tflite ...' 
+        msg.save()
 
         # Convert the model to the TensorFlow Lite format without quantization
         converter = tf.lite.TFLiteConverter.from_keras_model(model)
@@ -153,6 +168,9 @@ def export_data(request):
             fs.save()
         
         model_string = rmv_file_spaces('static/temp_model.h', exclude='unsigned char model[] = {')
+        
+        msg.message_status = 'Done!' 
+        msg.save()
 
         os.remove('static/temp_model.h') # end of using temp model
 
@@ -161,4 +179,25 @@ def export_data(request):
     
     return HttpResponse('')
 
+
+def get_status(request):
+    if request.method == 'POST':
+        msg = TrainingStatus.objects.get(owner=request.user)
+        context = {'message_status': msg.message_status}
+        return JsonResponse(context)
+    return HttpResponse('')
+
+
+
+class CustomCallback(keras.callbacks.Callback):
+    def __init__(self, callback_handler):
+        self.callback_handler = callback_handler
+
+    def on_epoch_begin(self, epoch, logs=None):
+        if epoch % 50 == 0:
+            self.callback_handler.message_status = f'Training your model (Epoch: {epoch})...'
+            self.callback_handler.save()
+            print('###############################################################')
+
+    
 
