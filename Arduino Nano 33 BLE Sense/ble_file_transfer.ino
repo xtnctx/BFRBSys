@@ -30,8 +30,6 @@ limitations under the License.
 #include <tensorflow/lite/schema/schema_generated.h>
 #include <tensorflow/lite/version.h>
 
-#include "model.h"
-
 
 // global variables used for TensorFlow Lite (Micro)
 tflite::MicroErrorReporter tflErrorReporter;
@@ -336,11 +334,7 @@ void setupBLEFileTransfer() {
 
   address.toUpperCase();
 
-  static String device_name = "FileTransferExample-";
-  device_name += address[address.length() - 5];
-  device_name += address[address.length() - 4];
-  device_name += address[address.length() - 2];
-  device_name += address[address.length() - 1];
+  static String device_name = "BFRB Sense";
 
   Serial.print("device_name = ");
   Serial.println(device_name);
@@ -412,22 +406,7 @@ void setup() {
     while (1);
   }
 
-  // get the TFL representation of the model byte array
-  tflModel = tflite::GetModel(model);
-  if (tflModel->version() != TFLITE_SCHEMA_VERSION) {
-    Serial.println("Model schema mismatch!");
-    while (1);
-  }
-
-  // Create an interpreter to run the model
-  tflInterpreter = new tflite::MicroInterpreter(tflModel, tflOpsResolver, tensorArena, tensorArenaSize, &tflErrorReporter);
-
-  // Allocate memory for the model's input and output tensors
-  tflInterpreter->AllocateTensors();
-
-  // Get pointers for the model's input and output tensors
-  tflInputTensor = tflInterpreter->input(0);
-  tflOutputTensor = tflInterpreter->output(0);
+  
 
 }
 
@@ -464,8 +443,56 @@ void onBLEFileReceived(uint8_t* file_data, int file_length) {
   
   Serial.println(str_data);
   Serial.println(file_length);
+
+//  // get the TFL representation of the model byte array
+//  tflModel = tflite::GetModel(model);
+//  if (tflModel->version() != TFLITE_SCHEMA_VERSION) {
+//    Serial.println("Model schema mismatch!");
+//    while (1);
+//  }
+//
+//  // Create an interpreter to run the model
+//  tflInterpreter = new tflite::MicroInterpreter(tflModel, tflOpsResolver, tensorArena, tensorArenaSize, &tflErrorReporter);
+//
+//  // Allocate memory for the model's input and output tensors
+//  tflInterpreter->AllocateTensors();
+//
+//  // Get pointers for the model's input and output tensors
+//  tflInputTensor = tflInterpreter->input(0);
+//  tflOutputTensor = tflInterpreter->output(0);
+  
 }
 
+
+//void runPrediction() {
+//  // normalize the IMU data between 0 to 1 and store in the model's
+//  // input tensor
+//  tflInputTensor->data.f[0] = (aX + 4.0) / 8.0;
+//  tflInputTensor->data.f[1] = (aY + 4.0) / 8.0;
+//  tflInputTensor->data.f[2] = (aZ + 4.0) / 8.0;
+//  tflInputTensor->data.f[3] = (gX + 2000.0) / 4000.0;
+//  tflInputTensor->data.f[4] = (gY + 2000.0) / 4000.0;
+//  tflInputTensor->data.f[5] = (gZ + 2000.0) / 4000.0;
+//
+//
+//  // Run inferencing
+//  TfLiteStatus invokeStatus = tflInterpreter->Invoke();
+//  if (invokeStatus != kTfLiteOk) {
+//    Serial.println("Invoke failed!");
+//    while (1);
+//    return;
+//  }
+//
+//
+//
+//  // Loop through the output tensor values from the model
+//  for (int i = 0; i < 2; i++) {
+//    Serial.print(HOTSPOT[i]);
+//    Serial.print(": ");
+//    Serial.println(tflOutputTensor->data.f[i], 6);
+//  }
+//  Serial.println();
+//}
 
 void loop() {
   updateBLEFileTransfer();
@@ -485,33 +512,7 @@ void loop() {
     gyroscope_characteristic.writeValue(gyroReadings);
 
 
-    // normalize the IMU data between 0 to 1 and store in the model's
-    // input tensor
-    tflInputTensor->data.f[0] = (aX + 4.0) / 8.0;
-    tflInputTensor->data.f[1] = (aY + 4.0) / 8.0;
-    tflInputTensor->data.f[2] = (aZ + 4.0) / 8.0;
-    tflInputTensor->data.f[3] = (gX + 2000.0) / 4000.0;
-    tflInputTensor->data.f[4] = (gY + 2000.0) / 4000.0;
-    tflInputTensor->data.f[5] = (gZ + 2000.0) / 4000.0;
-
-
-    // Run inferencing
-    TfLiteStatus invokeStatus = tflInterpreter->Invoke();
-    if (invokeStatus != kTfLiteOk) {
-      Serial.println("Invoke failed!");
-      while (1);
-      return;
-    }
-
-
-
-    // Loop through the output tensor values from the model
-    for (int i = 0; i < 2; i++) {
-      Serial.print(HOTSPOT[i]);
-      Serial.print(": ");
-      Serial.println(tflOutputTensor->data.f[i], 6);
-    }
-    Serial.println();
+    
         
     delay(100); // adds 0.1s for the webBLE to keep up - ( for smooth plotting )
   }
@@ -525,11 +526,11 @@ void loop() {
 
     distance_characteristic.writeValue(proximity);
 
-    Serial.println(proximity);
+//    Serial.println(proximity);
   }
 
-  Serial.print("Temperature = ");
-  Serial.print(temperature);
-  Serial.println(" °C");
+//  Serial.print("Temperature = ");
+//  Serial.print(temperature);
+//  Serial.println(" °C");
 
 }
