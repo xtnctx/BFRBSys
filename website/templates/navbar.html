@@ -20,7 +20,13 @@
                 <li><a href="{% url 'home' %}">Home</a></li>
                 <li><a href="{% url 'app' %}">App</a></li>
                 <li><a href="#">About</a></li>
-                <li><a href="{% url 'login' %}">Login</a></li>
+
+                {% if request.user.is_authenticated %}
+                    <li><a href="{% url 'account_info' %}">{{ request.user.username }}</a></li>
+                {% else %}
+                    <li><a href="{% url 'login' %}">Login</a></li>
+                {% endif %}
+
             </ul>
         </div>
 
