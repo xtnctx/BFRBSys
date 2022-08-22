@@ -50,3 +50,8 @@ def register_view(request):
 
     context = {'form': form}
     return render(request, 'accounts/register.html', context)
+
+
+def account_info(request):
+    context = {}
+    return render(request, 'accounts/account_info.html', context)

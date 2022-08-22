@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+
+
+<html lang="en">
+    {% load static %}
+        <link rel="stylesheet" href="{% static 'accounts/styles/account_info.css' %}">
+    {% include 'base/appNavbar.html' %}
+
+<body>
+    {% block content %}
+        <div class="container">
+            <div class="account-field">
+                <div class="basic-info">
+
+                    
+
+                    <h2>Profile</h2>
+                    <div class="image-container">
+                        <div class="profile-pic-div">
+                            <img src="{% static 'accounts/images/default.jpg' %}" id="photo">
+                            <input type="file" id="file">
+                            <label for="file" id="uploadBtn">Choose Photo</label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3>Username</h3>
+                        <p>{{ request.user.username }}</p>
+                    </div>
+                    <div>
+                        <h3>Email</h3>
+                        <p>{{ request.user.email}}</p>
+                    </div>
+                </div>
+
+                <div>
+                    <h2>Change Password</h2>
+                    <form class="password-form" method="POST">{% csrf_token %}
+                        <div class="input-class">
+                            <h3>Current</h3>
+                            <input type="text" name="" id="">
+        
+                            <h3>New</h3>
+                            <input type="text" name="" id="">
+        
+                            <h3>Re-type new</h3>
+                            <input type="text" name="" id="">
+                        </div>
+
+                        <button type="submit">Save changes</button>
+                        <a href="#">Forgot your password?</a>
+
+                    </form>
+                </div>
+
+            </div>
+        </div>
+
+    {% endblock %}
+
+    <script src="{% static 'accounts/scripts/profile_pic.js' %}"></script>
+</body>
+</html>
