@@ -14,10 +14,12 @@
         <link rel="stylesheet" href="{% static 'accounts/styles/accountsStyles.css' %}">
         
     <div class="main-wrapper">
-        <h1>Register your account</h1>
+        <h2 class="title">Register your account</h2>
         <form method="POST" class="form-group">{% csrf_token %}
             {{ form|crispy }}
-            <button type="submit" class="btn btn-success">Register</button>
+            <div class="submit-btn">
+                <button type="submit" class="btn btn-success">Register</button>
+            </div>
         </form>
     </div>
     {% endblock %}

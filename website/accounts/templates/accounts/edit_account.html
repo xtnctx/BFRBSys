@@ -25,28 +25,41 @@
                         <div class="user">
                             <div>
                                 <h4>Username</h4>
-                                <p>{{ request.user.username }}</p>
+                                <input type="text" name="newusername" placeholder="{{ request.user.username }}">
                             </div>
                             <div>
                                 <h4>Email</h4>
-                                <p>{{ request.user.email }}</p>
+                                <input type="text" name="newemail" placeholder="{{ request.user.email }}">
                             </div>
 
                             <div>
                                 <h4>First Name</h4>
-                                <p>{{ request.user.first_name }}</p>
+                                <input type="text" name="newfirstname" placeholder="{{ request.user.first_name }}">
                             </div>
 
                             <div>
                                 <h4>Last Name</h4>
-                                <p>{{ request.user.last_name }}</p>
+                                <input type="text" name="newlastname" placeholder="{{ request.user.last_name }}">
                             </div>
     
-                            <a href="{% url 'edit_account' %}">Edit</a>
+                            <button type="submit">Save changes</button>
                         </div>
     
+
+                        {% if messages %}
+                            <ul class="messages">
+                                {% for message in messages %}
+                                    <h6  {% if message.tags %} class=" {{ message.tags }} " {% endif %}> {{ message }} </h6>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
                     </form>
                     
+                </div>
+
+                <div>
+                    <h4><a href="{% url 'change_password' %}">Change Password</a></h4>
+                
                 </div>
 
             </div>
@@ -54,6 +67,6 @@
 
     {% endblock %}
 
-    <!-- <script src="{% static 'accounts/scripts/profile_pic.js' %}"></script> -->
+    <script src="{% static 'accounts/scripts/profile_pic.js' %}"></script>
 </body>
 </html>
