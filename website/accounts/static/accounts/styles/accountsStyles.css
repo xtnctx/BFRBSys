@@ -5,6 +5,12 @@
     place-content: center;
 }
 
+.title {
+    display: grid;
+    place-items: center;
+    margin-top: 60px;
+}
+
 
 .form-control {
     display: block;
@@ -36,7 +42,7 @@ ul {
 }
 
 label {
-    font-size: 1.1rem;
+    font-size: 0.9rem;
 }
 
 input:focus { 
@@ -70,10 +76,17 @@ input {
     margin-bottom: 5px;
 }
 
+.textinput, .emailinput {
+    padding: 2px;
+}
 
+.submit-btn {
+    display: flex;
+    justify-content: flex-end;
+}
 .btn {
-    --bs-btn-padding-x: 0.75rem;
-    --bs-btn-padding-y: 0.375rem;
+    --bs-btn-padding-x: 1.5rem;
+    --bs-btn-padding-y: 0.1rem;
     --bs-btn-font-family: ;
     --bs-btn-font-size: 1rem;
     --bs-btn-font-weight: 400;
@@ -128,3 +141,4 @@ input {
     --bs-btn-disabled-bg: #198754;
     --bs-btn-disabled-border-color: #198754;
 }
+
