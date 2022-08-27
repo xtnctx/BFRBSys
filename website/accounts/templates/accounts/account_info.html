@@ -9,51 +9,41 @@
 <body>
     {% block content %}
         <div class="container">
-            <div class="account-field">
-                <div class="basic-info">
-
-                    <h2>Profile</h2>
-                    <div class="image-container">
-                        <div class="profile-pic-div">
-                            <img src="{% static 'accounts/images/default.jpg' %}" id="photo">
-                            <input type="file" id="file">
-                            <label for="file" id="uploadBtn">Choose Photo</label>
-                        </div>
-                    </div>
-                    
-                    <form method="POST">{% csrf_token %}
-                        <div class="user">
-                            <div>
-                                <h4>Username</h4>
-                                <p>{{ request.user.username }}</p>
-                            </div>
-                            <div>
-                                <h4>Email</h4>
-                                <p>{{ request.user.email }}</p>
-                            </div>
-
-                            <div>
-                                <h4>First Name</h4>
-                                <p>{{ request.user.first_name }}</p>
-                            </div>
-
-                            <div>
-                                <h4>Last Name</h4>
-                                <p>{{ request.user.last_name }}</p>
-                            </div>
-    
-                            <a href="{% url 'edit_account' %}">Edit</a>
-                        </div>
-    
-                    </form>
-                    
+            <div class="card">
+                <div class="ds-top">
+                    <a href="{% url 'edit_account' %}"><span title="Edit"><ion-icon name="create-outline" title="Edit"></ion-icon></span></a>
                 </div>
 
+                <div class="avatar-holder">
+                    <img src="{% static 'accounts/images/default.jpg' %}" alt="{{ request.user.first_name }} {{ request.user.last_name }}">
+                </div>
+
+                <div class="name">
+                    <h3>{{ request.user.first_name }} {{ request.user.last_name }}</h3>
+                    <h6 title="Followers"> <span class="followers">{{ request.user.username }}</span></h6>
+                </div>
+                
+
+                <div class="ds-info">
+                    <h5>Overview</h5>
+                    <div class="info email">
+                        <p><span title="Email"><ion-icon class="icon" name="mail-outline"></ion-icon></span>{{request.user.email}}</p>
+                    </div>
+                    <div class="info phone">
+                        <p><span title="Contact No."><ion-icon class="icon" name="call-outline"></ion-icon></span></ion-icon>+639184044100</p>
+                    </div>
+                    <div class="info org">
+                        <p><span title="Organization"><ion-icon class="icon" name="briefcase-outline"></ion-icon></span>Milky Earth University</p>
+                    </div>
+
+                </div>
             </div>
         </div>
 
     {% endblock %}
 
     <!-- <script src="{% static 'accounts/scripts/profile_pic.js' %}"></script> -->
+    <script type="module" src="https://unpkg.com/ionicons@5.4.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule="" src="https://unpkg.com/ionicons@5.4.0/dist/ionicons/ionicons.js"></script>
 </body>
 </html>

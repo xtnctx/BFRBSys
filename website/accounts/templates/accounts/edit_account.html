@@ -3,7 +3,7 @@
 
 <html lang="en">
     {% load static %}
-        <link rel="stylesheet" href="{% static 'accounts/styles/account_info.css' %}">
+        <link rel="stylesheet" href="{% static 'accounts/styles/edit_acc.css' %}">
     {% include 'base/appNavbar.html' %}
 
 <body>
@@ -12,16 +12,21 @@
             <div class="account-field">
                 <div class="basic-info">
 
-                    <h2>Profile</h2>
-                    <div class="image-container">
-                        <div class="profile-pic-div">
-                            <img src="{% static 'accounts/images/default.jpg' %}" id="photo">
-                            <input type="file" id="file">
-                            <label for="file" id="uploadBtn">Choose Photo</label>
-                        </div>
-                    </div>
+                    
                     
                     <form method="POST">{% csrf_token %}
+                        <div class="image-container">
+                            <img src="{% static 'accounts/images/default.jpg' %}" id="photo">
+
+                            <!-- <input type="file" name="file" id="file" class="inputfile" accept="image/*"/> -->
+                            <div class="input-file-container">
+                                <input class="input-file" id="my-file" type="file" accept="image/*">
+                                <label for="my-file" class="input-file-trigger" tabindex="0">
+                                    Select a file...
+                                </label>
+                            </div>
+                        </div>
+
                         <div class="user">
                             <div>
                                 <h4>Username</h4>
@@ -66,7 +71,10 @@
         </div>
 
     {% endblock %}
-
+    
     <script src="{% static 'accounts/scripts/profile_pic.js' %}"></script>
+    <script type="module" src="https://unpkg.com/ionicons@5.4.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule="" src="https://unpkg.com/ionicons@5.4.0/dist/ionicons/ionicons.js"></script>
+
 </body>
 </html>
