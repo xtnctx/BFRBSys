@@ -1,83 +1,236 @@
-.container {
-    height: 100vh;
+
+@import url('https://fonts.googleapis.com/css?family=Krub:400,700');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  background: #202020;
+  font-family: 'Krub', sans-serif;
+}
+
+ion-icon {
+    pointer-events: none;
+}
+
+.ds-top {
     display: grid;
-    place-items: center;
+    justify-items: right;
+    position: absolute;
+    margin: auto;
+    top: 0;
+    right: 0;
+    left: 0;
+    width: 600px;
+    height: 110px;
+    background: crimson;
+    animation: dsTop 1.5s;
 }
 
-.basic-info {
-    margin-bottom: 40px;
+.ds-top a {
+    color: white;
+    padding: 15px;
+    font-size: 25px;
 }
 
-/* .account-field div {
+.avatar-holder {
+    position: absolute;
+    margin: auto;
+    top: 45px;
+    right: 0;
+    left: 0;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    box-shadow: 0 0 0 5px #151515,
+                inset 0 0 0 5px #000000,
+                inset 0 0 0 5px #000000,
+                inset 0 0 0 5px #000000,
+                inset 0 0 0 5px #000000,;
+    background: white;
+    overflow: hidden;
+    animation: mvTop 1.5s;
+    
+}
+
+.avatar-holder img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.name {
+    display: grid;
+    position: absolute;
+    margin: auto;
+    top: -60px;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: inherit;
+    height: 40px;
     text-align: center;
+    animation: fadeIn 2s ease-in-out;
+    
+    
+}
+
+.name h6 {
+    position: absolute;
+    margin: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    color: rgb(190, 190, 190);
+    width: 40px;
+}
+
+.name h3 {
+    color: white;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 18px;
+      
+}
+
+.ds-info {
+    position: absolute;
+    margin: auto;
+    top: 150px;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    width: inherit;
+    display: flex;
+    
+    
+}
+
+.ds-info {
+    display: grid;
+    row-gap: 10px;
+    position: absolute;
+    margin: auto;
+    padding-top: 50px;
+    bottom: 10px;
+    right: 0;
+    left: 0;
+    width: 500px;
+    height: 100px;
+    animation: mvBottom 1.5s;
+}
+
+.ds-info h5 {
+    margin-bottom: 5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: crimson;
+}
+
+.ds-info .info h6 {
+    font-weight: 400;
+    font-size: 8px;
+    letter-spacing: 0.05em;
+    margin: 4px 0;
+    color: white;
+}
+
+.ds-info .info .icon {
+    margin-right: 20px;
+}
+
+.ds-info .info p {
+    color: white;
+    font-size: small;
+}
+
+
+/* .ds-info .email {
+    width: 95%;
+    animation: htmlSkill 1s;
+    animation-delay: .4s;
+}
+.ds-info .phone {
+    width: 90%;
+    animation: cssSkill 2s;
+    animation-delay: .4s;
+}
+.ds-info .org {
+    width: 75%;
+    animation: jsSkill 3s;
+    animation-delay: .4s;
 } */
 
-.input-class {
-    display: grid;
-    grid-template-columns: 1fr 3fr;
+.card {
+  position: absolute;
+  margin: auto;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: 600px;
+  height: 450px;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px 5px rgba(0, 0, 0, 0.2);
+  background: #151515;
+  overflow: hidden;
 }
 
-.input-class h4 {
-    padding-right: 10px;
+@keyframes fadeInMove {
+  0% {
+    opacity: 0;
+    left: -300px;
+  }
+  100% {
+    opacity: 1;
+    left: 0;
+  }
 }
 
-/* Profile picture */
-.image-container {
-    display: grid;
-    justify-content: center;
+@keyframes fadeIn {
+  0% {opacity: 0;}
+  100% {opacity: 1;}
 }
 
-.image-container .profile-pic-div{
-    position: relative;
-    height: 150px;
-    width: 150px;
-    border-radius: 50%;
-    overflow: hidden;
-    border: 1px solid grey;
+@keyframes htmlSkill {
+  0% {width: 0;}
+  100% {width: 95%;}
 }
 
-
-#photo {
-    height: 100%;
-    width: 100%;
+@keyframes cssSkill {
+  0% {width: 0;}
+  100% {width: 90%;}
 }
 
-#file {
-    display: none;
+@keyframes jsSkill {
+  0% {width: 0;}
+  100% {width: 75%;}
 }
 
-#uploadBtn{
-    height: 30px;
-    width: 100%;
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    text-align: center;
-    background: rgba(0, 0, 0, 0.7);
-    color: wheat;
-    line-height: 30px;
-    font-family: sans-serif;
-    font-size: 10px;
-    cursor: pointer;
-    display: none;
+@keyframes mvBottom {
+  0% {bottom: -320px;}
+  100% {bottom: 10px;}
 }
 
-
-.user {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    margin-top: 20px;
-    column-gap: 10px;
-    row-gap: 10px;
+@keyframes mvTop {
+  0% {top: -150px;}
+  100% {top: 45px;}
 }
 
-.user div {
-    display: grid;
-    justify-items: center;
+@keyframes dsTop {
+  0% {top: -150px;}
+  100% {top: 0;}
 }
 
-.user button {
-    margin-top: 10px;
-    grid-column: 1 / span 2;
+.following {
+  color: white;
+  background: crimson;
 }
