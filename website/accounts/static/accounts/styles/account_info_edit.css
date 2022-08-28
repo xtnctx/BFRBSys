@@ -21,6 +21,29 @@ ion-icon {
     pointer-events: none;
 }
 
+input::placeholder{
+  text-align: center;
+}
+
+/* or, for legacy browsers */
+
+::-webkit-input-placeholder {
+  text-align: center;
+}
+
+:-moz-placeholder { /* Firefox 18- */
+  text-align: center;  
+}
+
+::-moz-placeholder {  /* Firefox 19+ */
+  text-align: center;  
+}
+
+:-ms-input-placeholder {  
+  text-align: center; 
+}
+
+
 .ds-top {
     display: grid;
     justify-items: right;
@@ -32,13 +55,18 @@ ion-icon {
     width: 600px;
     height: 110px;
     background: crimson;
-    animation: dsTop 1.5s;
 }
 
-.ds-top a {
-  color: white;
-  padding: 15px;
-  font-size: 25px;
+.ds-top .submit-btn {
+  background: none;
+  border: none;
+  margin-bottom: 45px;
+}
+
+.ds-top .save {
+    color: white;
+    padding: 15px;
+    font-size: 25px;
 }
 
 .avatar-holder {
@@ -57,7 +85,6 @@ ion-icon {
                 inset 0 0 0 5px #000000,;
     background: white;
     overflow: hidden;
-    animation: mvTop 1.5s;
     
 }
 
@@ -69,6 +96,10 @@ ion-icon {
 
 .name {
     display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 0 15px;
+    row-gap: 5px;
+    column-gap: 5px;
     position: absolute;
     margin: auto;
     top: -60px;
@@ -78,19 +109,12 @@ ion-icon {
     width: inherit;
     height: 40px;
     text-align: center;
-    animation: fadeIn 2s ease-in-out;
-    
-    
+
 }
 
-.name h6 {
-    position: absolute;
+.name #newusername {
+    grid-column: 1 / span 2;
     margin: auto;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    color: rgb(190, 190, 190);
-    width: 40px;
 }
 
 .name h3 {
@@ -125,7 +149,6 @@ ion-icon {
     left: 0;
     width: 500px;
     height: 100px;
-    animation: mvBottom 1.5s;
 }
 
 .ds-info h5 {
@@ -184,53 +207,10 @@ ion-icon {
   overflow: hidden;
 }
 
-@keyframes fadeInMove {
-  0% {
-    opacity: 0;
-    left: -300px;
-  }
-  100% {
-    opacity: 1;
-    left: 0;
-  }
-}
-
-@keyframes fadeIn {
-  0% {opacity: 0;}
-  100% {opacity: 1;}
-}
-
-@keyframes htmlSkill {
-  0% {width: 0;}
-  100% {width: 95%;}
-}
-
-@keyframes cssSkill {
-  0% {width: 0;}
-  100% {width: 90%;}
-}
-
-@keyframes jsSkill {
-  0% {width: 0;}
-  100% {width: 75%;}
-}
-
-@keyframes mvBottom {
-  0% {bottom: -320px;}
-  100% {bottom: 10px;}
-}
-
-@keyframes mvTop {
-  0% {top: -150px;}
-  100% {top: 45px;}
-}
-
-@keyframes dsTop {
-  0% {top: -150px;}
-  100% {top: 0;}
-}
-
 .following {
   color: white;
   background: crimson;
 }
+
+
+input[type=text] { text-align:center }
