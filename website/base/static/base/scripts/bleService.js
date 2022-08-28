@@ -48,7 +48,7 @@ connectButton.addEventListener('click', async function(event) {
   transferFileButton.addEventListener('click', function(event) {
     msg('Trying to write file ...');
     // You'll want to replace this with the data you want to transfer.
-    let fileContents = prepareDummyFileContents(contentString.length);
+    let fileContents = prepareFileContents(contentString.length);
     transferFile(fileContents);
   });
   cancelTransferButton.addEventListener('click', function(event) {
@@ -217,7 +217,7 @@ function onTransferStatusChanged(event) {
 }
 
 
-function prepareDummyFileContents(fileLength) {
+function prepareFileContents(fileLength) {
   let result = new ArrayBuffer(fileLength);
   let bytes = new Uint8Array(result);
   for (var i = 0; i < bytes.length; ++i) {
