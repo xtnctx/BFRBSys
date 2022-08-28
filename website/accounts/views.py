@@ -1,12 +1,13 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
+from validate_email import validate_email
 from accounts.forms import RegisterForm
 from base.models import TrainingStatus
 from django.contrib.auth.views import PasswordChangeView
 from django.contrib.auth.forms import PasswordChangeForm
+from django.http import HttpResponse, JsonResponse
 from django.contrib.auth.models import User
 from django.contrib import messages
-from validate_email import validate_email
 
 # Create your views here.
 
@@ -57,17 +58,19 @@ def register_view(request):
     return render(request, 'accounts/register.html', context)
 
 def account_info(request):
+    context = {}
     if request.method == 'POST':
         ...
-    context = {}
     return render(request, 'accounts/account_info.html', context)
 
 def edit_account(request):
     if request.method == 'POST':
-        newusername = " ".join(request.POST.get('newusername').split())
-        newemail = " ".join(request.POST.get('newemail').split())
         newfirstname = " ".join(request.POST.get('newfirstname').split())
         newlastname = " ".join(request.POST.get('newlastname').split())
+        newusername = " ".join(request.POST.get('newusername').split())
+        newemail = " ".join(request.POST.get('newemail').split())
+        newphone = " ".join(request.POST.get('newphone').split())
+        neworg = " ".join(request.POST.get('neworg').split())
 
         user = User.objects.get(username = request.user.username)
         if newusername != '':
@@ -88,8 +91,7 @@ def edit_account(request):
         elif newemail != '':
             messages.error(request, 'Invalid email')
     
-        print(request.user.first_name)
-        return redirect('edit_account')
+        return redirect('account_info')
 
     context = {}
     return render(request, 'accounts/edit_account.html', context)
