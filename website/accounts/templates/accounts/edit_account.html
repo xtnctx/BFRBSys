@@ -3,78 +3,59 @@
 
 <html lang="en">
     {% load static %}
-        <link rel="stylesheet" href="{% static 'accounts/styles/edit_acc.css' %}">
+        <link rel="stylesheet" href="{% static 'accounts/styles/account_info_edit.css' %}">
     {% include 'base/appNavbar.html' %}
 
 <body>
     {% block content %}
         <div class="container">
-            <div class="account-field">
-                <div class="basic-info">
-
-                    
-                    
-                    <form method="POST">{% csrf_token %}
-                        <div class="image-container">
-                            <img src="{% static 'accounts/images/default.jpg' %}" id="photo">
-
-                            <!-- <input type="file" name="file" id="file" class="inputfile" accept="image/*"/> -->
-                            <div class="input-file-container">
-                                <input class="input-file" id="my-file" type="file" accept="image/*">
-                                <label for="my-file" class="input-file-trigger" tabindex="0">
-                                    Select a file...
-                                </label>
-                            </div>
-                        </div>
-
-                        <div class="user">
-                            <div>
-                                <h4>Username</h4>
-                                <input type="text" name="newusername" placeholder="{{ request.user.username }}">
-                            </div>
-                            <div>
-                                <h4>Email</h4>
-                                <input type="text" name="newemail" placeholder="{{ request.user.email }}">
-                            </div>
-
-                            <div>
-                                <h4>First Name</h4>
-                                <input type="text" name="newfirstname" placeholder="{{ request.user.first_name }}">
-                            </div>
-
-                            <div>
-                                <h4>Last Name</h4>
-                                <input type="text" name="newlastname" placeholder="{{ request.user.last_name }}">
-                            </div>
-    
-                            <button type="submit">Save changes</button>
-                        </div>
-    
-
-                        {% if messages %}
-                            <ul class="messages">
-                                {% for message in messages %}
-                                    <h6  {% if message.tags %} class=" {{ message.tags }} " {% endif %}> {{ message }} </h6>
-                                {% endfor %}
-                            </ul>
-                        {% endif %}
-                    </form>
-                    
+            <form class="card" id="profile-form" method="POST">{% csrf_token %}
+                <div class="ds-top">
+                    <button class="submit-btn" type="submit">
+                        <span class="save" title="Save">
+                            <ion-icon name="checkmark-outline"></ion-icon>
+                        </span>
+                    </button>
                 </div>
 
-                <div>
-                    <h4><a href="{% url 'change_password' %}">Change Password</a></h4>
+                <div class="avatar-holder">
+                    <img src="{% static 'accounts/images/default.jpg' %}" alt="{{ request.user.first_name }} {{ request.user.last_name }}">
+                </div>
+
+                <div class="name">
+                    <input type="text" name="newfirstname" id="newfirstname" placeholder="{{request.user.first_name}}">
+                    <input type="text" name="newlastname" id="newlastname" placeholder="{{request.user.last_name}}">
+                    <input type="text" name="newusername" id="newusername" placeholder="{{request.user.username}}">
+                    <!-- <h6 title="Followers"> <span class="followers">{{ request.user.username }}</span></h6> -->
+                </div>
                 
-                </div>
 
-            </div>
+                <div class="ds-info">
+                    <h5>Overview</h5>
+                    <div class="info email">
+                        <p><span title="Email"><ion-icon class="icon" name="mail-outline"></ion-icon></span>
+                            <input type="text" name="newemail" id="newemail" placeholder="{{request.user.email}}">
+                        </p>
+                    </div>
+                    <div class="info phone">
+                        <p><span title="Contact No."><ion-icon class="icon" name="call-outline"></ion-icon></span></ion-icon>
+                            <input type="text" name="newphone" id="newphone" placeholder="+639184044100">
+                        </p>
+                    </div>
+                    <div class="info org">
+                        <p><span title="Organization"><ion-icon class="icon" name="briefcase-outline"></ion-icon></span>
+                            <input type="text" name="neworg" id="neworg" placeholder="Milky Earth University">
+                        </p>
+                    </div>
+
+                </div>
+            </form>
         </div>
 
     {% endblock %}
     
-    <script src="{% static 'accounts/scripts/profile_pic.js' %}"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script type="module" src="https://unpkg.com/ionicons@5.4.0/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule="" src="https://unpkg.com/ionicons@5.4.0/dist/ionicons/ionicons.js"></script>
-
 </body>
 </html>
