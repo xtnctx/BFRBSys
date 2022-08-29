@@ -9,7 +9,7 @@
 <body>
     {% block content %}
         <div class="container">
-            <form class="card" id="profile-form" method="POST">{% csrf_token %}
+            <form class="card" id="profile-form" method="POST" enctype="multipart/form-data">{% csrf_token %}
                 <div class="ds-top">
                     <button class="submit-btn" type="submit">
                         <span class="save" title="Save">
@@ -19,7 +19,16 @@
                 </div>
 
                 <div class="avatar-holder">
-                    <img src="{% static 'accounts/images/default.jpg' %}" alt="{{ request.user.first_name }} {{ request.user.last_name }}">
+                    <div class="avatar-container">
+                        <div class="avatar-outer">
+                            <img id="imagePreview" src="{{ profile.image.url }}" alt="{{ request.user.first_name }} {{ request.user.last_name }}">
+                            
+                            <div class="avatar-inner">
+                                <input class="inputfile" id="inputfile" type="file" name="newprofilepic" accept="image/*">
+                                <label><span title="Choose image"><ion-icon name="camera-outline"></ion-icon></span></label>
+                            </div>
+                        </div>
+                      </div>
                 </div>
 
                 <div class="name">
@@ -48,13 +57,15 @@
                         </p>
                     </div>
 
+                    
+
                 </div>
             </form>
         </div>
 
     {% endblock %}
     
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="{% static 'accounts/scripts/edit_profile_pic.js' %}"></script>
     <script type="module" src="https://unpkg.com/ionicons@5.4.0/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule="" src="https://unpkg.com/ionicons@5.4.0/dist/ionicons/ionicons.js"></script>
 </body>

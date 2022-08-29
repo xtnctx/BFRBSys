@@ -2,19 +2,19 @@
 @import url('https://fonts.googleapis.com/css?family=Krub:400,700');
 
 * {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 html, body {
-  width: 100%;
-  height: 100%;
+    width: 100%;
+    height: 100%;
 }
 
 body {
-  background: #202020;
-  font-family: 'Krub', sans-serif;
+    background: #202020;
+    font-family: 'Krub', sans-serif;
 }
 
 ion-icon {
@@ -22,25 +22,25 @@ ion-icon {
 }
 
 input::placeholder{
-  text-align: center;
+    text-align: center;
 }
 
 /* or, for legacy browsers */
 
 ::-webkit-input-placeholder {
-  text-align: center;
+    text-align: center;
 }
 
 :-moz-placeholder { /* Firefox 18- */
-  text-align: center;  
+    text-align: center;  
 }
 
 ::-moz-placeholder {  /* Firefox 19+ */
-  text-align: center;  
+    text-align: center;  
 }
 
 :-ms-input-placeholder {  
-  text-align: center; 
+    text-align: center; 
 }
 
 
@@ -58,9 +58,9 @@ input::placeholder{
 }
 
 .ds-top .submit-btn {
-  background: none;
-  border: none;
-  margin-bottom: 45px;
+    background: none;
+    border: none;
+    margin-bottom: 45px;
 }
 
 .ds-top .save {
@@ -70,6 +70,7 @@ input::placeholder{
 }
 
 .avatar-holder {
+    display: block;
     position: absolute;
     margin: auto;
     top: 45px;
@@ -84,14 +85,70 @@ input::placeholder{
                 inset 0 0 0 5px #000000,
                 inset 0 0 0 5px #000000,;
     background: white;
-    overflow: hidden;
+    /* overflow: hidden; */
     
 }
 
-.avatar-holder img {
+.avatar-container {
+    width: 120px;
+    height: 120px;
+    display: block;
+    margin: 0 auto;
+}
+
+.avatar-outer {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 120px !important; /* any size */
+    max-height: 120px !important; /* any size */
+    margin: auto;
+    border-radius: 100%;
+    position: relative;
+}
+
+.avatar-outer img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    border-radius: 50%;
+}
+
+.avatar-inner {
+    background-color: #414141;
+    width: 25px;
+    height: 25px;
+    border-radius: 100%;
+    position: absolute;
+    bottom: 2px;
+    right: 10px;
+}
+
+
+.avatar-inner:hover {
+    background-color: #636363;
+}
+
+.inputfile {
+    opacity: 0;
+    overflow: hidden;
+    position: absolute;
+    z-index: 1;
+    width: 25px;
+    height: 25px;
+}
+
+.inputfile + label {
+    font-size: 1.25rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-block;
+    overflow: hidden;
+    width: 25px;
+    height: 25px;
+    pointer-events: none;
+    cursor: pointer;
+    text-align: center;
+    color: white; 
 }
 
 .name {
@@ -193,24 +250,26 @@ input::placeholder{
 } */
 
 .card {
-  position: absolute;
-  margin: auto;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  width: 600px;
-  height: 450px;
-  border-radius: 10px;
-  box-shadow: 0 10px 25px 5px rgba(0, 0, 0, 0.2);
-  background: #151515;
-  overflow: hidden;
+    position: absolute;
+    margin: auto;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 600px;
+    height: 450px;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px 5px rgba(0, 0, 0, 0.2);
+    background: #151515;
+    overflow: hidden;
 }
 
 .following {
-  color: white;
-  background: crimson;
+    color: white;
+    background: crimson;
 }
 
 
 input[type=text] { text-align:center }
+
+
