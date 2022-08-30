@@ -215,6 +215,20 @@ input::placeholder{
     color: crimson;
 }
 
+.info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
+.username-error {
+    grid-column: 1 / span 2;
+    font-size: small;
+}
+
+.email-error, .username-error, .phone-error {
+    color: rgb(214, 82, 82) !important; 
+}
+
 .ds-info .info h6 {
     font-weight: 400;
     font-size: 8px;

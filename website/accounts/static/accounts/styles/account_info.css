@@ -84,13 +84,10 @@ ion-icon {
 }
 
 .name h6 {
-    position: absolute;
-    margin: auto;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    display: grid;
+    justify-items: center;
+    justify-content: center;
     color: rgb(190, 190, 190);
-    width: 40px;
 }
 
 .name h3 {
@@ -228,9 +225,4 @@ ion-icon {
 @keyframes dsTop {
   0% {top: -150px;}
   100% {top: 0;}
-}
-
-.following {
-  color: white;
-  background: crimson;
 }

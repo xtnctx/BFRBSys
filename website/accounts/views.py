@@ -7,7 +7,6 @@ from accounts.models import Profile
 from django.contrib.auth.views import PasswordChangeView
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.models import User
-from django.contrib import messages
 import os
 
 # Create your views here.
@@ -72,6 +71,7 @@ def edit_account(request):
         newlastname = " ".join(request.POST.get('newlastname').split())
         newusername = " ".join(request.POST.get('newusername').split())
         newemail = " ".join(request.POST.get('newemail').split())
+
         newphone = " ".join(request.POST.get('newphone').split())
         neworg = " ".join(request.POST.get('neworg').split())
         newprofilepic = request.FILES.get('newprofilepic')
@@ -79,7 +79,13 @@ def edit_account(request):
         user = User.objects.get(username=request.user.username)
         profile = Profile.objects.get(user=user)
         
-        if newusername != '':
+
+        # --- USER ---
+        if newusername != '' and newusername != request.user.username:
+            if User.objects.filter(username=newusername).exists():
+                username_error = 'This username is already taken'
+                return render(request, 'accounts/edit_account.html', 
+                             {'profile':profile, 'username_error': username_error})
             user.username = newusername
         
         if newfirstname != '':
@@ -91,16 +97,34 @@ def edit_account(request):
         if validate_email(newemail):
             user.email = newemail
         elif newemail != '':
-            messages.error(request, 'Invalid email')
+            email_error = 'Invalid email'
+            return render(request, 'accounts/edit_account.html', 
+                         {'profile':profile, 'email_error': email_error})
 
+
+        # --- PROFILE ---
         if newprofilepic is not None:
             # Overwrite image
             try:
                 if profile.image:
-                    os.remove(profile.image.path)
-            except FileNotFoundError as e:
-                print(e)
+                    if not profile.image.name:
+                        os.remove(profile.image.path)
+            except FileNotFoundError:
+                pass
+            # Uniquify - from username
+            file_name, extension = newprofilepic.name.split('.')
+            newprofilepic.name = f'{file_name}_{request.user.username}'+f'.{extension}'
             profile.image = newprofilepic
+        
+        if newphone != '':
+            if not newphone.isdecimal():
+                phone_error = 'Must be a number'
+                return render(request, 'accounts/edit_account.html', 
+                             {'profile':profile, 'phone_error': phone_error})
+            profile.phone = newphone
+        
+        if neworg != '':
+            profile.organization = neworg
 
         profile.save()
         user.save()

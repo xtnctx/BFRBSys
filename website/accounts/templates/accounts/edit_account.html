@@ -35,25 +35,42 @@
                     <input type="text" name="newfirstname" id="newfirstname" placeholder="{{request.user.first_name}}">
                     <input type="text" name="newlastname" id="newlastname" placeholder="{{request.user.last_name}}">
                     <input type="text" name="newusername" id="newusername" placeholder="{{request.user.username}}">
-                    <!-- <h6 title="Followers"> <span class="followers">{{ request.user.username }}</span></h6> -->
+                    {% if username_error %}
+                        <p class="username-error">{{ username_error }}</p>
+                    {% endif %}
                 </div>
                 
 
                 <div class="ds-info">
                     <h5>Overview</h5>
                     <div class="info email">
-                        <p><span title="Email"><ion-icon class="icon" name="mail-outline"></ion-icon></span>
-                            <input type="text" name="newemail" id="newemail" placeholder="{{request.user.email}}">
+                        <p>
+                            <span title="Email"><ion-icon class="icon" name="mail-outline"></ion-icon></span>
+                            <input type="text" name="newemail" id="newemail" placeholder="{{ request.user.email }}">
                         </p>
+
+                        {% if email_error %}
+                            <p class="email-error">{{ email_error }}</p>
+                        {% endif %}
+
                     </div>
+
                     <div class="info phone">
-                        <p><span title="Contact No."><ion-icon class="icon" name="call-outline"></ion-icon></span></ion-icon>
-                            <input type="text" name="newphone" id="newphone" placeholder="+639184044100">
+                        <p>
+                            <span title="Contact No."><ion-icon class="icon" name="call-outline"></ion-icon></span></ion-icon>
+                            <input type="text" name="newphone" id="newphone" placeholder="{{ profile.phone }}">
                         </p>
+
+                        {% if phone_error %}
+                            <p class="phone-error">{{ phone_error }}</p>
+                        {% endif %}
+
                     </div>
+
                     <div class="info org">
-                        <p><span title="Organization"><ion-icon class="icon" name="briefcase-outline"></ion-icon></span>
-                            <input type="text" name="neworg" id="neworg" placeholder="Milky Earth University">
+                        <p>
+                            <span title="Organization"><ion-icon class="icon" name="briefcase-outline"></ion-icon></span>
+                            <input type="text" name="neworg" id="neworg" placeholder="{{ profile.organization }}">
                         </p>
                     </div>
 
