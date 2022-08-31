@@ -107,7 +107,7 @@ def edit_account(request):
             # Overwrite image
             try:
                 if profile.image:
-                    if not profile.image.name:
+                    if profile.image.name != 'default.jpg':
                         os.remove(profile.image.path)
             except FileNotFoundError:
                 pass
