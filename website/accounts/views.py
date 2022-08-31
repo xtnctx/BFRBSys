@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 from validate_email import validate_email
 from accounts.forms import RegisterForm
 from base.models import TrainingStatus
@@ -58,6 +59,7 @@ def register_view(request):
     context = {'form': form}
     return render(request, 'accounts/register.html', context)
 
+@login_required(login_url='login')
 def account_info(request):
     profile = Profile.objects.get(user=request.user)
     context = {'profile':profile}
@@ -65,6 +67,8 @@ def account_info(request):
         ...
     return render(request, 'accounts/account_info.html', context)
 
+
+@login_required(login_url='login')
 def edit_account(request):
     if request.method == 'POST':
         newfirstname = " ".join(request.POST.get('newfirstname').split())
@@ -87,13 +91,13 @@ def edit_account(request):
                 return render(request, 'accounts/edit_account.html', 
                              {'profile':profile, 'username_error': username_error})
             user.username = newusername
-        
+
         if newfirstname != '':
             user.first_name = newfirstname.title()
 
         if newlastname != '':
             user.last_name = newlastname.title()
-        
+
         if validate_email(newemail):
             user.email = newemail
         elif newemail != '':
@@ -115,14 +119,14 @@ def edit_account(request):
             file_name, extension = newprofilepic.name.split('.')
             newprofilepic.name = f'{file_name}_{request.user.username}'+f'.{extension}'
             profile.image = newprofilepic
-        
+
         if newphone != '':
             if not newphone.isdecimal():
                 phone_error = 'Must be a number'
                 return render(request, 'accounts/edit_account.html', 
                              {'profile':profile, 'phone_error': phone_error})
             profile.phone = newphone
-        
+
         if neworg != '':
             profile.organization = neworg
 

@@ -2,9 +2,9 @@
 
 
 <html lang="en">
+    {% include 'navbar.html' %}
     {% load static %}
         <link rel="stylesheet" href="{% static 'accounts/styles/account_info.css' %}">
-    {% include 'base/appNavbar.html' %}
 
 <body>
     {% block content %}
@@ -23,7 +23,7 @@
                 </div>
 
                 <div class="name">
-                    <h3>{{ request.user.first_name }} {{ request.user.last_name }}</h3>
+                    <h3 >{{ request.user.first_name }} {{ request.user.last_name }}</h3>
                     <h6 title="Username">{{ request.user.username }}</h6>
                 </div>
                 

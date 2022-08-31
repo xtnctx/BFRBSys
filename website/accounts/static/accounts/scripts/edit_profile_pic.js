@@ -1,5 +1,7 @@
+
 const img = document.getElementById("inputfile");
 const imagePreview = document.getElementById("imagePreview");
+
 img.addEventListener("change", (e) => {
     const imgDetails = document.querySelector("input[type=file]").files[0];
     if (imgDetails) {

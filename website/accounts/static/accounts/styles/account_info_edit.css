@@ -1,10 +1,10 @@
-
-@import url('https://fonts.googleapis.com/css?family=Krub:400,700');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400&display=swap');
 
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
 }
 
 html, body {
@@ -21,9 +21,16 @@ ion-icon {
     pointer-events: none;
 }
 
+p, h3, h5, h6 {
+    margin-bottom: 0;
+}
+
+input[type=text] { text-align:center }
+
 input::placeholder{
     text-align: center;
 }
+
 
 /* or, for legacy browsers */
 
@@ -174,13 +181,6 @@ input::placeholder{
     margin: auto;
 }
 
-.name h3 {
-    color: white;
-    text-decoration: none;
-    font-weight: 700;
-    font-size: 18px;
-      
-}
 
 .ds-info {
     position: absolute;
@@ -213,6 +213,7 @@ input::placeholder{
     font-weight: 700;
     text-transform: uppercase;
     color: crimson;
+    font-size: 0.83em
 }
 
 .info {
@@ -284,6 +285,6 @@ input::placeholder{
 }
 
 
-input[type=text] { text-align:center }
+
 
 
