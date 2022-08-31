@@ -2,6 +2,7 @@ from django.http import HttpResponse, JsonResponse
 from django.contrib.auth.decorators import login_required
 from base.utils import hex_to_c_array, rmv_file_spaces
 from base.models import TrainedModel, TrainingStatus
+from accounts.models import Profile
 from django.core.files.base import File
 from django.shortcuts import render
 from tensorflow import keras
@@ -15,14 +16,16 @@ PARAMS = ['ax', 'ay', 'az', 'gx', 'gy', 'gz', 'class']
 SAMPLES_PER_HOTSPOT = 1
 
 def home(request):
-    context = {}
-    return render(request, 'base/home.html', context)
+    if request.user.is_authenticated:
+        profile = Profile.objects.get(user=request.user)
+        return render(request, 'base/home.html',  {'profile':profile})
+    return render(request, 'base/home.html', {})
 
 
 @login_required(login_url='login')
 def app(request):
-    context = {}
-    return render(request, 'base/livePlot.html', context)
+    profile = Profile.objects.get(user=request.user)
+    return render(request, 'base/livePlot.html', {'profile':profile})
 
 
 

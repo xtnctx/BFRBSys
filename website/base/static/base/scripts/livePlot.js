@@ -417,7 +417,7 @@ $(document).on('submit', '#data-form', function(e) {
   function trainModel() {
     $.ajax({
       type: 'POST',
-      url: 'export/',
+      url: 'train/',
       data: {
         data: $('#data-field').val(),
         model_name: $('#name-field').val(),
