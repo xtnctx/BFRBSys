@@ -24,22 +24,22 @@
         <div id="navbarCollapse" class="collapse navbar-collapse justify-content-start">
             <div class="navbar-nav">
                 <a href="{% url 'home' %}" class="nav-item nav-link">Home</a>
-                <a href="#" class="nav-item nav-link">About</a>			
+                <a href="#" class="nav-item nav-link">About</a>
                 <div class="nav-item dropdown">
                     <a href="#" data-toggle="dropdown" class="nav-item nav-link dropdown-toggle">Services</a>
-                    <div class="dropdown-menu">					
+                    <div class="dropdown-menu">
                         <a href="#" class="dropdown-item">Web Design</a>
                         <a href="#" class="dropdown-item">Web Development</a>
                         <a href="#" class="dropdown-item">Graphic Design</a>
                         <a href="#" class="dropdown-item">Digital Marketing</a>
                     </div>
                 </div>
-                <a href="#" class="nav-item nav-link active">Pricing</a>
+                <a href="{% url 'app' %}" class="nav-item nav-link active">App</a>
                 <a href="#" class="nav-item nav-link">Blog</a>
                 <a href="#" class="nav-item nav-link">Contact</a>
             </div>
             <form class="navbar-form form-inline">
-                <div class="input-group search-box">								
+                <div class="input-group search-box">
                     <input type="text" id="search" class="form-control" placeholder="Search here...">
                     <div class="input-group-append">
                         <span class="input-group-text">
@@ -51,14 +51,23 @@
             <div class="navbar-nav ml-auto action-buttons">
 
                 {% if request.user.is_authenticated %}
-                    <div title="Profile" class="nav-item">
-                        <a href="{% url 'account_info' %}"><img src="{{ profile.image.url }}" alt="{{ request.user.username }}" class="avatar"></a>
+                <div class="nav-item dropdown">
+                    <a href="#" data-toggle="dropdown" class="nav-item nav-link dropdown-toggle">
+                        <img src="{{ profile.image.url }}" alt="{{ request.user.username }}" class="avatar">
+                    </a>
+                    <div class="dropdown-menu profile-form">
+                        <p style="text-align: center"><a href="{% url 'account_info' %}" class="dropdown-item">Profile</a></p>
+                        <p style="text-align: center"><a href="{% url 'logout' %}" class="dropdown-item">Logout</a></p>
                     </div>
+                </div>
+                
+                    
                 {% else %}
                     <div class="nav-item dropdown">
                         <a href="#" data-toggle="dropdown" class="nav-link dropdown-toggle mr-4">Login</a>
                         <div class="dropdown-menu action-form">
-                            <form action="/examples/actions/confirmation.php" method="post">
+                            <form id="login-form" action="{% url 'login' %}" method="POST">{% csrf_token %}
+                                <input type="hidden" name="next" id="nextURL" value="{{ request.GET.next }}" />
                                 <p class="hint-text">Sign in with your social media account</p>
                                 <div class="form-group social-btn clearfix">
                                     <a href="#" class="btn btn-secondary facebook-btn float-left"><i class="fa fa-facebook"></i> Facebook</a>
@@ -66,10 +75,14 @@
                                 </div>
                                 <div class="or-seperator"><b>or</b></div>
                                 <div class="form-group">
-                                    <input type="text" class="form-control" placeholder="Username" required="required">
+                                    <input id="username" type="text" class="form-control" placeholder="Username" required="required">
                                 </div>
                                 <div class="form-group">
-                                    <input type="password" class="form-control" placeholder="Password" required="required">
+                                    <input id="password" type="password" class="form-control" placeholder="Password" required="required">
+                                </div>
+                                <div id="status-div">
+                                    <p id="status-message" style="text-align: center;"></p>
+                                    <div id="loader"></div>
                                 </div>
                                 <input type="submit" class="btn btn-primary btn-block" value="Login">
                                 <div class="text-center mt-2">
@@ -79,25 +92,7 @@
                         </div>
                     </div>
                     <div class="nav-item dropdown">
-                        <a href="#" data-toggle="dropdown" class="btn btn-primary dropdown-toggle sign-up-btn">Sign up</a>
-                        <div class="dropdown-menu action-form">
-                            <form method="POST">
-                                <p class="hint-text">Fill in this form to create your account!</p>
-                                <div class="form-group">
-                                    <input type="text" class="form-control" placeholder="Username" required="required">
-                                </div>
-                                <div class="form-group">
-                                    <input type="password" class="form-control" placeholder="Password" required="required">
-                                </div>
-                                <div class="form-group">
-                                    <input type="password" class="form-control" placeholder="Confirm Password" required="required">
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-check-label"><input type="checkbox" required="required"> I accept the <a href="#">Terms &amp; Conditions</a></label>
-                                </div>
-                                <input type="submit" class="btn btn-primary btn-block" value="Sign up">
-                            </form>
-                        </div>
+                        <a href="{% url 'register' %}" class="btn btn-primary sign-up-btn">Sign up</a>
                     </div>
                 {% endif %}
 
@@ -108,15 +103,65 @@
         </div>
     </nav>
     {% endblock %}
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
 
     <script>
-    // Prevent dropdown menu from closing when click inside the form
-    $(document).on("click", ".action-buttons .dropdown-menu", function(e){
-        e.stopPropagation();
-    });
+        /* JQuery - AJAX */
+        $(document).on('submit', '#login-form', function(e) {
+            loginURL = "{% url 'login' %}"
+            e.preventDefault();
+
+            $.ajax({
+            type: 'POST',
+            url: "{% url 'login' %}",
+            data: {
+                username: $('#username').val(),
+                password: $('#password').val(),
+                nextURL: $('#nextURL').val(),
+                csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val()
+            },
+
+            // GET response
+            error: function (response) {
+                $('#status-div').css('grid-template-columns', '1fr')
+                $('#status-message').css('color', 'red');
+                $('#status-message').text(response.responseJSON.error);
+            },
+
+            success: function(response) {
+                $('#status-div').css('grid-template-columns', '4fr 1fr')
+                $('#status-message').css('color', 'green');
+                $('#status-message').text(response.success);
+                reloadPage();
+            }
+
+            });
+
+
+            function delay(delayInms) {
+                return new Promise(resolve => {
+                setTimeout(() => {
+                    resolve(2);
+                }, delayInms);
+                });
+            }
+
+            async function reloadPage() {
+                $('#loader').show();
+                let delayres = await delay(1000);
+                location.reload();
+            }
+            
+
+        })
+
+
+        // Prevent dropdown menu from closing when click inside the form
+        $(document).on("click", ".action-buttons .dropdown-menu", function(e){
+            e.stopPropagation();
+        });
     </script>
 </body>
 </html>
