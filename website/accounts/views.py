@@ -1,3 +1,4 @@
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -17,19 +18,20 @@ def login_view(request):
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
-        nextURL = request.POST.get('next')
+        nextURL = request.POST.get('nextURL')
 
         user = authenticate(request, username=username, password=password)
         if user is None:
-            context = {'error': 'Invalid username or password'}
-            return render(request, 'accounts/login.html', context)
-        login(request, user)
+            print('ERROR')
+            return JsonResponse({'error': 'Invalid username or password'}, status=403)
 
+        login(request, user)
+        return JsonResponse({'success': 'Login successfull !'}, status=200)
         return redirect(nextURL) if nextURL != '' else redirect('home')
 
     context = {}
+    # return HttpResponse('')
     return render(request, 'accounts/login.html', context)
-    # return redirect(request.POST.get('next','../app/'))
 
 def logout_view(request):
     if request.method == 'POST': 

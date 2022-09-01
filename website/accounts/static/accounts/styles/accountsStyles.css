@@ -1,19 +1,39 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Poppins', sans-serif;
+}
 
 .main-wrapper {
-    height: 100vh;
     display: grid;
-    place-content: center;
+    padding: 20 380;
 }
+
 
 .title {
     display: grid;
     place-items: center;
-    margin-top: 60px;
+    margin-bottom: 0px;
+    color: #33cabb;
+    text-transform: uppercase;
 }
 
-
 .form-control {
-    display: block;
+    font-weight: normal;
+    font-size: 5px;
+}
+
+hr {
+    margin: 5px 0 15px 0 !important;
+}
+
+.register-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 10px;
     width: 100%;
     padding: 0.375rem 0.75rem;
     font-size: 1rem;
@@ -30,19 +50,21 @@
     transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
 }
 
+.title, hr, #div_id_username, #div_id_email, 
+#div_id_password1, #div_id_password2, .submit-btn {
+    grid-column: 1 / span 2;
+}
+
 .text-muted {
     --bs-text-opacity: 1;
     color: rgba(33,37,41,0.75)!important;
 }
 
-ul {
-    display: block;
-    list-style-type: disc;
-    padding-left: 2rem
-}
+ul { display: none } /* hides password description */
 
 label {
-    font-size: 0.9rem;
+    font-size: 0.8rem;
+    margin: 2px !important;
 }
 
 input:focus { 
@@ -51,94 +73,12 @@ input:focus {
     box-shadow: 0 0 10px #719ECE;
 }
 
-input {
-    writing-mode: horizontal-tb !important;
-    text-rendering: auto;
-    color: fieldtext;
-    letter-spacing: normal;
-    word-spacing: normal;
-    line-height: normal;
-    text-transform: none;
-    text-indent: 0px;
-    text-shadow: none;
-    display: inline-block;
-    text-align: start;
-    appearance: auto;
-    -webkit-rtl-ordering: logical;
-    cursor: text;
-    background-color: field;
-    margin: 0em;
-    padding: 1px 2px;
-    border-width: 2px;
-    border-style: inset;
-    border-color: -internal-light-dark(rgb(118, 118, 118), rgb(133, 133, 133));
-    border-image: initial;
-    margin-bottom: 5px;
-}
-
 .textinput, .emailinput {
-    padding: 2px;
+    padding: 2px !important;
 }
 
 .submit-btn {
     display: flex;
     justify-content: flex-end;
-}
-.btn {
-    --bs-btn-padding-x: 1.5rem;
-    --bs-btn-padding-y: 0.1rem;
-    --bs-btn-font-family: ;
-    --bs-btn-font-size: 1rem;
-    --bs-btn-font-weight: 400;
-    --bs-btn-line-height: 1.5;
-    --bs-btn-color: #212529;
-    --bs-btn-bg: transparent;
-    --bs-btn-border-width: 1px;
-    --bs-btn-border-color: transparent;
-    --bs-btn-border-radius: 0.375rem;
-    --bs-btn-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15),0 1px 1px rgba(0, 0, 0, 0.075);
-    --bs-btn-disabled-opacity: 0.65;
-    --bs-btn-focus-box-shadow: 0 0 0 0.25rem rgba(var(--bs-btn-focus-shadow-rgb), .5);
-    
-    display: inline-block;
-    padding: var(--bs-btn-padding-y) var(--bs-btn-padding-x);
-    font-family: var(--bs-btn-font-family);
-    font-size: var(--bs-btn-font-size);
-    font-weight: var(--bs-btn-font-weight);
-    line-height: var(--bs-btn-line-height);
-    color: var(--bs-btn-color);
-    text-align: center;
-    text-decoration: none;
-    vertical-align: middle;
-    cursor: pointer;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    user-select: none;
-    border: var(--bs-btn-border-width) solid var(--bs-btn-border-color);
-    border-radius: var(--bs-btn-border-radius);
-    background-color: var(--bs-btn-bg);
-    transition: color .15s ease-in-out,
-                background-color .15s ease-in-out, 
-                border-color .15s ease-in-out, 
-                box-shadow .15s ease-in-out;
-}
-
-
-
-.btn-success {
-    --bs-btn-color: #fff;
-    --bs-btn-bg: #198754;
-    --bs-btn-border-color: #198754;
-    --bs-btn-hover-color: #fff;
-    --bs-btn-hover-bg: #157347;
-    --bs-btn-hover-border-color: #146c43;
-    --bs-btn-focus-shadow-rgb: 60,153,110;
-    --bs-btn-active-color: #fff;
-    --bs-btn-active-bg: #146c43;
-    --bs-btn-active-border-color: #13653f;
-    --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
-    --bs-btn-disabled-color: #fff;
-    --bs-btn-disabled-bg: #198754;
-    --bs-btn-disabled-border-color: #198754;
 }
 

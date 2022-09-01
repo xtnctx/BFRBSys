@@ -1,21 +1,24 @@
 <html>
     
 
-    {% include 'navbar.html' %}
     {% load static %}
+    <link rel="stylesheet" href="{% static 'accounts/styles/accountsStyles.css' %}">
+
+    {% include 'navbar.html' %} 
+    <style> 
+        .navbar { position: relative }
+    </style>
+    
     {% load crispy_forms_tags %}
 
 
     {% block content %}
-        <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" 
-        rel="stylesheet" integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" 
-        crossorigin="anonymous"> -->
         
-        <link rel="stylesheet" href="{% static 'accounts/styles/accountsStyles.css' %}">
         
     <div class="main-wrapper">
-        <h2 class="title">Register your account</h2>
-        <form method="POST" class="form-group">{% csrf_token %}
+        <form method="POST" class="register-form">{% csrf_token %}
+            <h5 class="title">New User Registration</h5>
+            <hr>
             {{ form|crispy }}
             <div class="submit-btn">
                 <button type="submit" class="btn btn-success">Register</button>
@@ -23,6 +26,13 @@
         </form>
     </div>
     {% endblock %}
+    
+    <script>
+        window.onload = function() {
+            document.getElementById("id_first_name").focus();
+        }
+    </script>
+
 
 </html>
 
