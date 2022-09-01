@@ -6,6 +6,25 @@
     font-family: 'Poppins', sans-serif;
 }
 
+#status-div {
+	display: grid;
+}
+
+#loader {
+	border: 3px solid #f3f3f3; /* Light grey */
+	border-top: 3px solid #3498db; /* Blue */
+	border-radius: 50%;
+	width: 20px;
+	height: 20px;
+	animation: spin 0.5s linear infinite;
+	display: none;
+}
+
+@keyframes spin {
+	0% { transform: rotate(0deg); }
+	100% { transform: rotate(360deg); }
+}
+
 .form-control {
 	box-shadow: none;		
 	font-weight: normal;
@@ -13,8 +32,7 @@
 }
 .navbar {
 	background: #fff;
-	padding-left: 16px;
-	padding-right: 16px;
+	padding: 3px 16px;
 	border-bottom: 1px solid #dfe3e8;
 	border-radius: 0;
     position: fixed ;
@@ -26,13 +44,16 @@
     transition-timing-function: ease-in-out;
     
 }
+
 .nav-link img {
 	border-radius: 50%;
 	width: 36px;
 	height: 36px;
-	margin: -8px 0;
-	float: left;
 	margin-right: 10px;
+	object-fit: cover;
+    -ms-transform: translateZ(0); /* IE 9 */
+    -webkit-transform: translateZ(0); /* Chrome, Safari, Opera */
+    transform: translateZ(0);
 }
 .navbar .navbar-brand {
 	font-size: 20px;
@@ -74,9 +95,9 @@
 	color: #a0a5b1;
 	font-size: 19px;
 }
+
 .navbar .sign-up-btn {
 	min-width: 110px;
-	max-height: 36px;
 }
 .navbar .dropdown-menu {
 	color: #999;
@@ -101,6 +122,16 @@
 	right: 0;
 	font-size: 14px;
 }
+
+.navbar .profile-form {
+	width: 160px;
+	padding: 10px;
+	left: auto;
+	right: 0;
+	font-size: 14px;
+}
+
+
 .navbar .action-form a {		
 	color: #33cabb;
 	padding: 0 !important;
@@ -179,12 +210,12 @@
 	top: 1px;
 }
 
-.avatar {
-    width: 50px;
-    height: 50px;
+/* .avatar {
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
 	object-fit: cover;
-}
+} */
 
 
 @media (min-width: 1200px){
