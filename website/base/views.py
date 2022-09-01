@@ -32,17 +32,6 @@ def app(request):
 
 def train_model(request):
     if request.method == 'POST':
-
-        '''
-            -- 07/29/2022 --
-        >> This must be a header file (model.h)
-        >> will fix soon ...
-
-            -- 07/31/2022 --
-        >> normalizing data
-        >> classify on and off target soon ... 
-        '''
-
         data = request.POST.get('data')
         named_model = request.POST.get('model_name')
         if named_model == '':
