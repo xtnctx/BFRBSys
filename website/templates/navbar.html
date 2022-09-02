@@ -67,7 +67,7 @@
                         <a href="#" data-toggle="dropdown" class="nav-link dropdown-toggle mr-4">Login</a>
                         <div class="dropdown-menu action-form">
                             <form id="login-form" action="{% url 'login' %}" method="POST">{% csrf_token %}
-                                <input type="hidden" name="next" id="nextURL" value="{{ request.GET.next }}" />
+                                <input type="hidden" id="nextURL" value="{{ request.GET.next }}" />
                                 <p class="hint-text">Sign in with your social media account</p>
                                 <div class="form-group social-btn clearfix">
                                     <a href="#" class="btn btn-secondary facebook-btn float-left"><i class="fa fa-facebook"></i> Facebook</a>
@@ -110,34 +110,33 @@
     <script>
         /* JQuery - AJAX */
         $(document).on('submit', '#login-form', function(e) {
-            loginURL = "{% url 'login' %}"
             e.preventDefault();
 
             $.ajax({
-            type: 'POST',
-            url: "{% url 'login' %}",
-            data: {
-                username: $('#username').val(),
-                password: $('#password').val(),
-                nextURL: $('#nextURL').val(),
-                csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val()
-            },
+                type: 'POST',
+                url: "{% url 'login' %}",
+                data: {
+                    username: $('#username').val(),
+                    password: $('#password').val(),
+                    nextURL: $('#nextURL').val(),
+                    csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val()
+                },
 
-            // GET response
-            error: function (response) {
-                $('#status-div').css('grid-template-columns', '1fr')
-                $('#status-message').css('color', 'red');
-                $('#status-message').text(response.responseJSON.error);
-            },
+                // GET response
+                error: function (response) {
+                    $('#status-div').css('grid-template-columns', '1fr')
+                    $('#status-message').css('color', 'red');
+                    $('#status-message').text(response.responseJSON.error);
+                },
 
-            success: function(response) {
-                $('#status-div').css('grid-template-columns', '4fr 1fr')
-                $('#status-message').css('color', 'green');
-                $('#status-message').text(response.success);
-                reloadPage();
-            }
+                success: function(response) {
+                    $('#status-div').css('grid-template-columns', '4fr 1fr')
+                    $('#status-message').css('color', 'green');
+                    $('#status-message').text(response.success);
+                    reloadPage();
+                }
 
-            });
+                });
 
 
             function delay(delayInms) {
