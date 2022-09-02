@@ -22,16 +22,11 @@ def login_view(request):
 
         user = authenticate(request, username=username, password=password)
         if user is None:
-            print('ERROR')
             return JsonResponse({'error': 'Invalid username or password'}, status=403)
-
         login(request, user)
-        return JsonResponse({'success': 'Login successfull !'}, status=200)
-        return redirect(nextURL) if nextURL != '' else redirect('home')
+        return JsonResponse({'success': 'Login successfull !', 'nextURL': nextURL}, status=200)
 
-    context = {}
-    # return HttpResponse('')
-    return render(request, 'accounts/login.html', context)
+    return render(request, 'accounts/login.html', {})
 
 def logout_view(request):
     if request.method == 'POST': 
