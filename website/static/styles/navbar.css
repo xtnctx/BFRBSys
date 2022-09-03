@@ -1,5 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400&display=swap');
 
+:root {
+	--beta-color: #dd2022;
+}
+
 *{
     padding: 0;
     margin: 0;
@@ -79,7 +83,12 @@
 	padding-right: 35px;
 	border-color: #dfe3e8;
 	border-radius: 4px !important;
-	box-shadow: none
+	box-shadow: none;
+	text-align: left !important;
+}
+
+.search-box input::placeholder {
+	text-align: left !important;
 }
 .search-box .input-group-text {
 	min-width: 35px;
@@ -210,12 +219,13 @@
 	top: 1px;
 }
 
-/* .avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-	object-fit: cover;
-} */
+.version-beta {
+	color: var(--beta-color);
+	border: 1px solid var(--beta-color);
+	padding: 2px 4px;
+	border-radius: 16px;
+	font-size: smaller;
+}
 
 
 @media (min-width: 1200px){
