@@ -3,18 +3,25 @@
     {% load static %}
 
     {% block content %}
-        <link rel="stylesheet" href="{% static 'accounts/styles/accountsStyles.css' %}">
+        <link rel="stylesheet" href="{% static 'accounts/styles/form.css' %}">
 
     {% if request.user.is_authenticated %}
-        <div class="main-wrapper" style="margin-top: 30px;">
+        <div class="container">
             <form class="main-wrapper" method="POST">{% csrf_token %}
-                <p>Are you sure you want to logout?</p>
-                <button type="submit">Yes, logout</button>
+                <div class="data">
+                    <p style="text-align: center;">Are you sure you want to logout?</p>
+                </div>
+                <div class="btn">
+                    <div class="inner"></div>
+                    <button type="submit">Yes, logout</button>
+                </div>
             </form>
         </div>
     {% else %}
-    <div class="main-wrapper">
-        <p>You're not login. Would you like to <a href="{% url 'login' %}">login</a>?</p>
+    <div class="container">
+        <div class="data">
+            <p>You're not login. Would you like to <a href="{% url 'login' %}">login</a>?</p>
+        </div>
     </div>
     {% endif %}
 
