@@ -3,12 +3,14 @@ from django.contrib.auth.decorators import login_required
 from base.utils import hex_to_c_array, rmv_file_spaces
 from base.models import TrainedModel, TrainingStatus
 from accounts.models import Profile
+from django.conf import settings
 from django.core.files.base import File
 from django.shortcuts import render
 from tensorflow import keras
 import tensorflow as tf
 import pandas as pd
 import numpy as np
+import asyncio
 import csv
 import os
 
@@ -29,13 +31,20 @@ def app(request):
 
 
 
+async def timer(t):
+    await asyncio.sleep(t)
+
+async def pause(t):
+    await timer(t)
+
 
 def train_model(request):
     if request.method == 'POST':
         data = request.POST.get('data')
         named_model = request.POST.get('model_name')
+
         if named_model == '':
-            named_model = request.user.username + '_no_name_model'
+            named_model = 'NO_NAME_MODEL'
 
         parsed_csv = list(csv.reader(data.split(';')))
 
@@ -56,7 +65,7 @@ def train_model(request):
         msg.message_status = 'Normalizing data ...' 
         msg.save()
         # -----------------------------------------------------
-
+        asyncio.run(pause(t=1))
         for hotspot_index in range(NUM_HOTSPOT):
 
             target = HOTSPOT[hotspot_index]
@@ -109,7 +118,7 @@ def train_model(request):
 
         inputs_train, inputs_test, inputs_validate = np.split(inputs, [TRAIN_SPLIT, TEST_SPLIT])
         outputs_train, outputs_test, outputs_validate = np.split(outputs, [TRAIN_SPLIT, TEST_SPLIT])
-
+        
         # build the model and train it
         model = tf.keras.Sequential()
         model.add(tf.keras.layers.Dense(50, activation='relu')) # relu is used for performance
@@ -118,7 +127,7 @@ def train_model(request):
         model.compile(optimizer='rmsprop', loss='mse', metrics=['mae'])
         history = model.fit(inputs_train, outputs_train, epochs=N_EPOCH, batch_size=1,
                             validation_data=(inputs_validate, outputs_validate),
-                            callbacks=[CustomCallback(msg)])
+                            callbacks=[EpochPrintingCallback(msg, N_EPOCH)])
 
 
         # print("Evaluate on test data")
@@ -137,7 +146,6 @@ def train_model(request):
 
         # # print the predictions and the expected ouputs
         # print("predictions =\n", np.round(predictions, decimals=3))
-
         msg.message_status = 'Converting to tflite ...' 
         msg.save()
 
@@ -147,24 +155,25 @@ def train_model(request):
         tflite_model = converter.convert()
 
         # Save as temporary
-        with open('static/temp_model.h', 'w') as temp:
+        USER_TEMP_FILE = os.path.join(settings.MEDIA_ROOT, request.user.username + '_TEMPFILE.h')
+        with open(USER_TEMP_FILE, 'w') as temp:
             temp.write(hex_to_c_array(tflite_model))
 
         # Then save to database
-        with open('static/temp_model.h', 'rb') as f:
+        with open(USER_TEMP_FILE, 'rb') as f:
             fs = TrainedModel(
                 owner=request.user, 
                 model_name=named_model, 
-                file=File(f, name=str(named_model).replace(" ", "_") + '.h')
+                file=File(f, name=str(named_model).replace(" ", "_") + f'--{request.user.username}' + '.h')
                 )
             fs.save()
         
-        model_string = rmv_file_spaces('static/temp_model.h', exclude='unsigned char model[] = {')
+        model_string = rmv_file_spaces(USER_TEMP_FILE, exclude='unsigned char model[] = {')
         
         msg.message_status = 'Done!' 
         msg.save()
 
-        os.remove('static/temp_model.h') # end of using temp model
+        os.remove(USER_TEMP_FILE) # end of using temp model
 
         context = {'model_string': model_string}
         return JsonResponse(context)
@@ -181,15 +190,21 @@ def get_status(request):
 
 
 
-class CustomCallback(keras.callbacks.Callback):
-    def __init__(self, callback_handler):
+class EpochPrintingCallback(keras.callbacks.Callback):
+    def __init__(self, callback_handler, N_EPOCH):
         self.callback_handler = callback_handler
+        self.N_EPOCH = N_EPOCH
+        
+        asyncio.run(pause(t=1))
+        self.callback_handler.message_status = f'Training your model (Epoch: 0/{self.N_EPOCH})...'
+        self.callback_handler.save()
 
-    def on_epoch_begin(self, epoch, logs=None):
+    def on_epoch_end(self, epoch, logs=None):
         if epoch % 50 == 0:
-            self.callback_handler.message_status = f'Training your model (Epoch: {epoch})...'
+            self.callback_handler.message_status = f'Training your model (Epoch: {epoch+50}/{self.N_EPOCH})...'
             self.callback_handler.save()
-            print('###############################################################')
+            
+
 
     
 
