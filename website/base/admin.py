@@ -7,6 +7,8 @@ from django.dispatch.dispatcher import receiver
 admin.site.register(TrainedModel)
 admin.site.register(TrainingStatus)
 
+admin.site.site_header = 'BFRBSys Admin'
+admin.site.site_title = 'BFRBSys'
 
 @receiver(pre_delete, sender=TrainedModel)
 def onTrainedModelDelete(sender, instance, **kwargs):
