@@ -1,4 +1,4 @@
-from django.http import HttpResponse, JsonResponse
+from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -57,16 +57,16 @@ def register_view(request):
     return render(request, 'accounts/register.html', context)
 
 @login_required(login_url='login')
-def account_info(request):
+def account_info(request, username):
     profile = Profile.objects.get(user=request.user)
     context = {'profile':profile}
     if request.method == 'POST':
         ...
-    return render(request, 'accounts/account_info.html', context)
+    return render(request, 'accounts/profile.html', context)
 
 
 @login_required(login_url='login')
-def edit_account(request):
+def edit_account(request, username):
     if request.method == 'POST':
         newfirstname = " ".join(request.POST.get('newfirstname').split())
         newlastname = " ".join(request.POST.get('newlastname').split())
@@ -77,7 +77,7 @@ def edit_account(request):
         neworg = " ".join(request.POST.get('neworg').split())
         newprofilepic = request.FILES.get('newprofilepic')
 
-        user = User.objects.get(username=request.user.username)
+        user = User.objects.get(username=username)
         profile = Profile.objects.get(user=user)
         
 
@@ -85,7 +85,7 @@ def edit_account(request):
         if newusername != '' and newusername != request.user.username:
             if User.objects.filter(username=newusername).exists():
                 username_error = 'This username is already taken'
-                return render(request, 'accounts/edit_account.html', 
+                return render(request, 'accounts/editProfile.html', 
                              {'profile':profile, 'username_error': username_error})
             user.username = newusername
 
@@ -99,7 +99,7 @@ def edit_account(request):
             user.email = newemail
         elif newemail != '':
             email_error = 'Invalid email'
-            return render(request, 'accounts/edit_account.html', 
+            return render(request, 'accounts/editProfile.html', 
                          {'profile':profile, 'email_error': email_error})
 
 
@@ -114,13 +114,13 @@ def edit_account(request):
                 pass
             # Uniquify - from username
             file_name, extension = newprofilepic.name.split('.')
-            newprofilepic.name = f'{file_name}_{request.user.username}'+f'.{extension}'
+            newprofilepic.name = f'{file_name}--{request.user.username}'+f'.{extension}'
             profile.image = newprofilepic
 
         if newphone != '':
             if not newphone.isdecimal():
                 phone_error = 'Must be a number'
-                return render(request, 'accounts/edit_account.html', 
+                return render(request, 'accounts/editProfile.html', 
                              {'profile':profile, 'phone_error': phone_error})
             profile.phone = newphone
 
@@ -129,11 +129,11 @@ def edit_account(request):
 
         profile.save()
         user.save()
-        return redirect('account_info')
+        return redirect('profile', username=username)
 
     profile = Profile.objects.get(user=request.user)
     context = {'profile':profile}
-    return render(request, 'accounts/edit_account.html', context)
+    return render(request, 'accounts/editProfile.html', context)
 
 
 
@@ -141,3 +141,8 @@ class UpdatePassword(PasswordChangeView):
     form_class = PasswordChangeForm
     success_url = '/edit_account'
     template_name = 'accounts/changepassword.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['profile'] = Profile.objects.get(user=self.request.user)
+        return context
