@@ -1,0 +1,284 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+}
+
+body {
+    background: #202020;
+    font-family: 'Krub', sans-serif;
+}
+
+ion-icon {
+    pointer-events: none;
+}
+
+p, h3, h5, h6 {
+    margin-bottom: 0;
+}
+
+input[type=text] { text-align:center }
+
+input::placeholder{
+    text-align: center;
+}
+
+
+/* or, for legacy browsers */
+
+::-webkit-input-placeholder {
+    text-align: center;
+}
+
+:-moz-placeholder { /* Firefox 18- */
+    text-align: center;  
+}
+
+::-moz-placeholder {  /* Firefox 19+ */
+    text-align: center;  
+}
+
+:-ms-input-placeholder {  
+    text-align: center; 
+}
+
+
+.ds-top {
+    display: grid;
+    justify-items: right;
+    position: absolute;
+    margin: auto;
+    top: 0;
+    right: 0;
+    left: 0;
+    width: 600px;
+    height: 110px;
+    background: crimson;
+}
+
+.ds-top .submit-btn {
+    background: none;
+    border: none;
+    margin-bottom: 45px;
+}
+
+.ds-top .save {
+    color: white;
+    padding: 15px;
+    font-size: 25px;
+}
+
+.avatar-holder {
+    display: block;
+    position: absolute;
+    margin: auto;
+    top: 45px;
+    right: 0;
+    left: 0;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    box-shadow: 0 0 0 5px #151515,
+                inset 0 0 0 5px #000000,
+                inset 0 0 0 5px #000000,
+                inset 0 0 0 5px #000000,
+                inset 0 0 0 5px #000000,;
+    background: white;
+    /* overflow: hidden; */
+    
+}
+
+.avatar-container {
+    width: 120px;
+    height: 120px;
+    display: block;
+    margin: 0 auto;
+}
+
+.avatar-outer {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 120px !important; /* any size */
+    max-height: 120px !important; /* any size */
+    margin: auto;
+    border-radius: 100%;
+    position: relative;
+}
+
+.avatar-outer img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.avatar-inner {
+    background-color: #414141;
+    width: 25px;
+    height: 25px;
+    border-radius: 100%;
+    position: absolute;
+    bottom: 2px;
+    right: 10px;
+}
+
+
+.avatar-inner:hover {
+    background-color: #636363;
+}
+
+.inputfile {
+    opacity: 0;
+    overflow: hidden;
+    position: absolute;
+    z-index: 1;
+    width: 25px;
+    height: 25px;
+}
+
+.inputfile + label {
+    font-size: 1.25rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-block;
+    overflow: hidden;
+    width: 25px;
+    height: 25px;
+    pointer-events: none;
+    cursor: pointer;
+    text-align: center;
+    color: white; 
+}
+
+.name {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 0 15px;
+    row-gap: 5px;
+    column-gap: 5px;
+    position: absolute;
+    margin: auto;
+    top: -60px;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: inherit;
+    height: 40px;
+    text-align: center;
+
+}
+
+.name #newusername {
+    grid-column: 1 / span 2;
+    margin: auto;
+}
+
+
+.ds-info {
+    position: absolute;
+    margin: auto;
+    top: 150px;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    width: inherit;
+    display: flex;
+    
+    
+}
+
+.ds-info {
+    display: grid;
+    row-gap: 10px;
+    position: absolute;
+    margin: auto;
+    padding-top: 50px;
+    bottom: 10px;
+    right: 0;
+    left: 0;
+    width: 500px;
+    height: 100px;
+}
+
+.ds-info h5 {
+    margin-bottom: 5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: crimson;
+    font-size: 0.83em
+}
+
+.info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
+.username-error {
+    grid-column: 1 / span 2;
+    font-size: small;
+}
+
+.email-error, .username-error, .phone-error {
+    color: rgb(214, 82, 82) !important; 
+}
+
+.ds-info .info h6 {
+    font-weight: 400;
+    font-size: 8px;
+    letter-spacing: 0.05em;
+    margin: 4px 0;
+    color: white;
+}
+
+.ds-info .info .icon {
+    margin-right: 20px;
+}
+
+.ds-info .info p {
+    color: white;
+    font-size: small;
+}
+
+
+/* .ds-info .email {
+    width: 95%;
+    animation: htmlSkill 1s;
+    animation-delay: .4s;
+}
+.ds-info .phone {
+    width: 90%;
+    animation: cssSkill 2s;
+    animation-delay: .4s;
+}
+.ds-info .org {
+    width: 75%;
+    animation: jsSkill 3s;
+    animation-delay: .4s;
+} */
+
+.card {
+    position: absolute;
+    margin: auto;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 600px;
+    height: 450px;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px 5px rgba(0, 0, 0, 0.2);
+    background: #151515;
+    overflow: hidden;
+}
+
+
+
+
