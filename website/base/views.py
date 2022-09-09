@@ -27,7 +27,7 @@ def home(request):
 @login_required(login_url='login')
 def app(request):
     profile = Profile.objects.get(user=request.user)
-    return render(request, 'base/livePlot.html', {'profile':profile})
+    return render(request, 'base/app.html', {'profile':profile})
 
 
 
