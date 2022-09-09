@@ -25,6 +25,14 @@ def hex_to_c_array(hex_data):
 
 
 def rmv_file_spaces(file, exclude='') -> str:
+    '''
+        WHY DO I DO THIS ? 
+            To reduce memory when transferring file contents,
+            because a single character (including spaces) is equal to 1 byte.
+        
+        WHY NOT JUST DO IT IN 'hex_to_c_array' FUNCTION ?
+            I leave that on purpose so when user decides to download the file, it is presented properly.
+    '''
     with open(file) as stream:
         contents = stream.read()
         x = re.sub('\s$', '', contents, flags=re.MULTILINE)

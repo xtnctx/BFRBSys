@@ -2,30 +2,91 @@
 
 <html lang="en">
 
+    {% include 'main.html' %}
     {% load static %}
         <link rel="stylesheet" href="{% static 'base/styles/app.css' %}">
-    {% include 'base/appNavbar.html' %}
-    
+
+
 <body>
-    
+
     {% block content %}
 
-    <div class="mainapp">
-        <h1>BFRB MOBILE APP</h1>
-        <div class="ble">
-            <button id="connect-button">Connect</button>
-            <button id="transfer-file-button">Transfer</button>
-            <button id="cancel-transfer-button">Cancel</button>
+    <div class="app-wrapper">
+
+        <div class="sidebar">
+            
+            <h1>Train</h1>
+            <div class="trainBtn-container">
+                
+                <button onclick="captureData(1)" class="_button">
+                    <span class="_button__text">ADD ON TARGET</span>
+                    <span id="t-button__hiddenIcon" class="t-button__hiddenIcon">
+                        <ion-icon name="checkmark-circle-outline"></ion-icon>
+                    </span>
+                  </button>
+
+                <button onclick="deleteData(1)">Delete</button>
+            </div>
+    
+            <div class="trainBtn-container">
+
+                <button onclick="captureData(0)" class="_button">
+                    <span class="_button__text">ADD OFF TARGET</span>
+                    <span id="f-button__hiddenIcon" class="f-button__hiddenIcon">
+                        <ion-icon name="checkmark-circle-outline"></ion-icon>
+                    </span>
+                  </button>
+
+                <button onclick="deleteData(0)">Delete</button>
+            </div>
+            
+            <form id="data-form" method="POST" enctype="multipart/form-data">{% csrf_token %}
+                <input hidden id="data-field" type="text" name="data">
+                <input id="name-field" type="text" name="model_name" placeholder="Model name" disabled>
+                <input id="trainBtn" type="submit" value="Train" disabled>
+            </form>
+
+            <div class="train-container">
+                <button id="transfer-file-button" disabled >Transfer</button>
+                <button id="cancel-transfer-button" disabled >Cancel</button>
+            </div>
+
         </div>
-        <div id="status-label">Click button to connect to the board</div>
-        <button id="view">view</button>
-        <div id="serialData">None</div>
+
+        <div class="mainapp">
+            <canvas id="accelerometerCanvas" width="400" height="100"></canvas>
+            <canvas id="gyroscopeCanvas" width="400" height="100"></canvas>
+
+            <div class="prox-container">
+                <div>Distance: </div>
+                <p id="dstData">. . .</p>
+            </div>
+            
+            <div class="prox-container">
+                <div>Temperature: </div>
+                <p id="tempData">. . .</p>
+            </div>
+
+            <div class="ble">
+                <button id="connect-button">Connect</button>
+            </div>
+
+        </div>
+
+        <div class="status-container">
+            <h3>Status</h3>
+            <div id="status-label">Open your bluetooth and click the button to connect to the board</div>
+        </div>
+
     </div>
     
-    
-    <script src="{% static 'base/scripts/bleService.js' %}"></script>
-    
     {% endblock %}
-</body>
 
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="{% static 'base/scripts/smoothie.js' %}"></script>
+    <script src="{% static 'base/scripts/app.js' %}"></script>
+    <script type="module" src="https://unpkg.com/ionicons@5.4.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule="" src="https://unpkg.com/ionicons@5.4.0/dist/ionicons/ionicons.js"></script>
+
+</body>
 </html>
