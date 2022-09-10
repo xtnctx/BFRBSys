@@ -1,2 +1,5 @@
+django
+tensorflow
+pandas
 validate_email
 pillow
