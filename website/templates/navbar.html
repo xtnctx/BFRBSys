@@ -56,7 +56,7 @@
                         <img src="{{ profile.image.url }}" alt="{{ request.user.username }}" class="avatar">
                     </a>
                     <div class="dropdown-menu profile-form">
-                        <p style="text-align: center"><a href="{% url 'account_info' %}" class="dropdown-item">Profile</a></p>
+                        <p style="text-align: center"><a href="{% url 'profile' request.user.username %}" class="dropdown-item">Profile</a></p>
                         <p style="text-align: center"><a href="{% url 'logout' %}" class="dropdown-item">Logout</a></p>
                     </div>
                 </div>
@@ -133,7 +133,12 @@
                     $('#status-div').css('grid-template-columns', '4fr 1fr')
                     $('#status-message').css('color', 'green');
                     $('#status-message').text(response.success);
-                    reloadPage();
+
+                    if ('{{ request.path }}' === '/register/') {
+                        window.location = "{% url 'home' %}"
+                    } else {
+                        reloadPage();
+                    }
                 }
 
                 });
