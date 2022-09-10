@@ -1,3 +1,3 @@
-# Untitled-thesis-proj
+# Computer Engineering Design Project
 
-read more about the [title proposal](https://github.com/xtnctx/Thesis/blob/main/Documents/Capsule_Bahillo-Dalanon.pdf)
+Read more about the [title proposal](https://github.com/xtnctx/Thesis/blob/main/Documents/Capsule_Bahillo-Dalanon.pdf)
