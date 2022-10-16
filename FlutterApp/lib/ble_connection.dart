@@ -19,12 +19,23 @@ class BluetoothBuilderPage extends StatefulWidget {
 }
 
 class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
-  /* ========================== P  R  I  M  A  R  Y  =========================== */
+  /// The [SERVICE_UUID] sets as the primary service id of the device and
+  /// its characteristics can be get using the @get[uuids]. Use this
+  /// characteristics to set a late BluetoothCharacteristic which translates
+  /// to @get[attr] from flutter_blue package https://pub.dev/packages/flutter_blue.
+  ///
+  /// INFO: The Generic Attribute Profile (GATT) is the architechture used
+  ///       for bluetooth connectivity.
+  ///
+  /// NOTE: The length of [uuids] and [attr] must be the same and takes the
+  ///        reference from the Arduino Nano 33 BLE Sense board.
+
+  /* ========================== S  E  R  V  I  C  E  =========================== */
   final String SERVICE_UUID = 'bf88b656-0000-4a61-86e0-769c741026c0';
   final String TARGET_DEVICE_NAME = "BFRB Sense";
   /* =========================================================================== */
 
-  /* ****************** C H I L D R E N   O F   P R I M A R Y ****************** */
+  /* ********************** C H A R A C T E R I S T I C S ********************** */
   final String FILE_BLOCK_UUID = 'bf88b656-3000-4a61-86e0-769c741026c0';
   final String FILE_LENGTH_UUID = 'bf88b656-3001-4a61-86e0-769c741026c0';
   final String FILE_MAXIMUM_LENGTH_UUID = 'bf88b656-3002-4a61-86e0-769c741026c0';
@@ -57,6 +68,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
 
   String connectionText = "";
   bool isFileTransferInProgress = false;
+  String info = "";
 
   Crc32 crc = Crc32();
 
@@ -121,39 +133,70 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
           String characteristicUUID = characteristic.uuid.toString();
           print('################ Searching $characteristicUUID ...');
 
+          // FILE_BLOCK_UUID : fileBlockCharacteristic
           if (characteristicUUID == FILE_BLOCK_UUID) {
             fileBlockCharacteristic = characteristic;
             print('Connected to $FILE_BLOCK_UUID');
-          } else if (characteristicUUID == FILE_LENGTH_UUID) {
+          }
+
+          // FILE_LENGTH_UUID : fileLengthCharacteristic
+          else if (characteristicUUID == FILE_LENGTH_UUID) {
             fileLengthCharacteristic = characteristic;
             print('Connected to $FILE_LENGTH_UUID');
-          } else if (characteristicUUID == FILE_MAXIMUM_LENGTH_UUID) {
+          }
+
+          // FILE_MAXIMUM_LENGTH_UUID : fileMaximumLengthCharacteristic
+          else if (characteristicUUID == FILE_MAXIMUM_LENGTH_UUID) {
             fileMaximumLengthCharacteristic = characteristic;
             print('Connected to $FILE_MAXIMUM_LENGTH_UUID');
-          } else if (characteristicUUID == FILE_CHECKSUM_UUID) {
+          }
+
+          // FILE_CHECKSUM_UUID : fileChecksumCharacteristic
+          else if (characteristicUUID == FILE_CHECKSUM_UUID) {
             fileChecksumCharacteristic = characteristic;
             print('Connected to $FILE_CHECKSUM_UUID');
-          } else if (characteristicUUID == COMMAND_UUID) {
+          }
+
+          // COMMAND_UUID : commandCharacteristic
+          else if (characteristicUUID == COMMAND_UUID) {
             commandCharacteristic = characteristic;
             print('Connected to $COMMAND_UUID');
-          } else if (characteristicUUID == TRANSFER_STATUS_UUID) {
+          }
+
+          // TRANSFER_STATUS_UUID : transferStatusCharacteristic
+          else if (characteristicUUID == TRANSFER_STATUS_UUID) {
             transferStatusCharacteristic = characteristic;
             await transferStatusCharacteristic?.setNotifyValue(true);
+            onTransferStatusChanged(transferStatusCharacteristic);
             print('Connected to $TRANSFER_STATUS_UUID');
             // _readData(transferStatusCharacteristic);
-          } else if (characteristicUUID == ERROR_MESSAGE_UUID) {
+          }
+
+          // ERROR_MESSAGE_UUID : errorMessageCharacteristic
+          else if (characteristicUUID == ERROR_MESSAGE_UUID) {
             errorMessageCharacteristic = characteristic;
+            await errorMessageCharacteristic?.setNotifyValue(true);
+            onErrorMessageChanged(errorMessageCharacteristic);
             print('Connected to $ERROR_MESSAGE_UUID');
             // _readData(errorMessageCharacteristic);
-          } else if (characteristicUUID == ACC_DATA_UUID) {
+          }
+
+          // ACC_DATA_UUID : accDataCharacteristic
+          else if (characteristicUUID == ACC_DATA_UUID) {
             accDataCharacteristic = characteristic;
             print('Connected to $ACC_DATA_UUID');
             // _readData(accDataCharacteristic);
-          } else if (characteristicUUID == GYRO_DATA_UUID) {
+          }
+
+          // GYRO_DATA_UUID : gyroDataCharacteristic
+          else if (characteristicUUID == GYRO_DATA_UUID) {
             gyroDataCharacteristic = characteristic;
             print('Connected to $GYRO_DATA_UUID');
             // _readData(gyroDataCharacteristic);
-          } else if (characteristicUUID == DIST_DATA_UUID) {
+          }
+
+          // DIST_DATA_UUID : distDataCharacteristic
+          else if (characteristicUUID == DIST_DATA_UUID) {
             distDataCharacteristic = characteristic;
             print('Connected to $DIST_DATA_UUID');
             // _readData(distDataCharacteristic);
@@ -191,15 +234,14 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
     });
   }
 
-  /* ------------------------------------------------- */
-  writeData(String data) async {
-    // ignore: unnecessary_null_comparison
-    if (commandCharacteristic == null) return;
-
-    List<int> bytes = utf8.encode(data);
-    await commandCharacteristic?.write(bytes);
+  msg(String m) {
+    print(m);
+    setState(() {
+      info = m;
+    });
   }
 
+  /* ------------------------------------------------- */
   // EVENT LISTENERS
   _readData(characteristic) async {
     if (!characteristic.isNotifying) {
@@ -218,6 +260,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
   onTransferStatusChanged(characteristic) {
     characteristic.value.listen((List<int> value) {
       num statusCode = bytesToInteger(value);
+      print(isFileTransferInProgress);
 
       if (value.isEmpty) return;
 
@@ -239,11 +282,14 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
       String errorMessage = String.fromCharCodes(readData);
 
       if (readData.isNotEmpty && readData != []) {
-        print("Error message = $errorMessage");
+        msg("Error message = $errorMessage");
       }
     });
   }
 
+  // ----------------------------------------------------------------------------------
+  // This part is to configure the flutter_blue BluetoothCharacteristic because
+  // the read and write values is a type of byte array.
   num bytesToInteger(List<int> bytes) {
     num value = 0;
     if (Endian.host == Endian.big) {
@@ -255,6 +301,12 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
     return value;
   }
 
+  Uint8List integerToBytes(int value) {
+    const length = 4;
+    return Uint8List(length)..buffer.asByteData().setInt32(0, value, Endian.little);
+  }
+  // ----------------------------------------------------------------------------------
+
   transferFile(Uint8List fileContents) async {
     var maximumLengthValue = await fileMaximumLengthCharacteristic?.read();
     num maximumLength = bytesToInteger(maximumLengthValue!);
@@ -262,19 +314,21 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
     // ByteData byteData = maximumLengthArray.buffer.asByteData();
     // int value = byteData.getUint32(0, Endian.little);
     if (fileContents.length > maximumLength) {
-      print("File length is too long: ${fileContents.length} bytes but maximum is $maximumLength");
+      msg("File length is too long: ${fileContents.length} bytes but maximum is $maximumLength");
       return;
     }
 
     if (isFileTransferInProgress) {
-      print("Another file transfer is already in progress");
+      msg("Another file transfer is already in progress");
       return;
     }
 
-    await fileLengthCharacteristic?.write([fileContents.length]);
+    var contentsLengthArray = integerToBytes(fileContents.length);
+    await fileLengthCharacteristic?.write(contentsLengthArray);
 
     int fileChecksum = crc.crc32(fileContents);
-    await fileChecksumCharacteristic?.write([fileChecksum]);
+    var fileChecksumArray = integerToBytes(fileChecksum);
+    await fileChecksumCharacteristic?.write(fileChecksumArray);
 
     await commandCharacteristic?.write([1]);
 
@@ -294,7 +348,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
   }
 
   // ------------------------------------------------------------------------------
-  // This section contains functions you may want to customize for your own page.
+  // This section contains funrctions you may want to customize for your own page.
 
   // You'll want to replace these two functions with your own logic, to take what
   // actions your application needs when a file transfer succeeds, or errors out.
@@ -302,13 +356,13 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
     isFileTransferInProgress = false;
     var checksumValue = await fileChecksumCharacteristic?.read();
     var checksum = bytesToInteger(checksumValue!) as int;
-    print("File transfer succeeded: Checksum 0x${checksum.toRadixString(16)}");
+    msg("File transfer succeeded: Checksum 0x${checksum.toRadixString(16)}");
   }
 
   // Called when something has gone wrong with a file transfer.
   onTransferError() {
     isFileTransferInProgress = false;
-    print("File transfer error");
+    msg("File transfer error");
   }
 
   sendFileBlock(fileContents, bytesAlreadySent) async {
@@ -316,18 +370,20 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
 
     const maxBlockLength = 128;
     int blockLength = min(bytesRemaining, maxBlockLength);
-    Uint8List blockView = Uint8List.view(fileContents, bytesAlreadySent, blockLength);
+    Uint8List blockView = Uint8List.view(fileContents.buffer, bytesAlreadySent, blockLength);
+    print(blockView.toList());
 
     fileBlockCharacteristic?.write(blockView).then((_) {
       bytesRemaining -= blockLength;
+      print(isFileTransferInProgress);
       if ((bytesRemaining > 0) && isFileTransferInProgress) {
-        print("File block written - $bytesRemaining bytes remaining");
+        msg("File block written - $bytesRemaining bytes remaining");
         bytesAlreadySent += blockLength;
         sendFileBlock(fileContents, bytesAlreadySent);
       }
     }).catchError((error) {
       print(error);
-      print("File block write error with $bytesRemaining bytes remaining, see console");
+      msg("File block write error with $bytesRemaining bytes remaining, see console");
     });
   }
 
@@ -367,8 +423,8 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
                 ),
-                onPressed: () {
-                  transferFile([1, 2, 3] as Uint8List);
+                onPressed: () async {
+                  // print(bytesToInteger([1, 4, 9, 0]));
                 },
                 child: const Text('Check'),
               ),
@@ -379,8 +435,21 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red,
                 ),
-                onPressed: () {},
+                onPressed: () {
+                  String dataStr =
+                      "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.!!!!";
+                  var fileContents = utf8.encode(dataStr) as Uint8List;
+                  print("fileContents length is ${fileContents.length}");
+                  transferFile(fileContents);
+                },
                 child: const Text('Send'),
+              ),
+              const SizedBox(
+                height: 80,
+              ),
+              Text(
+                info,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 30),
               ),
             ],
           ),
@@ -388,19 +457,4 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
       ),
     );
   }
-}
-
-class BaseModel {
-  late Map objects;
-  StreamController fetchDoneController = StreamController.broadcast();
-
-  // define constructor here
-
-  fetch() {
-    // fetch json from server and then load it to objects
-    // emits an event here
-    fetchDoneController.add("all done"); // send an arbitrary event
-  }
-
-  Stream get fetchDone => fetchDoneController.stream;
 }
