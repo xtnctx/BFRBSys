@@ -11,6 +11,8 @@ import 'package:flutter/material.dart';
 // import 'package:flutter/services.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 
+import 'package:syncfusion_flutter_charts/charts.dart';
+
 class BluetoothBuilderPage extends StatefulWidget {
   const BluetoothBuilderPage({super.key});
 
@@ -19,16 +21,11 @@ class BluetoothBuilderPage extends StatefulWidget {
 }
 
 class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
-  /// The [SERVICE_UUID] sets as the primary service id of the device and
-  /// its characteristics can be get using the @get[uuids]. Use this
-  /// characteristics to set a late BluetoothCharacteristic which translates
-  /// to @get[attr] from flutter_blue package https://pub.dev/packages/flutter_blue.
-  ///
   /// INFO: The Generic Attribute Profile (GATT) is the architechture used
   ///       for bluetooth connectivity.
   ///
-  /// NOTE: The length of [uuids] and [attr] must be the same and takes the
-  ///        reference from the Arduino Nano 33 BLE Sense board.
+  /// NOTE: The length of uuids and characteristics must be the same and takes the
+  ///       reference from the Arduino Nano 33 BLE Sense board.
 
   /* ========================== S  E  R  V  I  C  E  =========================== */
   final String SERVICE_UUID = 'bf88b656-0000-4a61-86e0-769c741026c0';
@@ -72,34 +69,24 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
 
   Crc32 crc = Crc32();
 
-  List get attr {
-    return [
-      fileBlockCharacteristic,
-      fileLengthCharacteristic,
-      fileMaximumLengthCharacteristic,
-      fileChecksumCharacteristic,
-      commandCharacteristic,
-      transferStatusCharacteristic,
-      errorMessageCharacteristic,
-      accDataCharacteristic,
-      gyroDataCharacteristic,
-      distDataCharacteristic
-    ];
-  }
+  Timer? timer;
+  List<_ChartData>? chartAccData;
+  List<_ChartData>? chartGyroData;
+  late int count;
+  ChartSeriesController? axAxisController;
+  ChartSeriesController? ayAxisController;
+  ChartSeriesController? azAxisController;
 
-  List get uuids {
-    return [
-      FILE_BLOCK_UUID,
-      FILE_LENGTH_UUID,
-      FILE_MAXIMUM_LENGTH_UUID,
-      FILE_CHECKSUM_UUID,
-      COMMAND_UUID,
-      TRANSFER_STATUS_UUID,
-      ERROR_MESSAGE_UUID,
-      ACC_DATA_UUID,
-      GYRO_DATA_UUID,
-      DIST_DATA_UUID
-    ];
+  ChartSeriesController? gxAxisController;
+  ChartSeriesController? gyAxisController;
+  ChartSeriesController? gzAxisController;
+
+  @override
+  void initState() {
+    count = 19;
+    chartAccData = <_ChartData>[];
+    chartGyroData = <_ChartData>[];
+    super.initState();
   }
 
   startConnection() {
@@ -169,7 +156,6 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
             await transferStatusCharacteristic?.setNotifyValue(true);
             onTransferStatusChanged(transferStatusCharacteristic);
             print('Connected to $TRANSFER_STATUS_UUID');
-            // _readData(transferStatusCharacteristic);
           }
 
           // ERROR_MESSAGE_UUID : errorMessageCharacteristic
@@ -178,30 +164,33 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
             await errorMessageCharacteristic?.setNotifyValue(true);
             onErrorMessageChanged(errorMessageCharacteristic);
             print('Connected to $ERROR_MESSAGE_UUID');
-            // _readData(errorMessageCharacteristic);
           }
 
           // ACC_DATA_UUID : accDataCharacteristic
           else if (characteristicUUID == ACC_DATA_UUID) {
             accDataCharacteristic = characteristic;
+            await accDataCharacteristic?.setNotifyValue(true);
             print('Connected to $ACC_DATA_UUID');
-            // _readData(accDataCharacteristic);
+            _readData(accDataCharacteristic);
           }
 
           // GYRO_DATA_UUID : gyroDataCharacteristic
           else if (characteristicUUID == GYRO_DATA_UUID) {
             gyroDataCharacteristic = characteristic;
+            await gyroDataCharacteristic?.setNotifyValue(true);
             print('Connected to $GYRO_DATA_UUID');
-            // _readData(gyroDataCharacteristic);
+            _readData(gyroDataCharacteristic);
           }
 
           // DIST_DATA_UUID : distDataCharacteristic
           else if (characteristicUUID == DIST_DATA_UUID) {
             distDataCharacteristic = characteristic;
+            await distDataCharacteristic?.setNotifyValue(true);
             print('Connected to $DIST_DATA_UUID');
-            // _readData(distDataCharacteristic);
+            _readData(distDataCharacteristic);
           }
         }
+        timer = Timer.periodic(const Duration(milliseconds: 100), _updateDataSource);
         setState(() {
           connectionText = "All Ready with ${device.name}";
         });
@@ -241,18 +230,24 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
     });
   }
 
+  String? accData;
+  String? gyroData;
+  String? distData;
   /* ------------------------------------------------- */
   // EVENT LISTENERS
-  _readData(characteristic) async {
-    if (!characteristic.isNotifying) {
-      await characteristic.setNotifyValue(true);
-    }
+  _readData(characteristic) {
     characteristic.value.listen((value) {
       List<int> readData = List.from(value);
       String parsedData = String.fromCharCodes(readData);
 
       if (readData.isNotEmpty && readData != []) {
-        print('BLE read data: $parsedData');
+        if (characteristic.uuid.toString() == ACC_DATA_UUID) {
+          accData = parsedData;
+        } else if (characteristic.uuid.toString() == GYRO_DATA_UUID) {
+          gyroData = parsedData;
+        } else if (characteristic.uuid.toString() == DIST_DATA_UUID) {
+          distData = parsedData;
+        }
       }
     });
   }
@@ -260,7 +255,6 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
   onTransferStatusChanged(characteristic) {
     characteristic.value.listen((List<int> value) {
       num statusCode = bytesToInteger(value);
-      print(isFileTransferInProgress);
 
       if (value.isEmpty) return;
 
@@ -387,11 +381,156 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
     });
   }
 
+  /// Returns the realtime Cartesian line chart.
+  SfCartesianChart _buildLiveAccChart() {
+    return SfCartesianChart(
+      plotAreaBorderWidth: 0,
+      primaryXAxis: NumericAxis(majorGridLines: const MajorGridLines(width: 0)),
+      primaryYAxis: NumericAxis(
+        axisLine: const AxisLine(width: 0),
+        majorTickLines: const MajorTickLines(size: 0),
+        minimum: -2.5,
+        maximum: 2.5,
+      ),
+      series: <LineSeries<_ChartData, int>>[
+        LineSeries<_ChartData, int>(
+          onRendererCreated: (ChartSeriesController controller) {
+            axAxisController = controller;
+          },
+          dataSource: chartAccData!,
+          color: const Color.fromRGBO(192, 108, 132, 1),
+          xValueMapper: (_ChartData data, _) => data.t,
+          yValueMapper: (_ChartData data, _) => data.x,
+          animationDuration: 0,
+        ),
+        LineSeries<_ChartData, int>(
+          onRendererCreated: (ChartSeriesController controller) {
+            ayAxisController = controller;
+          },
+          dataSource: chartAccData!,
+          color: const Color.fromARGB(255, 59, 101, 185),
+          xValueMapper: (_ChartData data, _) => data.t,
+          yValueMapper: (_ChartData data, _) => data.y,
+          animationDuration: 0,
+        ),
+        LineSeries<_ChartData, int>(
+          onRendererCreated: (ChartSeriesController controller) {
+            azAxisController = controller;
+          },
+          dataSource: chartAccData!,
+          color: const Color.fromARGB(255, 59, 185, 93),
+          xValueMapper: (_ChartData data, _) => data.t,
+          yValueMapper: (_ChartData data, _) => data.z,
+          animationDuration: 0,
+        )
+      ],
+    );
+  }
+
+  SfCartesianChart _buildLiveGyroChart() {
+    return SfCartesianChart(
+      plotAreaBorderWidth: 0,
+      primaryXAxis: NumericAxis(majorGridLines: const MajorGridLines(width: 0)),
+      primaryYAxis: NumericAxis(
+        axisLine: const AxisLine(width: 0),
+        majorTickLines: const MajorTickLines(size: 0),
+        minimum: -800,
+        maximum: 800,
+      ),
+      series: <LineSeries<_ChartData, int>>[
+        LineSeries<_ChartData, int>(
+          onRendererCreated: (ChartSeriesController controller) {
+            gxAxisController = controller;
+          },
+          dataSource: chartGyroData!,
+          color: const Color.fromRGBO(192, 108, 132, 1),
+          xValueMapper: (_ChartData data, _) => data.t,
+          yValueMapper: (_ChartData data, _) => data.x,
+          animationDuration: 0,
+        ),
+        LineSeries<_ChartData, int>(
+          onRendererCreated: (ChartSeriesController controller) {
+            gyAxisController = controller;
+          },
+          dataSource: chartGyroData!,
+          color: const Color.fromARGB(255, 59, 101, 185),
+          xValueMapper: (_ChartData data, _) => data.t,
+          yValueMapper: (_ChartData data, _) => data.y,
+          animationDuration: 0,
+        ),
+        LineSeries<_ChartData, int>(
+          onRendererCreated: (ChartSeriesController controller) {
+            gzAxisController = controller;
+          },
+          dataSource: chartGyroData!,
+          color: const Color.fromARGB(255, 59, 185, 93),
+          xValueMapper: (_ChartData data, _) => data.t,
+          yValueMapper: (_ChartData data, _) => data.z,
+          animationDuration: 0,
+        )
+      ],
+    );
+  }
+
+  updateControllerDataSource(listData, controller, isEdge) {
+    if (isEdge) {
+      controller?.updateDataSource(
+        addedDataIndexes: <int>[listData!.length - 1],
+        removedDataIndexes: <int>[0],
+      );
+    } else {
+      controller?.updateDataSource(
+        addedDataIndexes: <int>[listData!.length - 1],
+      );
+    }
+  }
+
+  List<double> dataParse(String data) {
+    double x = double.parse(data.split(',')[0]);
+    double y = double.parse(data.split(',')[1]);
+    double z = double.parse(data.split(',')[2]);
+    return [x, y, z];
+  }
+
+  ///Continously updating the data source based on timer
+  void _updateDataSource(Timer timer) {
+    List<double> acc = dataParse(accData!);
+    List<double> gyro = dataParse(gyroData!);
+    chartAccData!.add(_ChartData(count, acc[0], acc[1], acc[2]));
+    chartGyroData!.add(_ChartData(count, gyro[0], gyro[1], gyro[2]));
+
+    if (chartAccData!.length == 20) {
+      chartAccData!.removeAt(0);
+      updateControllerDataSource(chartAccData, axAxisController, true);
+      updateControllerDataSource(chartAccData, ayAxisController, true);
+      updateControllerDataSource(chartAccData, azAxisController, true);
+    } else {
+      updateControllerDataSource(chartAccData, axAxisController, false);
+      updateControllerDataSource(chartAccData, ayAxisController, false);
+      updateControllerDataSource(chartAccData, azAxisController, false);
+    }
+
+    if (chartGyroData!.length == 20) {
+      chartGyroData!.removeAt(0);
+      updateControllerDataSource(chartGyroData, gxAxisController, true);
+      updateControllerDataSource(chartGyroData, gyAxisController, true);
+      updateControllerDataSource(chartGyroData, gzAxisController, true);
+    } else {
+      updateControllerDataSource(chartGyroData, gxAxisController, false);
+      updateControllerDataSource(chartGyroData, gyAxisController, false);
+      updateControllerDataSource(chartGyroData, gzAxisController, false);
+    }
+    count = count + 1;
+  }
+
   /* ------------------------------------------------- */
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: const Drawer(),
       appBar: AppBar(
+        // leading: Icon(Icons.line),
+        backgroundColor: Colors.transparent,
         title: Text(connectionText),
         actions: [
           IconButton(
@@ -406,6 +545,8 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
         child: Center(
           child: Column(
             children: [
+              _buildLiveAccChart(),
+              _buildLiveGyroChart(),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
@@ -457,4 +598,13 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
       ),
     );
   }
+}
+
+/// Private calss for storing the chart series data points.
+class _ChartData {
+  _ChartData(this.t, [this.x = 0, this.y = 0, this.z = 0]);
+  final int t;
+  final num x;
+  final num y;
+  final num z;
 }
