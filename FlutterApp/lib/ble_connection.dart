@@ -10,6 +10,7 @@ import 'package:bfrbsys/crc32_checksum.dart';
 import 'package:flutter/material.dart';
 // import 'package:flutter/services.dart';
 import 'package:flutter_blue/flutter_blue.dart';
+import 'package:bfrbsys/colors.dart' as custom_color;
 
 import 'package:syncfusion_flutter_charts/charts.dart';
 
@@ -382,91 +383,164 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
   }
 
   /// Returns the realtime Cartesian line chart.
-  SfCartesianChart _buildLiveAccChart() {
-    return SfCartesianChart(
-      plotAreaBorderWidth: 0,
-      primaryXAxis: NumericAxis(majorGridLines: const MajorGridLines(width: 0)),
-      primaryYAxis: NumericAxis(
-        axisLine: const AxisLine(width: 0),
-        majorTickLines: const MajorTickLines(size: 0),
-        minimum: -2.5,
-        maximum: 2.5,
+  Container _buildLiveAccChart(context) {
+    return Container(
+      margin: const EdgeInsets.all(10.0),
+      height: 170,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: SfCartesianChart(
+          title: ChartTitle(
+            text: 'Accelerometer',
+            textStyle: const TextStyle(
+              fontStyle: FontStyle.italic,
+              fontSize: 12,
+            ),
+          ),
+          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+          plotAreaBorderWidth: 0,
+          primaryXAxis: NumericAxis(
+            isVisible: false,
+          ),
+          primaryYAxis: NumericAxis(
+            minimum: -3,
+            maximum: 3,
+            isVisible: false,
+          ),
+          series: <LineSeries<_ChartData, int>>[
+            LineSeries<_ChartData, int>(
+              name: 'x',
+              onRendererCreated: (ChartSeriesController controller) {
+                axAxisController = controller;
+              },
+              dataSource: chartAccData!,
+              color: custom_color.lineXColor,
+              xValueMapper: (_ChartData data, _) => data.t,
+              yValueMapper: (_ChartData data, _) => data.x,
+              animationDuration: 0,
+            ),
+            LineSeries<_ChartData, int>(
+              name: 'y',
+              onRendererCreated: (ChartSeriesController controller) {
+                ayAxisController = controller;
+              },
+              dataSource: chartAccData!,
+              color: custom_color.lineYColor,
+              xValueMapper: (_ChartData data, _) => data.t,
+              yValueMapper: (_ChartData data, _) => data.y,
+              animationDuration: 0,
+            ),
+            LineSeries<_ChartData, int>(
+              name: 'z',
+              onRendererCreated: (ChartSeriesController controller) {
+                azAxisController = controller;
+              },
+              dataSource: chartAccData!,
+              color: custom_color.lineZColor,
+              xValueMapper: (_ChartData data, _) => data.t,
+              yValueMapper: (_ChartData data, _) => data.z,
+              animationDuration: 0,
+            )
+          ],
+        ),
       ),
-      series: <LineSeries<_ChartData, int>>[
-        LineSeries<_ChartData, int>(
-          onRendererCreated: (ChartSeriesController controller) {
-            axAxisController = controller;
-          },
-          dataSource: chartAccData!,
-          color: const Color.fromRGBO(192, 108, 132, 1),
-          xValueMapper: (_ChartData data, _) => data.t,
-          yValueMapper: (_ChartData data, _) => data.x,
-          animationDuration: 0,
-        ),
-        LineSeries<_ChartData, int>(
-          onRendererCreated: (ChartSeriesController controller) {
-            ayAxisController = controller;
-          },
-          dataSource: chartAccData!,
-          color: const Color.fromARGB(255, 59, 101, 185),
-          xValueMapper: (_ChartData data, _) => data.t,
-          yValueMapper: (_ChartData data, _) => data.y,
-          animationDuration: 0,
-        ),
-        LineSeries<_ChartData, int>(
-          onRendererCreated: (ChartSeriesController controller) {
-            azAxisController = controller;
-          },
-          dataSource: chartAccData!,
-          color: const Color.fromARGB(255, 59, 185, 93),
-          xValueMapper: (_ChartData data, _) => data.t,
-          yValueMapper: (_ChartData data, _) => data.z,
-          animationDuration: 0,
-        )
-      ],
     );
   }
 
-  SfCartesianChart _buildLiveGyroChart() {
-    return SfCartesianChart(
-      plotAreaBorderWidth: 0,
-      primaryXAxis: NumericAxis(majorGridLines: const MajorGridLines(width: 0)),
-      primaryYAxis: NumericAxis(
-        axisLine: const AxisLine(width: 0),
-        majorTickLines: const MajorTickLines(size: 0),
-        minimum: -800,
-        maximum: 800,
+  Container _buildLiveGyroChart(context) {
+    return Container(
+      margin: const EdgeInsets.all(10.0),
+      height: 170,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: SfCartesianChart(
+          title: ChartTitle(
+            text: 'Gyroscope',
+            textStyle: const TextStyle(
+              fontStyle: FontStyle.italic,
+              fontSize: 12,
+            ),
+          ),
+          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+          plotAreaBorderWidth: 0,
+          primaryXAxis: NumericAxis(
+            isVisible: false,
+          ),
+          primaryYAxis: NumericAxis(
+            minimum: -750,
+            maximum: 750,
+            isVisible: false,
+          ),
+          series: <LineSeries<_ChartData, int>>[
+            LineSeries<_ChartData, int>(
+              name: 'x',
+              onRendererCreated: (ChartSeriesController controller) {
+                gxAxisController = controller;
+              },
+              dataSource: chartGyroData!,
+              color: custom_color.lineXColor,
+              xValueMapper: (_ChartData data, _) => data.t,
+              yValueMapper: (_ChartData data, _) => data.x,
+              animationDuration: 0,
+            ),
+            LineSeries<_ChartData, int>(
+              name: 'y',
+              onRendererCreated: (ChartSeriesController controller) {
+                gyAxisController = controller;
+              },
+              dataSource: chartGyroData!,
+              color: custom_color.lineYColor,
+              xValueMapper: (_ChartData data, _) => data.t,
+              yValueMapper: (_ChartData data, _) => data.y,
+              animationDuration: 0,
+            ),
+            LineSeries<_ChartData, int>(
+              name: 'z',
+              onRendererCreated: (ChartSeriesController controller) {
+                gzAxisController = controller;
+              },
+              dataSource: chartGyroData!,
+              color: custom_color.lineZColor,
+              xValueMapper: (_ChartData data, _) => data.t,
+              yValueMapper: (_ChartData data, _) => data.z,
+              animationDuration: 0,
+            )
+          ],
+        ),
       ),
-      series: <LineSeries<_ChartData, int>>[
-        LineSeries<_ChartData, int>(
-          onRendererCreated: (ChartSeriesController controller) {
-            gxAxisController = controller;
-          },
-          dataSource: chartGyroData!,
-          color: const Color.fromRGBO(192, 108, 132, 1),
-          xValueMapper: (_ChartData data, _) => data.t,
-          yValueMapper: (_ChartData data, _) => data.x,
-          animationDuration: 0,
+    );
+  }
+
+  Row chartLegend() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        Wrap(
+          children: const [
+            Icon(
+              Icons.horizontal_rule_rounded,
+              color: custom_color.lineXColor,
+            ),
+            Text('x'),
+          ],
         ),
-        LineSeries<_ChartData, int>(
-          onRendererCreated: (ChartSeriesController controller) {
-            gyAxisController = controller;
-          },
-          dataSource: chartGyroData!,
-          color: const Color.fromARGB(255, 59, 101, 185),
-          xValueMapper: (_ChartData data, _) => data.t,
-          yValueMapper: (_ChartData data, _) => data.y,
-          animationDuration: 0,
+        Wrap(
+          children: const [
+            Icon(
+              Icons.horizontal_rule_rounded,
+              color: custom_color.lineYColor,
+            ),
+            Text('y'),
+          ],
         ),
-        LineSeries<_ChartData, int>(
-          onRendererCreated: (ChartSeriesController controller) {
-            gzAxisController = controller;
-          },
-          dataSource: chartGyroData!,
-          color: const Color.fromARGB(255, 59, 185, 93),
-          xValueMapper: (_ChartData data, _) => data.t,
-          yValueMapper: (_ChartData data, _) => data.z,
-          animationDuration: 0,
+        Wrap(
+          children: const [
+            Icon(
+              Icons.horizontal_rule_rounded,
+              color: custom_color.lineZColor,
+            ),
+            Text('z'),
+          ],
         )
       ],
     );
@@ -541,60 +615,258 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
           )
         ],
       ),
-      body: SingleChildScrollView(
-        child: Center(
-          child: Column(
-            children: [
-              _buildLiveAccChart(),
-              _buildLiveGyroChart(),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
+      body: ListView(
+        children: [
+          Container(
+            margin: const EdgeInsets.only(left: 20),
+            child: Row(
+              children: const [
+                Expanded(
+                  child: Text(
+                    'Activity',
+                    textAlign: TextAlign.left,
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 20,
+                      fontFamily: 'Consolas',
+                    ),
+                  ),
                 ),
-                onPressed: () {
-                  debugPrint('Connecting');
-                  startConnection();
-                },
-                child: const Text('Connect'),
-              ),
-              const SizedBox(
-                height: 80,
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                ),
-                onPressed: () async {
-                  // print(bytesToInteger([1, 4, 9, 0]));
-                },
-                child: const Text('Check'),
-              ),
-              const SizedBox(
-                height: 80,
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                ),
-                onPressed: () {
-                  String dataStr =
-                      "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.!!!!";
-                  var fileContents = utf8.encode(dataStr) as Uint8List;
-                  print("fileContents length is ${fileContents.length}");
-                  transferFile(fileContents);
-                },
-                child: const Text('Send'),
-              ),
-              const SizedBox(
-                height: 80,
-              ),
-              Text(
-                info,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 30),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+          _buildLiveAccChart(context),
+          _buildLiveGyroChart(context),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                // E X T E R N A L S
+                Container(
+                  height: 110,
+                  width: 150,
+                  margin: const EdgeInsets.all(10.0),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    color: Theme.of(context).colorScheme.primaryContainer,
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: const [
+                          Expanded(
+                            child: Text(
+                              'Externals',
+                              textAlign: TextAlign.left,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Wrap(children: const [
+                            Icon(
+                              Icons.sensors,
+                              color: custom_color.lineYColor,
+                            ),
+                          ]),
+                          Column(
+                            children: const [
+                              Text('Dist'),
+                              Text('123.45'),
+                            ],
+                          ),
+                        ],
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Wrap(children: const [
+                            Icon(
+                              Icons.thermostat,
+                              color: custom_color.lineXColor,
+                            ),
+                          ]),
+                          Column(
+                            children: const [
+                              Text('Temp'),
+                              Text('35°C'),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                // S T A T U S
+                Container(
+                  height: 110,
+                  width: 150,
+                  margin: const EdgeInsets.all(10.0),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    color: Theme.of(context).colorScheme.primaryContainer,
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: const [
+                          Expanded(
+                            child: Text(
+                              'Status',
+                              textAlign: TextAlign.left,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Wrap(children: const [
+                            Icon(
+                              Icons.sensors,
+                              color: custom_color.lineYColor,
+                            ),
+                          ]),
+                          Column(
+                            children: const [
+                              Text('Dist'),
+                              Text('123.45'),
+                            ],
+                          ),
+                        ],
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Wrap(children: const [
+                            Icon(
+                              Icons.thermostat,
+                              color: custom_color.lineXColor,
+                            ),
+                          ]),
+                          Column(
+                            children: const [
+                              Text('Temp'),
+                              Text('35°C'),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                // M E M E M O R Y   A V A I L A B L E
+                Container(
+                  height: 110,
+                  width: 150,
+                  margin: const EdgeInsets.all(10.0),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    color: Theme.of(context).colorScheme.primaryContainer,
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: const [
+                          Expanded(
+                            child: Text(
+                              'Memory available',
+                              textAlign: TextAlign.left,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Wrap(children: const [
+                            Icon(
+                              Icons.sensors,
+                              color: custom_color.lineYColor,
+                            ),
+                          ]),
+                          Column(
+                            children: const [
+                              Text('Dist'),
+                              Text('123.45'),
+                            ],
+                          ),
+                        ],
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Wrap(children: const [
+                            Icon(
+                              Icons.thermostat,
+                              color: custom_color.lineXColor,
+                            ),
+                          ]),
+                          Column(
+                            children: const [
+                              Text('Temp'),
+                              Text('35°C'),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue,
+            ),
+            onPressed: () {
+              debugPrint('Connecting');
+              startConnection();
+            },
+            child: const Text('Connect'),
+          ),
+          const SizedBox(
+            height: 80,
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+            ),
+            onPressed: () async {
+              // print(bytesToInteger([1, 4, 9, 0]));
+            },
+            child: const Text('Check'),
+          ),
+          const SizedBox(
+            height: 80,
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            onPressed: () {
+              String dataStr =
+                  "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.!!!!";
+              var fileContents = utf8.encode(dataStr) as Uint8List;
+              print("fileContents length is ${fileContents.length}");
+              transferFile(fileContents);
+            },
+            child: const Text('Send'),
+          ),
+          const SizedBox(
+            height: 80,
+          ),
+          Text(
+            info,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 30),
+          ),
+        ],
       ),
     );
   }
