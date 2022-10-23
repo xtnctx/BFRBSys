@@ -41,6 +41,7 @@ dependencies:
   flutter_blue: ^0.8.0
   flex_color_scheme: ^6.0.1
   syncfusion_flutter_charts: ^20.3.49
+  carousel_slider: ^4.1.1
 
 dev_dependencies:
   flutter_test:
