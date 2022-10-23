@@ -11,7 +11,7 @@ import 'package:flutter/material.dart';
 // import 'package:flutter/services.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 import 'package:bfrbsys/colors.dart' as custom_color;
-
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
 class BluetoothBuilderPage extends StatefulWidget {
@@ -225,7 +225,6 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
   }
 
   msg(String m) {
-    print(m);
     setState(() {
       info = m;
     });
@@ -393,7 +392,6 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
           title: ChartTitle(
             text: 'Accelerometer',
             textStyle: const TextStyle(
-              fontStyle: FontStyle.italic,
               fontSize: 12,
             ),
           ),
@@ -457,7 +455,6 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
           title: ChartTitle(
             text: 'Gyroscope',
             textStyle: const TextStyle(
-              fontStyle: FontStyle.italic,
               fontSize: 12,
             ),
           ),
@@ -617,209 +614,238 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
       ),
       body: ListView(
         children: [
-          Container(
-            margin: const EdgeInsets.only(left: 20),
-            child: Row(
-              children: const [
-                Expanded(
-                  child: Text(
-                    'Activity',
-                    textAlign: TextAlign.left,
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 20,
-                      fontFamily: 'Consolas',
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
           _buildLiveAccChart(context),
           _buildLiveGyroChart(context),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                // E X T E R N A L S
-                Container(
-                  height: 110,
-                  width: 150,
-                  margin: const EdgeInsets.all(10.0),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    color: Theme.of(context).colorScheme.primaryContainer,
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: const [
-                          Expanded(
-                            child: Text(
-                              'Externals',
-                              textAlign: TextAlign.left,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          Wrap(children: const [
-                            Icon(
-                              Icons.sensors,
-                              color: custom_color.lineYColor,
-                            ),
-                          ]),
-                          Column(
-                            children: const [
-                              Text('Dist'),
-                              Text('123.45'),
-                            ],
-                          ),
-                        ],
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          Wrap(children: const [
-                            Icon(
-                              Icons.thermostat,
-                              color: custom_color.lineXColor,
-                            ),
-                          ]),
-                          Column(
-                            children: const [
-                              Text('Temp'),
-                              Text('35°C'),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                // S T A T U S
-                Container(
-                  height: 110,
-                  width: 150,
-                  margin: const EdgeInsets.all(10.0),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    color: Theme.of(context).colorScheme.primaryContainer,
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: const [
-                          Expanded(
-                            child: Text(
-                              'Status',
-                              textAlign: TextAlign.left,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          Wrap(children: const [
-                            Icon(
-                              Icons.sensors,
-                              color: custom_color.lineYColor,
-                            ),
-                          ]),
-                          Column(
-                            children: const [
-                              Text('Dist'),
-                              Text('123.45'),
-                            ],
-                          ),
-                        ],
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          Wrap(children: const [
-                            Icon(
-                              Icons.thermostat,
-                              color: custom_color.lineXColor,
-                            ),
-                          ]),
-                          Column(
-                            children: const [
-                              Text('Temp'),
-                              Text('35°C'),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                // M E M E M O R Y   A V A I L A B L E
-                Container(
-                  height: 110,
-                  width: 150,
-                  margin: const EdgeInsets.all(10.0),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    color: Theme.of(context).colorScheme.primaryContainer,
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: const [
-                          Expanded(
-                            child: Text(
-                              'Memory available',
-                              textAlign: TextAlign.left,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          Wrap(children: const [
-                            Icon(
-                              Icons.sensors,
-                              color: custom_color.lineYColor,
-                            ),
-                          ]),
-                          Column(
-                            children: const [
-                              Text('Dist'),
-                              Text('123.45'),
-                            ],
-                          ),
-                        ],
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          Wrap(children: const [
-                            Icon(
-                              Icons.thermostat,
-                              color: custom_color.lineXColor,
-                            ),
-                          ]),
-                          Column(
-                            children: const [
-                              Text('Temp'),
-                              Text('35°C'),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+          // SingleChildScrollView(
+          //   scrollDirection: Axis.horizontal,
+          CarouselSlider(
+            options: CarouselOptions(
+              aspectRatio: 2.28,
+              viewportFraction: 0.6,
+              enlargeCenterPage: true,
+              enlargeStrategy: CenterPageEnlargeStrategy.height,
             ),
+            items: [
+              // E X T E R N A L S
+              Container(
+                margin: const EdgeInsets.all(5.0),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                ),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 5),
+                    Row(
+                      children: const [
+                        SizedBox(width: 15),
+                        Expanded(
+                          child: Text(
+                            'Externals',
+                            textAlign: TextAlign.left,
+                            style: TextStyle(
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Container(
+                          margin: const EdgeInsets.only(left: 25),
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            color: Theme.of(context).colorScheme.secondaryContainer,
+                          ),
+                          child: const Icon(Icons.sensors, color: Color.fromARGB(255, 42, 162, 237)),
+                        ),
+                        Expanded(
+                          child: Column(
+                            children: const [
+                              Text('Distance', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                              Text('123.45cm', style: TextStyle(fontSize: 17)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 5),
+                    Row(
+                      children: [
+                        Container(
+                          margin: const EdgeInsets.only(left: 25),
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            color: Theme.of(context).colorScheme.secondaryContainer,
+                          ),
+                          child: const Icon(Icons.thermostat, color: Color.fromARGB(255, 231, 124, 149)),
+                        ),
+                        Expanded(
+                          child: Column(
+                            children: const [
+                              Text('Temperature', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                              Text('35.6°C', style: TextStyle(fontSize: 17)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              // S T A T U S
+              Container(
+                margin: const EdgeInsets.all(5.0),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                ),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 5),
+                    Row(
+                      children: const [
+                        SizedBox(width: 15),
+                        Expanded(
+                          child: Text(
+                            'Status',
+                            textAlign: TextAlign.left,
+                            style: TextStyle(
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Container(
+                          margin: const EdgeInsets.only(left: 25),
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            color: Theme.of(context).colorScheme.secondaryContainer,
+                          ),
+                          child: const Icon(Icons.sensors, color: Color.fromARGB(255, 42, 162, 237)),
+                        ),
+                        Expanded(
+                          child: Column(
+                            children: const [
+                              Text('Distance', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                              Text('123.45cm', style: TextStyle(fontSize: 17)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 5),
+                    Row(
+                      children: [
+                        Container(
+                          margin: const EdgeInsets.only(left: 25),
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            color: Theme.of(context).colorScheme.secondaryContainer,
+                          ),
+                          child: const Icon(Icons.thermostat, color: Color.fromARGB(255, 231, 124, 149)),
+                        ),
+                        Expanded(
+                          child: Column(
+                            children: const [
+                              Text('Temperature', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                              Text('35.6°C', style: TextStyle(fontSize: 17)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              // M E M E M O R Y   A V A I L A B L E
+              Container(
+                margin: const EdgeInsets.all(5.0),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                ),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 5),
+                    Row(
+                      children: const [
+                        SizedBox(width: 15),
+                        Expanded(
+                          child: Text(
+                            'Memory available',
+                            textAlign: TextAlign.left,
+                            style: TextStyle(
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Container(
+                          margin: const EdgeInsets.only(left: 25),
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            color: Theme.of(context).colorScheme.secondaryContainer,
+                          ),
+                          child: const Icon(Icons.sensors, color: Color.fromARGB(255, 42, 162, 237)),
+                        ),
+                        Expanded(
+                          child: Column(
+                            children: const [
+                              Text('Distance', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                              Text('123.45cm', style: TextStyle(fontSize: 17)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 5),
+                    Row(
+                      children: [
+                        Container(
+                          margin: const EdgeInsets.only(left: 25),
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            color: Theme.of(context).colorScheme.secondaryContainer,
+                          ),
+                          child: const Icon(Icons.thermostat, color: Color.fromARGB(255, 231, 124, 149)),
+                        ),
+                        Expanded(
+                          child: Column(
+                            children: const [
+                              Text('Temperature', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                              Text('35.6°C', style: TextStyle(fontSize: 17)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
