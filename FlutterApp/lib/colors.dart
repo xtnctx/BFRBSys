@@ -1,22 +1,5 @@
 import 'package:flutter/material.dart';
 
-const MaterialColor primaryBlack = MaterialColor(
-  _blackPrimaryValue,
-  <int, Color>{
-    50: Color.fromRGBO(255, 0, 0, 1),
-    100: Color(0xFF000000),
-    200: Color(0xFF000000),
-    300: Color(0xFF000000),
-    400: Color(0xFF000000),
-    500: Color(_blackPrimaryValue), // Primary value
-    600: Color(0xFF000000),
-    700: Color(0xFF000000),
-    800: Color(0xFF000000),
-    900: Color.fromRGBO(255, 0, 0, 1),
-  },
-);
-const int _blackPrimaryValue = 0xFF000000;
-
 const ColorScheme flexSchemeDark = ColorScheme(
   brightness: Brightness.dark,
   primary: Color(0xff4e597d),
@@ -48,3 +31,39 @@ const ColorScheme flexSchemeDark = ColorScheme(
   inversePrimary: Color(0xff2f3342),
   surfaceTint: Color(0xff4e597d),
 );
+
+const ColorScheme flexSchemeLight = ColorScheme(
+  brightness: Brightness.light,
+  primary: Color(0xff202541),
+  onPrimary: Color(0xffffffff),
+  primaryContainer: Color(0xff9ba7cf),
+  onPrimaryContainer: Color(0xff1b1d23),
+  secondary: Color(0xff006b54),
+  onSecondary: Color(0xffffffff),
+  secondaryContainer: Color(0xff8fc3ad),
+  onSecondaryContainer: Color(0xff19211e),
+  tertiary: Color(0xff004b3b),
+  onTertiary: Color(0xffffffff),
+  tertiaryContainer: Color(0xff82bcb5),
+  onTertiaryContainer: Color(0xff17201f),
+  error: Color(0xffb00020),
+  onError: Color(0xffffffff),
+  errorContainer: Color(0xfffcd8df),
+  onErrorContainer: Color(0xff282526),
+  background: Color(0xffededf0),
+  onBackground: Color(0xff121212),
+  surface: Color(0xfff6f6f7),
+  onSurface: Color(0xff090909),
+  surfaceVariant: Color(0xffededf0),
+  onSurfaceVariant: Color(0xff121212),
+  outline: Color(0xff5f5f5f),
+  shadow: Color(0xff000000),
+  inverseSurface: Color(0xff111112),
+  onInverseSurface: Color(0xfff5f5f5),
+  inversePrimary: Color(0xffa4a7bc),
+  surfaceTint: Color(0xff202541),
+);
+
+const Color lineXColor = Color(0xFFC06C84);
+const Color lineYColor = Color(0xFF3B65B9);
+const Color lineZColor = Color(0xFF3BB95D);
