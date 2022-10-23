@@ -6,15 +6,15 @@ class DeviceCharacteristics {
   // ignore_for_file: non_constant_identifier_names
 
   /// The [SERVICE_UUID] sets as the primary service id of the device and
-  /// its sub characteristics can be get using the @get[uuids]. Use this
-  /// characteristics to set a late BluetoothCharacteristicwhich translates
-  /// to [attr] from flutter_blue package https://pub.dev/packages/flutter_blue.
+  /// its characteristics can be get using the @get[uuids]. Use this
+  /// characteristics to set a late BluetoothCharacteristic which translates
+  /// to @get[attr] from flutter_blue package https://pub.dev/packages/flutter_blue.
   ///
   /// INFO: The Generic Attribute Profile (GATT) is the architechture used
   ///       for bluetooth connectivity.
   ///
   /// NOTE: The length of [uuids] and [attr] must be the same and takes the
-  ///        reference from the Arduino Nano 33 BLE Sense chip.
+  ///        reference from the Arduino Nano 33 BLE Sense board.
 
   /* ========================== P  R  I  M  A  R  Y  =========================== */
   final String SERVICE_UUID = 'bf88b656-0000-4a61-86e0-769c741026c0';
