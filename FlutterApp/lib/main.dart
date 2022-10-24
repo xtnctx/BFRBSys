@@ -48,35 +48,51 @@ class RootPage extends StatefulWidget {
 
 class _RootPageState extends State<RootPage> {
   int currentPage = 0;
-  List<Widget> pages = const [HomePapge(), ResultsPage(), ProfilePage(), SettingsPage()];
+  List pages = const [HomePage(), ResultsPage(), ProfilePage(), SettingsPage()];
 
   @override
   Widget build(BuildContext context) {
+    int mid = pages.length ~/ 2;
+    double navBarIconSize = 27;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('BFRBSys'),
-      ),
       body: pages[currentPage],
+      bottomNavigationBar: ClipRRect(
+        borderRadius: const BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20)),
+        child: BottomAppBar(
+          color: Theme.of(context).colorScheme.primaryContainer,
+          shape: const CircularNotchedRectangle(),
+          notchMargin: 6,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: List<Widget>.generate(pages.length, (int index) {
+              var widget = pages[index];
+              if (mid == index) {
+                return Wrap(children: [
+                  const SizedBox(width: 60),
+                  IconButton(
+                    enableFeedback: false,
+                    // iconSize: navBarIconSize,
+                    icon: index == currentPage ? widget.navBarIconSelected : widget.navBarIcon,
+                    onPressed: index == currentPage ? () {} : () => setState(() => currentPage = index),
+                  )
+                ]);
+              } else {
+                return IconButton(
+                  enableFeedback: false,
+                  // iconSize: navBarIconSize,
+                  icon: index == currentPage ? widget.navBarIconSelected : widget.navBarIcon,
+                  onPressed: index == currentPage ? () {} : () => setState(() => currentPage = index),
+                );
+              }
+            }),
+          ),
+        ),
+      ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          debugPrint('Floating Action Button');
-        },
+        onPressed: () {},
         child: const Icon(Icons.add),
       ),
-      bottomNavigationBar: NavigationBar(
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.auto_graph), label: 'Results'),
-          NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
-          NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
-        ],
-        onDestinationSelected: (int index) {
-          setState(() {
-            currentPage = index;
-          });
-        },
-        selectedIndex: currentPage,
-      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 }
