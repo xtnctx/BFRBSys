@@ -16,6 +16,8 @@ import 'package:syncfusion_flutter_charts/charts.dart';
 
 class BluetoothBuilderPage extends StatefulWidget {
   const BluetoothBuilderPage({super.key});
+  final Icon navBarIcon = const Icon(Icons.monitor_heart_outlined);
+  final Icon navBarIconSelected = const Icon(Icons.monitor_heart);
 
   @override
   State<BluetoothBuilderPage> createState() => _BluetoothBuilderPageState();
@@ -66,7 +68,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
 
   String connectionText = "";
   bool isFileTransferInProgress = false;
-  String info = "";
+  String info = "Sample text ...";
 
   Crc32 crc = Crc32();
 
@@ -382,18 +384,15 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
   }
 
   /// Returns the realtime Cartesian line chart.
-  Container _buildLiveAccChart(context) {
-    return Container(
-      margin: const EdgeInsets.all(10.0),
-      height: 170,
+  SizedBox _buildLiveAccChart(context) {
+    return SizedBox(
+      height: 150,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
         child: SfCartesianChart(
           title: ChartTitle(
             text: 'Accelerometer',
-            textStyle: const TextStyle(
-              fontSize: 12,
-            ),
+            textStyle: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
           ),
           backgroundColor: Theme.of(context).colorScheme.primaryContainer,
           plotAreaBorderWidth: 0,
@@ -445,18 +444,15 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
     );
   }
 
-  Container _buildLiveGyroChart(context) {
-    return Container(
-      margin: const EdgeInsets.all(10.0),
-      height: 170,
+  SizedBox _buildLiveGyroChart(context) {
+    return SizedBox(
+      height: 150,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
         child: SfCartesianChart(
           title: ChartTitle(
             text: 'Gyroscope',
-            textStyle: const TextStyle(
-              fontSize: 12,
-            ),
+            textStyle: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
           ),
           backgroundColor: Theme.of(context).colorScheme.primaryContainer,
           plotAreaBorderWidth: 0,
@@ -563,7 +559,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
     return [x, y, z];
   }
 
-  ///Continously updating the data source based on timer
+  // Continously updating the data source based on timer
   void _updateDataSource(Timer timer) {
     List<double> acc = dataParse(accData!);
     List<double> gyro = dataParse(gyroData!);
@@ -598,11 +594,17 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: const Drawer(),
+      // drawer: const Drawer(),
       appBar: AppBar(
+        centerTitle: true,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            bottomRight: Radius.circular(20),
+            bottomLeft: Radius.circular(20),
+          ),
+        ),
         // leading: Icon(Icons.line),
-        backgroundColor: Colors.transparent,
-        title: Text(connectionText),
+        // backgroundColor: Colors.transparent,
         actions: [
           IconButton(
             onPressed: () {
@@ -612,16 +614,25 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
           )
         ],
       ),
-      body: ListView(
+      body: Column(
         children: [
-          _buildLiveAccChart(context),
-          _buildLiveGyroChart(context),
+          Container(
+            margin: const EdgeInsets.all(10.0),
+            child: Column(
+              children: [
+                _buildLiveAccChart(context),
+                const SizedBox(height: 10.0),
+                _buildLiveGyroChart(context),
+              ],
+            ),
+          ),
+
           // SingleChildScrollView(
           //   scrollDirection: Axis.horizontal,
           CarouselSlider(
             options: CarouselOptions(
-              aspectRatio: 2.28,
-              viewportFraction: 0.6,
+              aspectRatio: 2.5,
+              viewportFraction: 0.5,
               enlargeCenterPage: true,
               enlargeStrategy: CenterPageEnlargeStrategy.height,
             ),
@@ -633,7 +644,8 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
                   borderRadius: BorderRadius.circular(10),
                   color: Theme.of(context).colorScheme.primaryContainer,
                 ),
-                child: Column(
+                child: ListView(
+                  physics: const NeverScrollableScrollPhysics(),
                   children: [
                     const SizedBox(height: 5),
                     Row(
@@ -643,9 +655,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
                           child: Text(
                             'Externals',
                             textAlign: TextAlign.left,
-                            style: TextStyle(
-                              fontSize: 16,
-                            ),
+                            style: TextStyle(fontSize: 14, fontStyle: FontStyle.italic),
                           ),
                         ),
                       ],
@@ -655,8 +665,8 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
                       children: [
                         Container(
                           margin: const EdgeInsets.only(left: 25),
-                          width: 40,
-                          height: 40,
+                          width: 30,
+                          height: 30,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(8),
                             color: Theme.of(context).colorScheme.secondaryContainer,
@@ -667,7 +677,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
                           child: Column(
                             children: const [
                               Text('Distance', style: TextStyle(color: Colors.white54, fontSize: 12)),
-                              Text('123.45cm', style: TextStyle(fontSize: 17)),
+                              Text('123.45cm', style: TextStyle(fontSize: 15)),
                             ],
                           ),
                         ),
@@ -678,8 +688,8 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
                       children: [
                         Container(
                           margin: const EdgeInsets.only(left: 25),
-                          width: 40,
-                          height: 40,
+                          width: 30,
+                          height: 30,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(8),
                             color: Theme.of(context).colorScheme.secondaryContainer,
@@ -690,7 +700,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
                           child: Column(
                             children: const [
                               Text('Temperature', style: TextStyle(color: Colors.white54, fontSize: 12)),
-                              Text('35.6°C', style: TextStyle(fontSize: 17)),
+                              Text('35.6°C', style: TextStyle(fontSize: 15)),
                             ],
                           ),
                         ),
@@ -706,7 +716,8 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
                   borderRadius: BorderRadius.circular(10),
                   color: Theme.of(context).colorScheme.primaryContainer,
                 ),
-                child: Column(
+                child: ListView(
+                  physics: const NeverScrollableScrollPhysics(),
                   children: [
                     const SizedBox(height: 5),
                     Row(
@@ -716,9 +727,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
                           child: Text(
                             'Status',
                             textAlign: TextAlign.left,
-                            style: TextStyle(
-                              fontSize: 16,
-                            ),
+                            style: TextStyle(fontSize: 14, fontStyle: FontStyle.italic),
                           ),
                         ),
                       ],
@@ -728,8 +737,8 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
                       children: [
                         Container(
                           margin: const EdgeInsets.only(left: 25),
-                          width: 40,
-                          height: 40,
+                          width: 30,
+                          height: 30,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(8),
                             color: Theme.of(context).colorScheme.secondaryContainer,
@@ -740,7 +749,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
                           child: Column(
                             children: const [
                               Text('Distance', style: TextStyle(color: Colors.white54, fontSize: 12)),
-                              Text('123.45cm', style: TextStyle(fontSize: 17)),
+                              Text('123.45cm', style: TextStyle(fontSize: 15)),
                             ],
                           ),
                         ),
@@ -751,8 +760,8 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
                       children: [
                         Container(
                           margin: const EdgeInsets.only(left: 25),
-                          width: 40,
-                          height: 40,
+                          width: 30,
+                          height: 30,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(8),
                             color: Theme.of(context).colorScheme.secondaryContainer,
@@ -763,7 +772,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
                           child: Column(
                             children: const [
                               Text('Temperature', style: TextStyle(color: Colors.white54, fontSize: 12)),
-                              Text('35.6°C', style: TextStyle(fontSize: 17)),
+                              Text('35.6°C', style: TextStyle(fontSize: 15)),
                             ],
                           ),
                         ),
@@ -779,7 +788,8 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
                   borderRadius: BorderRadius.circular(10),
                   color: Theme.of(context).colorScheme.primaryContainer,
                 ),
-                child: Column(
+                child: ListView(
+                  physics: const NeverScrollableScrollPhysics(),
                   children: [
                     const SizedBox(height: 5),
                     Row(
@@ -789,9 +799,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
                           child: Text(
                             'Memory available',
                             textAlign: TextAlign.left,
-                            style: TextStyle(
-                              fontSize: 16,
-                            ),
+                            style: TextStyle(fontSize: 14, fontStyle: FontStyle.italic),
                           ),
                         ),
                       ],
@@ -801,8 +809,8 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
                       children: [
                         Container(
                           margin: const EdgeInsets.only(left: 25),
-                          width: 40,
-                          height: 40,
+                          width: 30,
+                          height: 30,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(8),
                             color: Theme.of(context).colorScheme.secondaryContainer,
@@ -813,7 +821,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
                           child: Column(
                             children: const [
                               Text('Distance', style: TextStyle(color: Colors.white54, fontSize: 12)),
-                              Text('123.45cm', style: TextStyle(fontSize: 17)),
+                              Text('123.45cm', style: TextStyle(fontSize: 15)),
                             ],
                           ),
                         ),
@@ -824,8 +832,8 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
                       children: [
                         Container(
                           margin: const EdgeInsets.only(left: 25),
-                          width: 40,
-                          height: 40,
+                          width: 30,
+                          height: 30,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(8),
                             color: Theme.of(context).colorScheme.secondaryContainer,
@@ -836,7 +844,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
                           child: Column(
                             children: const [
                               Text('Temperature', style: TextStyle(color: Colors.white54, fontSize: 12)),
-                              Text('35.6°C', style: TextStyle(fontSize: 17)),
+                              Text('35.6°C', style: TextStyle(fontSize: 15)),
                             ],
                           ),
                         ),
@@ -847,53 +855,168 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
               ),
             ],
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
+
+          Expanded(
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 20, left: 10, right: 10),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.tertiaryContainer,
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                flex: 3,
+                                child: TextButton(
+                                  style: TextButton.styleFrom(
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(20),
+                                      )),
+                                  onPressed: () {},
+                                  child: const Text('ADD ON TARGET'),
+                                ),
+                              ),
+                              Expanded(
+                                  flex: 1,
+                                  child: TextButton(
+                                    style: TextButton.styleFrom(
+                                        foregroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(20),
+                                        )),
+                                    child: Wrap(
+                                      children: const [
+                                        Icon(
+                                          Icons.delete_outline,
+                                          color: Colors.red,
+                                        ),
+                                      ],
+                                    ),
+                                    onPressed: () {},
+                                  )),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 20),
+                      Expanded(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.tertiaryContainer,
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                flex: 3,
+                                child: TextButton(
+                                  style: TextButton.styleFrom(
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(20),
+                                      )),
+                                  onPressed: () {},
+                                  child: const Text('ADD OFF TARGET'),
+                                ),
+                              ),
+                              Expanded(
+                                  flex: 1,
+                                  child: TextButton(
+                                    style: TextButton.styleFrom(
+                                        foregroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(20),
+                                        )),
+                                    child: Wrap(
+                                      children: const [
+                                        Icon(
+                                          Icons.delete_outline,
+                                          color: Colors.red,
+                                        ),
+                                      ],
+                                    ),
+                                    onPressed: () {},
+                                  )),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-            onPressed: () {
-              debugPrint('Connecting');
-              startConnection();
-            },
-            child: const Text('Connect'),
           ),
-          const SizedBox(
-            height: 80,
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-            ),
-            onPressed: () async {
-              // print(bytesToInteger([1, 4, 9, 0]));
-            },
-            child: const Text('Check'),
-          ),
-          const SizedBox(
-            height: 80,
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
-            onPressed: () {
-              String dataStr =
-                  "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.!!!!";
-              var fileContents = utf8.encode(dataStr) as Uint8List;
-              print("fileContents length is ${fileContents.length}");
-              transferFile(fileContents);
-            },
-            child: const Text('Send'),
-          ),
-          const SizedBox(
-            height: 80,
-          ),
-          Text(
-            info,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 30),
-          ),
+          // const SizedBox(
+          //   height: 80,
+          // ),
+          // ElevatedButton(
+          //   style: ElevatedButton.styleFrom(
+          //     backgroundColor: Colors.green,
+          //   ),
+          //   onPressed: () async {
+          //     // print(bytesToInteger([1, 4, 9, 0]));
+          //   },
+          //   child: const Text('Check'),
+          // ),
+          // const SizedBox(
+          //   height: 80,
+          // ),
+          // ElevatedButton(
+          //   style: ElevatedButton.styleFrom(
+          //     backgroundColor: Colors.red,
+          //   ),
+          //   onPressed: () {
+          //     String dataStr =
+          //         "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.!!!!";
+          //     var fileContents = utf8.encode(dataStr) as Uint8List;
+          //     print("fileContents length is ${fileContents.length}");
+          //     transferFile(fileContents);
+          //   },
+          //   child: const Text('Send'),
+          // ),
+          // const SizedBox(
+          //   height: 80,
+          // ),
+          // Text(
+          //   info,
+          //   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 30),
+          // ),
         ],
       ),
+      bottomNavigationBar: ClipRRect(
+        borderRadius: const BorderRadius.only(topLeft: Radius.circular(20)),
+        child: BottomAppBar(
+          color: Theme.of(context).colorScheme.primaryContainer,
+          shape: const CircularNotchedRectangle(),
+          notchMargin: 6,
+          child: Padding(
+            padding: const EdgeInsets.all(14.0),
+            child: ClipRRect(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: const [
+                  Flexible(child: Text('Status message ...')),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {},
+        child: const Icon(Icons.add),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
     );
   }
 }
