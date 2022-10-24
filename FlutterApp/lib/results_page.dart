@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 class ResultsPage extends StatefulWidget {
   const ResultsPage({super.key});
+  final Icon navBarIcon = const Icon(Icons.fact_check_outlined);
+  final Icon navBarIconSelected = const Icon(Icons.fact_check);
 
   @override
   State<ResultsPage> createState() => _ResultsPageState();
@@ -13,7 +15,6 @@ class _ResultsPageState extends State<ResultsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
       body: Center(
         child: SizedBox(
           height: 200, // card height
@@ -30,7 +31,7 @@ class _ResultsPageState extends State<ResultsPage> {
                   child: Center(
                     child: Text(
                       "Card ${i + 1}",
-                      style: TextStyle(fontSize: 32),
+                      style: const TextStyle(fontSize: 32),
                     ),
                   ),
                 ),
