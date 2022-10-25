@@ -3,6 +3,7 @@ import 'package:bfrbsys/home_page.dart';
 import 'package:bfrbsys/results_page.dart';
 import 'package:bfrbsys/settings_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:bfrbsys/themes.dart';
 import 'package:provider/provider.dart';
@@ -52,8 +53,6 @@ class _RootPageState extends State<RootPage> {
 
   @override
   Widget build(BuildContext context) {
-    int mid = pages.length ~/ 2;
-    double navBarIconSize = 27;
     return Scaffold(
       body: pages[currentPage],
       bottomNavigationBar: ClipRRect(
@@ -66,33 +65,16 @@ class _RootPageState extends State<RootPage> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: List<Widget>.generate(pages.length, (int index) {
               var widget = pages[index];
-              if (mid == index) {
-                return Wrap(children: [
-                  const SizedBox(width: 60),
-                  IconButton(
-                    enableFeedback: false,
-                    // iconSize: navBarIconSize,
-                    icon: index == currentPage ? widget.navBarIconSelected : widget.navBarIcon,
-                    onPressed: index == currentPage ? () {} : () => setState(() => currentPage = index),
-                  )
-                ]);
-              } else {
-                return IconButton(
-                  enableFeedback: false,
-                  // iconSize: navBarIconSize,
-                  icon: index == currentPage ? widget.navBarIconSelected : widget.navBarIcon,
-                  onPressed: index == currentPage ? () {} : () => setState(() => currentPage = index),
-                );
-              }
+              return IconButton(
+                enableFeedback: false,
+                // iconSize: navBarIconSize,
+                icon: index == currentPage ? widget.navBarIconSelected : widget.navBarIcon,
+                onPressed: index == currentPage ? () {} : () => setState(() => currentPage = index),
+              );
             }),
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        child: const Icon(Icons.add),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 }
