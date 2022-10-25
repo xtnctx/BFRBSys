@@ -13,6 +13,7 @@ import 'package:flutter_blue/flutter_blue.dart';
 import 'package:bfrbsys/colors.dart' as custom_color;
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
+import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 
 class BluetoothBuilderPage extends StatefulWidget {
   const BluetoothBuilderPage({super.key});
@@ -66,9 +67,10 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
   BluetoothCharacteristic? gyroDataCharacteristic;
   BluetoothCharacteristic? distDataCharacteristic;
 
-  String connectionText = "";
   bool isFileTransferInProgress = false;
-  String info = "Sample text ...";
+  bool isConnected = false;
+  String info = '>_';
+  int infoCode = 0;
 
   Crc32 crc = Crc32();
 
@@ -93,17 +95,12 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
   }
 
   startConnection() {
-    setState(() {
-      connectionText = "Start Scanning";
-    });
+    msg('Scanning ... ');
 
     flutterBlue.scan().listen((results) {
       if (results.device.name == TARGET_DEVICE_NAME) {
-        debugPrint('DEVICE found');
         stopScan();
-        setState(() {
-          connectionText = "Found Target Device";
-        });
+        msg('Target device found. Getting primary service ...');
         device = results.device;
         connectToDevice();
       }
@@ -194,9 +191,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
           }
         }
         timer = Timer.periodic(const Duration(milliseconds: 100), _updateDataSource);
-        setState(() {
-          connectionText = "All Ready with ${device.name}";
-        });
+        msg('Connected to ${device.name}');
       }
     }
   }
@@ -205,15 +200,9 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
     // ignore: unnecessary_null_comparison
     if (device == null) return;
 
-    setState(() {
-      connectionText = "Device Connecting";
-    });
-
     await device.connect();
-    debugPrint('DEVICE CONNECTED');
-    setState(() {
-      connectionText = "Device Connected";
-    });
+
+    msg('Getting characteristics ...');
 
     discoverServices();
   }
@@ -221,15 +210,24 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
   disconnectFromDevice() {
     device.disconnect();
 
+    msg('Device ${device.name} disconnected');
+  }
+
+  msg(String m, [int statusCode = 0]) {
     setState(() {
-      connectionText = "Device Disconnected";
+      info = m;
+      infoCode = statusCode;
     });
   }
 
-  msg(String m) {
-    setState(() {
-      info = m;
-    });
+  Text _textInfo(String m, [int statusCode = 0]) {
+    Map<int, Color> statusCodeColor = {
+      -2: const Color(0xFFE91DC7), // Crash
+      -1: const Color(0xFFCA1A1A), // Error
+      1: const Color(0xFFD8CB19), // Warning
+      2: const Color(0xFF15A349), // Success
+    };
+    return Text(m, style: TextStyle(color: statusCodeColor[statusCode]));
   }
 
   String? accData;
@@ -278,7 +276,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
       String errorMessage = String.fromCharCodes(readData);
 
       if (readData.isNotEmpty && readData != []) {
-        msg("Error message = $errorMessage");
+        msg("Error message = $errorMessage", -1);
       }
     });
   }
@@ -298,6 +296,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
   }
 
   Uint8List integerToBytes(int value) {
+    /// Use case: value > 255
     const length = 4;
     return Uint8List(length)..buffer.asByteData().setInt32(0, value, Endian.little);
   }
@@ -310,12 +309,12 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
     // ByteData byteData = maximumLengthArray.buffer.asByteData();
     // int value = byteData.getUint32(0, Endian.little);
     if (fileContents.length > maximumLength) {
-      msg("File length is too long: ${fileContents.length} bytes but maximum is $maximumLength");
+      msg("File length is too long: ${fileContents.length} bytes but maximum is $maximumLength", 1);
       return;
     }
 
     if (isFileTransferInProgress) {
-      msg("Another file transfer is already in progress");
+      msg("Another file transfer is already in progress", 1);
       return;
     }
 
@@ -352,13 +351,13 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
     isFileTransferInProgress = false;
     var checksumValue = await fileChecksumCharacteristic?.read();
     var checksum = bytesToInteger(checksumValue!) as int;
-    msg("File transfer succeeded: Checksum 0x${checksum.toRadixString(16)}");
+    msg("File transfer succeeded: Checksum 0x${checksum.toRadixString(16)}", 2);
   }
 
   // Called when something has gone wrong with a file transfer.
   onTransferError() {
     isFileTransferInProgress = false;
-    msg("File transfer error");
+    msg("File transfer error", -1);
   }
 
   sendFileBlock(fileContents, bytesAlreadySent) async {
@@ -379,7 +378,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
       }
     }).catchError((error) {
       print(error);
-      msg("File block write error with $bytesRemaining bytes remaining, see console");
+      msg("File block write error with $bytesRemaining bytes remaining", -1);
     });
   }
 
@@ -388,7 +387,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
     return SizedBox(
       height: 150,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(10),
         child: SfCartesianChart(
           title: ChartTitle(
             text: 'Accelerometer',
@@ -404,8 +403,8 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
             maximum: 3,
             isVisible: false,
           ),
-          series: <LineSeries<_ChartData, int>>[
-            LineSeries<_ChartData, int>(
+          series: <SplineSeries<_ChartData, int>>[
+            SplineSeries<_ChartData, int>(
               name: 'x',
               onRendererCreated: (ChartSeriesController controller) {
                 axAxisController = controller;
@@ -416,7 +415,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
               yValueMapper: (_ChartData data, _) => data.x,
               animationDuration: 0,
             ),
-            LineSeries<_ChartData, int>(
+            SplineSeries<_ChartData, int>(
               name: 'y',
               onRendererCreated: (ChartSeriesController controller) {
                 ayAxisController = controller;
@@ -427,7 +426,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
               yValueMapper: (_ChartData data, _) => data.y,
               animationDuration: 0,
             ),
-            LineSeries<_ChartData, int>(
+            SplineSeries<_ChartData, int>(
               name: 'z',
               onRendererCreated: (ChartSeriesController controller) {
                 azAxisController = controller;
@@ -448,7 +447,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
     return SizedBox(
       height: 150,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(10),
         child: SfCartesianChart(
           title: ChartTitle(
             text: 'Gyroscope',
@@ -464,8 +463,8 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
             maximum: 750,
             isVisible: false,
           ),
-          series: <LineSeries<_ChartData, int>>[
-            LineSeries<_ChartData, int>(
+          series: <SplineSeries<_ChartData, int>>[
+            SplineSeries<_ChartData, int>(
               name: 'x',
               onRendererCreated: (ChartSeriesController controller) {
                 gxAxisController = controller;
@@ -476,7 +475,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
               yValueMapper: (_ChartData data, _) => data.x,
               animationDuration: 0,
             ),
-            LineSeries<_ChartData, int>(
+            SplineSeries<_ChartData, int>(
               name: 'y',
               onRendererCreated: (ChartSeriesController controller) {
                 gyAxisController = controller;
@@ -487,7 +486,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
               yValueMapper: (_ChartData data, _) => data.y,
               animationDuration: 0,
             ),
-            LineSeries<_ChartData, int>(
+            SplineSeries<_ChartData, int>(
               name: 'z',
               onRendererCreated: (ChartSeriesController controller) {
                 gzAxisController = controller;
@@ -535,6 +534,24 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
             Text('z'),
           ],
         )
+      ],
+    );
+  }
+
+  Widget _buildPopupDialog(BuildContext context, String title, Widget content) {
+    return AlertDialog(
+      title: Text(title),
+      content: content,
+      actions: <Widget>[
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+          child: const Text(
+            'Close',
+            style: TextStyle(color: Colors.blue),
+          ),
+        ),
       ],
     );
   }
@@ -596,28 +613,90 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
     return Scaffold(
       // drawer: const Drawer(),
       appBar: AppBar(
+        toolbarHeight: 40,
         centerTitle: true,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.only(
-            bottomRight: Radius.circular(20),
-            bottomLeft: Radius.circular(20),
+            bottomRight: Radius.circular(15),
+            bottomLeft: Radius.circular(15),
           ),
         ),
         // leading: Icon(Icons.line),
         // backgroundColor: Colors.transparent,
         actions: [
-          IconButton(
-            onPressed: () {
-              debugPrint('Actions');
-            },
+          Container(
+            padding: const EdgeInsets.only(right: 11.2),
+            child: MyTooltip(
+                message: isConnected ? 'Connected' : 'Disconnected',
+                child: Icon(
+                  Icons.rectangle,
+                  size: 10,
+                  color: isConnected ? Colors.greenAccent : Colors.redAccent,
+                )),
+          ),
+          PopupMenuButton(
             icon: const Icon(Icons.info_outline),
-          )
+            itemBuilder: (context) => [
+              // PopupMenuItem 1
+              const PopupMenuItem(value: 1, child: Text('Chart Legend')),
+              const PopupMenuItem(value: 2, child: Text('Sensor Range')),
+            ],
+            onSelected: (value) {
+              if (value == 1) {
+                showDialog(
+                  barrierColor: Theme.of(context).colorScheme.primaryContainer.withAlpha(125),
+                  context: context,
+                  builder: (BuildContext context, [_]) => _buildPopupDialog(
+                    context,
+                    'Chart Legend',
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Column(
+                          children: [
+                            chartLegend(),
+                          ],
+                        )
+                      ],
+                    ),
+                  ),
+                );
+              } else if (value == 2) {
+                showDialog(
+                  barrierColor: Theme.of(context).colorScheme.primaryContainer.withAlpha(125),
+                  context: context,
+                  builder: (BuildContext context, [_]) => _buildPopupDialog(
+                    context,
+                    'Sensor Range',
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Column(
+                          children: const [
+                            Text('Accelerometer : ±4 g'),
+                            SizedBox(height: 5),
+                            Text('Gyroscope : ±2000 dps'),
+                            SizedBox(height: 5),
+                            Text('Distance : 200 cm (max)'),
+                            SizedBox(height: 5),
+                            Text('Temperature : -70 to 382.2°C'),
+                          ],
+                        )
+                      ],
+                    ),
+                  ),
+                );
+              }
+            },
+          ),
         ],
       ),
       body: Column(
         children: [
           Container(
-            margin: const EdgeInsets.all(10.0),
+            margin: const EdgeInsets.only(left: 10, right: 10, top: 10, bottom: 5),
             child: Column(
               children: [
                 _buildLiveAccChart(context),
@@ -631,7 +710,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
           //   scrollDirection: Axis.horizontal,
           CarouselSlider(
             options: CarouselOptions(
-              aspectRatio: 2.5,
+              aspectRatio: 2.6,
               viewportFraction: 0.5,
               enlargeCenterPage: true,
               enlargeStrategy: CenterPageEnlargeStrategy.height,
@@ -644,67 +723,90 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
                   borderRadius: BorderRadius.circular(10),
                   color: Theme.of(context).colorScheme.primaryContainer,
                 ),
-                child: ListView(
-                  physics: const NeverScrollableScrollPhysics(),
+                child: Column(
                   children: [
-                    const SizedBox(height: 5),
-                    Row(
-                      children: const [
-                        SizedBox(width: 15),
-                        Expanded(
-                          child: Text(
-                            'Externals',
-                            textAlign: TextAlign.left,
-                            style: TextStyle(fontSize: 14, fontStyle: FontStyle.italic),
+                    Container(
+                      margin: const EdgeInsets.only(top: 12),
+                      child: Row(
+                        children: const [
+                          SizedBox(width: 15),
+                          Expanded(
+                            child: Text(
+                              'Externals',
+                              textAlign: TextAlign.left,
+                              style: TextStyle(fontSize: 14, fontStyle: FontStyle.italic),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Container(
-                          margin: const EdgeInsets.only(left: 25),
-                          width: 30,
-                          height: 30,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            color: Theme.of(context).colorScheme.secondaryContainer,
-                          ),
-                          child: const Icon(Icons.sensors, color: Color.fromARGB(255, 42, 162, 237)),
+                    Expanded(
+                      child: Center(
+                        child: ListView(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(top: 3, bottom: 3),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    margin: const EdgeInsets.only(left: 25),
+                                    width: 30,
+                                    height: 30,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(8),
+                                      color: Theme.of(context).colorScheme.secondaryContainer,
+                                    ),
+                                    child: const Icon(Icons.sensors),
+                                  ),
+                                  Expanded(
+                                    child: Column(
+                                      children: const [
+                                        Text('Distance',
+                                            style: TextStyle(
+                                              color: Colors.white54,
+                                              fontSize: 12,
+                                            )),
+                                        Text('123.45cm', style: TextStyle(fontSize: 15)),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 3, bottom: 3),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    margin: const EdgeInsets.only(left: 25),
+                                    width: 30,
+                                    height: 30,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(8),
+                                      color: Theme.of(context).colorScheme.secondaryContainer,
+                                    ),
+                                    child: const Icon(Icons.thermostat),
+                                  ),
+                                  Expanded(
+                                    child: Column(
+                                      children: const [
+                                        Text('Temperature',
+                                            style: TextStyle(
+                                              color: Colors.white54,
+                                              fontSize: 12,
+                                            )),
+                                        Text('35.6°C', style: TextStyle(fontSize: 15)),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                        Expanded(
-                          child: Column(
-                            children: const [
-                              Text('Distance', style: TextStyle(color: Colors.white54, fontSize: 12)),
-                              Text('123.45cm', style: TextStyle(fontSize: 15)),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 5),
-                    Row(
-                      children: [
-                        Container(
-                          margin: const EdgeInsets.only(left: 25),
-                          width: 30,
-                          height: 30,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            color: Theme.of(context).colorScheme.secondaryContainer,
-                          ),
-                          child: const Icon(Icons.thermostat, color: Color.fromARGB(255, 231, 124, 149)),
-                        ),
-                        Expanded(
-                          child: Column(
-                            children: const [
-                              Text('Temperature', style: TextStyle(color: Colors.white54, fontSize: 12)),
-                              Text('35.6°C', style: TextStyle(fontSize: 15)),
-                            ],
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
@@ -716,67 +818,90 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
                   borderRadius: BorderRadius.circular(10),
                   color: Theme.of(context).colorScheme.primaryContainer,
                 ),
-                child: ListView(
-                  physics: const NeverScrollableScrollPhysics(),
+                child: Column(
                   children: [
-                    const SizedBox(height: 5),
-                    Row(
-                      children: const [
-                        SizedBox(width: 15),
-                        Expanded(
-                          child: Text(
-                            'Status',
-                            textAlign: TextAlign.left,
-                            style: TextStyle(fontSize: 14, fontStyle: FontStyle.italic),
+                    Container(
+                      margin: const EdgeInsets.only(top: 12),
+                      child: Row(
+                        children: const [
+                          SizedBox(width: 15),
+                          Expanded(
+                            child: Text(
+                              'Status',
+                              textAlign: TextAlign.left,
+                              style: TextStyle(fontSize: 14, fontStyle: FontStyle.italic),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Container(
-                          margin: const EdgeInsets.only(left: 25),
-                          width: 30,
-                          height: 30,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            color: Theme.of(context).colorScheme.secondaryContainer,
-                          ),
-                          child: const Icon(Icons.sensors, color: Color.fromARGB(255, 42, 162, 237)),
+                    Expanded(
+                      child: Center(
+                        child: ListView(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(top: 3, bottom: 3),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    margin: const EdgeInsets.only(left: 25),
+                                    width: 30,
+                                    height: 30,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(8),
+                                      color: Theme.of(context).colorScheme.secondaryContainer,
+                                    ),
+                                    child: const Icon(Icons.battery_5_bar),
+                                  ),
+                                  Expanded(
+                                    child: Column(
+                                      children: const [
+                                        Text('Battery level',
+                                            style: TextStyle(
+                                              color: Colors.white54,
+                                              fontSize: 12,
+                                            )),
+                                        Text('85%', style: TextStyle(fontSize: 15)),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 3, bottom: 3),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    margin: const EdgeInsets.only(left: 25),
+                                    width: 30,
+                                    height: 30,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(8),
+                                      color: Theme.of(context).colorScheme.secondaryContainer,
+                                    ),
+                                    child: const Icon(Icons.scatter_plot),
+                                  ),
+                                  Expanded(
+                                    child: Column(
+                                      children: const [
+                                        Text('TFLite model',
+                                            style: TextStyle(
+                                              color: Colors.white54,
+                                              fontSize: 12,
+                                            )),
+                                        Text('In use', style: TextStyle(fontSize: 15)),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                        Expanded(
-                          child: Column(
-                            children: const [
-                              Text('Distance', style: TextStyle(color: Colors.white54, fontSize: 12)),
-                              Text('123.45cm', style: TextStyle(fontSize: 15)),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 5),
-                    Row(
-                      children: [
-                        Container(
-                          margin: const EdgeInsets.only(left: 25),
-                          width: 30,
-                          height: 30,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            color: Theme.of(context).colorScheme.secondaryContainer,
-                          ),
-                          child: const Icon(Icons.thermostat, color: Color.fromARGB(255, 231, 124, 149)),
-                        ),
-                        Expanded(
-                          child: Column(
-                            children: const [
-                              Text('Temperature', style: TextStyle(color: Colors.white54, fontSize: 12)),
-                              Text('35.6°C', style: TextStyle(fontSize: 15)),
-                            ],
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
@@ -788,67 +913,56 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
                   borderRadius: BorderRadius.circular(10),
                   color: Theme.of(context).colorScheme.primaryContainer,
                 ),
-                child: ListView(
-                  physics: const NeverScrollableScrollPhysics(),
+                child: Column(
                   children: [
-                    const SizedBox(height: 5),
-                    Row(
-                      children: const [
-                        SizedBox(width: 15),
-                        Expanded(
-                          child: Text(
-                            'Memory available',
-                            textAlign: TextAlign.left,
-                            style: TextStyle(fontSize: 14, fontStyle: FontStyle.italic),
+                    Container(
+                      margin: const EdgeInsets.only(top: 12),
+                      child: Row(
+                        children: const [
+                          SizedBox(width: 15),
+                          Expanded(
+                            child: Text(
+                              'Memory available',
+                              textAlign: TextAlign.left,
+                              style: TextStyle(fontSize: 14, fontStyle: FontStyle.italic),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Container(
-                          margin: const EdgeInsets.only(left: 25),
-                          width: 30,
-                          height: 30,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            color: Theme.of(context).colorScheme.secondaryContainer,
-                          ),
-                          child: const Icon(Icons.sensors, color: Color.fromARGB(255, 42, 162, 237)),
+                    Expanded(
+                      child: Center(
+                        child: ListView(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(top: 3, bottom: 3),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    margin: const EdgeInsets.only(left: 25),
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(8),
+                                      color: Theme.of(context).colorScheme.secondaryContainer,
+                                    ),
+                                    child: const Icon(Icons.memory, size: 30),
+                                  ),
+                                  Expanded(
+                                    child: Column(
+                                      children: const [
+                                        Text('256kB', style: TextStyle(fontSize: 20)),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                        Expanded(
-                          child: Column(
-                            children: const [
-                              Text('Distance', style: TextStyle(color: Colors.white54, fontSize: 12)),
-                              Text('123.45cm', style: TextStyle(fontSize: 15)),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 5),
-                    Row(
-                      children: [
-                        Container(
-                          margin: const EdgeInsets.only(left: 25),
-                          width: 30,
-                          height: 30,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            color: Theme.of(context).colorScheme.secondaryContainer,
-                          ),
-                          child: const Icon(Icons.thermostat, color: Color.fromARGB(255, 231, 124, 149)),
-                        ),
-                        Expanded(
-                          child: Column(
-                            children: const [
-                              Text('Temperature', style: TextStyle(color: Colors.white54, fontSize: 12)),
-                              Text('35.6°C', style: TextStyle(fontSize: 15)),
-                            ],
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
@@ -1004,17 +1118,62 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
             child: ClipRRect(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.start,
-                children: const [
-                  Flexible(child: Text('Status message ...')),
+                children: [
+                  Flexible(child: _textInfo(info, infoCode)),
                 ],
               ),
             ),
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        child: const Icon(Icons.add),
+
+      floatingActionButton: SpeedDial(
+        direction: SpeedDialDirection.left,
+        animatedIcon: AnimatedIcons.menu_close,
+        spaceBetweenChildren: 10,
+        children: [
+          SpeedDialChild(
+            child:
+                !isConnected ? const Icon(Icons.bluetooth_connected) : const Icon(Icons.bluetooth_disabled),
+            onTap: !isConnected
+                ? () {
+                    startConnection();
+                    setState(() {
+                      isConnected = !isConnected;
+                    });
+                  }
+                : () {
+                    msg('Hold to disconnect', 1);
+                  },
+            onLongPress: () {
+              if (isConnected) {
+                setState(() {
+                  isConnected = !isConnected;
+                });
+              }
+            },
+          ),
+          SpeedDialChild(
+              child: const Icon(Icons.send),
+              onTap: () {
+                String dataStr =
+                    "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.!!!!";
+                var fileContents = utf8.encode(dataStr) as Uint8List;
+                print("fileContents length is ${fileContents.length}");
+                transferFile(fileContents);
+              }),
+          SpeedDialChild(
+              child: const Icon(Icons.cancel),
+              onTap: () async {
+                msg('Trying to cancel transfer ...');
+                await commandCharacteristic?.write([2]);
+              }),
+          SpeedDialChild(
+              child: const Icon(Icons.build),
+              onTap: () {
+                msg('Building model please wait');
+              }),
+        ],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
     );
@@ -1028,4 +1187,30 @@ class _ChartData {
   final num x;
   final num y;
   final num z;
+}
+
+class MyTooltip extends StatelessWidget {
+  final Widget child;
+  final String message;
+
+  const MyTooltip({super.key, required this.message, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final key = GlobalKey<State<Tooltip>>();
+    return Tooltip(
+      key: key,
+      message: message,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => _onTap(key),
+        child: child,
+      ),
+    );
+  }
+
+  void _onTap(GlobalKey key) {
+    final dynamic tooltip = key.currentState;
+    tooltip?.ensureTooltipVisible();
+  }
 }
