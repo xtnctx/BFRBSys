@@ -56,8 +56,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage>
   /* =========================================================================== */
 
   FlutterBlue flutterBlue = FlutterBlue.instance;
-
-  late BluetoothDevice device;
+  BluetoothDevice? device;
 
   // The characteritics here must match in the peripheral
   BluetoothCharacteristic? fileBlockCharacteristic;
@@ -107,18 +106,25 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage>
 
   startConnection() {
     msg('Scanning ... ');
-    flutterBlue.scan().listen((results) {
-      if (results.device.name == TARGET_DEVICE_NAME) {
-        msg('Target device found. Getting primary service ...');
-        device = results.device;
-        _connectToDevice();
-        flutterBlue.stopScan();
+    flutterBlue.startScan(timeout: const Duration(seconds: 4));
+
+    flutterBlue.scanResults.listen((results) {
+      for (ScanResult r in results) {
+        print('${r.device.name} found! rssi: ${r.rssi}');
+        if (r.device.name == TARGET_DEVICE_NAME) {
+          msg('Target device found. Getting primary service ...');
+          device = r.device;
+          _connectToDevice();
+          flutterBlue.stopScan();
+        }
       }
     });
+    msg("Can't find your device.", 1);
+    flutterBlue.stopScan();
   }
 
   _discoverServices() async {
-    List<BluetoothService> services = await device.discoverServices();
+    List<BluetoothService> services = await device!.discoverServices();
     for (var service in services) {
       if (service.uuid.toString() == SERVICE_UUID) {
         for (var characteristic in service.characteristics) {
@@ -196,7 +202,8 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage>
           }
         }
         timer = Timer.periodic(const Duration(milliseconds: 100), _updateDataSource);
-        msg('Connected to ${device.name}');
+
+        msg('Connected to ${device!.name}');
       }
     }
   }
@@ -205,16 +212,35 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage>
     // ignore: unnecessary_null_comparison
     if (device == null) return;
 
-    await device.connect();
+    await device!.connect();
 
     msg('Getting characteristics ...');
-
     _discoverServices();
+
+    setState(() {
+      isConnected = true;
+    });
+
+    // Listen from sudden disconnection
+    late StreamSubscription<dynamic> deviceState;
+    deviceState = device!.state.listen((event) {
+      if (event == BluetoothDeviceState.disconnected) {
+        _disconnectFromDevice();
+        deviceState.cancel();
+      }
+    });
   }
 
   _disconnectFromDevice() {
-    device.disconnect();
-    msg('Device ${device.name} disconnected');
+    device!.disconnect();
+    device = null;
+    timer!.cancel();
+    timer = null;
+
+    setState(() {
+      isConnected = false;
+    });
+    msg('Device ${device!.name} disconnected');
   }
 
   msg(String m, [int statusCode = 0]) {
@@ -239,8 +265,8 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage>
   String? distData;
   /* ------------------------------------------------- */
   // EVENT LISTENERS
-  _readData(characteristic) {
-    characteristic.value.listen((value) {
+  _readData(BluetoothCharacteristic? characteristic) {
+    characteristic!.value.listen((value) {
       List<int> readData = List.from(value);
       String parsedData = String.fromCharCodes(readData);
 
@@ -256,8 +282,8 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage>
     });
   }
 
-  onTransferStatusChanged(characteristic) {
-    characteristic.value.listen((List<int> value) {
+  onTransferStatusChanged(BluetoothCharacteristic? characteristic) {
+    characteristic!.value.listen((List<int> value) {
       num statusCode = bytesToInteger(value);
 
       if (value.isEmpty) return;
@@ -274,8 +300,8 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage>
 
   // Called when an error message is received from the device. This describes what
   // went wrong with the transfer in a user-readable form.
-  onErrorMessageChanged(characteristic) {
-    characteristic.value.listen((List<int> value) {
+  onErrorMessageChanged(BluetoothCharacteristic? characteristic) {
+    characteristic!.value.listen((List<int> value) {
       List<int> readData = List.from(value);
       String errorMessage = String.fromCharCodes(readData);
 
@@ -608,6 +634,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage>
       updateControllerDataSource(chartGyroData, gyAxisController, false);
       updateControllerDataSource(chartGyroData, gzAxisController, false);
     }
+
     count = count + 1;
   }
 
@@ -1149,9 +1176,6 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage>
             onTap: !isConnected
                 ? () {
                     startConnection();
-                    setState(() {
-                      isConnected = !isConnected;
-                    });
                   }
                 : () {
                     msg('Hold to disconnect', 1);
@@ -1159,9 +1183,6 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage>
             onLongPress: () {
               if (isConnected) {
                 _disconnectFromDevice();
-                setState(() {
-                  isConnected = !isConnected;
-                });
               }
             },
           ),
@@ -1182,8 +1203,15 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage>
               }),
           SpeedDialChild(
               child: const Icon(Icons.build),
-              onTap: () {
-                msg('Building model please wait');
+              onTap: () async {
+                bool? state;
+                if (device!.state == BluetoothDeviceState.connected) {
+                  state = true;
+                } else {
+                  state = false;
+                }
+
+                msg('Building model please wait. ${device!.id}');
               }),
         ],
       ),
