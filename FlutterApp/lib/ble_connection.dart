@@ -16,15 +16,20 @@ import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 
 class BluetoothBuilderPage extends StatefulWidget {
-  const BluetoothBuilderPage({super.key});
+  final Widget? navigationDrawer;
   final Icon navBarIcon = const Icon(Icons.monitor_heart_outlined);
   final Icon navBarIconSelected = const Icon(Icons.monitor_heart);
+  final String navBarTitle = 'Monitoring System';
+  final GlobalKey<ScaffoldState>? scaffoldKey = GlobalKey<ScaffoldState>();
+
+  BluetoothBuilderPage({super.key, this.navigationDrawer});
 
   @override
   State<BluetoothBuilderPage> createState() => _BluetoothBuilderPageState();
 }
 
-class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
+class _BluetoothBuilderPageState extends State<BluetoothBuilderPage>
+    with AutomaticKeepAliveClientMixin<BluetoothBuilderPage> {
   /// INFO: The Generic Attribute Profile (GATT) is the architechture used
   ///       for bluetooth connectivity.
   ///
@@ -51,7 +56,6 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
   /* =========================================================================== */
 
   FlutterBlue flutterBlue = FlutterBlue.instance;
-  StreamSubscription<ScanResult>? scanSubScription;
 
   late BluetoothDevice device;
 
@@ -85,34 +89,35 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
   ChartSeriesController? gxAxisController;
   ChartSeriesController? gyAxisController;
   ChartSeriesController? gzAxisController;
+  Widget? navigationDrawer;
+  GlobalKey<ScaffoldState>? scaffoldKey;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
     count = 19;
     chartAccData = <_ChartData>[];
     chartGyroData = <_ChartData>[];
+    navigationDrawer = widget.navigationDrawer;
+    scaffoldKey = widget.scaffoldKey;
     super.initState();
   }
 
   startConnection() {
     msg('Scanning ... ');
-
     flutterBlue.scan().listen((results) {
       if (results.device.name == TARGET_DEVICE_NAME) {
-        stopScan();
         msg('Target device found. Getting primary service ...');
         device = results.device;
-        connectToDevice();
+        _connectToDevice();
+        flutterBlue.stopScan();
       }
-    }, onDone: () => stopScan());
+    });
   }
 
-  stopScan() {
-    scanSubScription?.cancel();
-    scanSubScription = null;
-  }
-
-  discoverServices() async {
+  _discoverServices() async {
     List<BluetoothService> services = await device.discoverServices();
     for (var service in services) {
       if (service.uuid.toString() == SERVICE_UUID) {
@@ -196,7 +201,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
     }
   }
 
-  connectToDevice() async {
+  _connectToDevice() async {
     // ignore: unnecessary_null_comparison
     if (device == null) return;
 
@@ -204,12 +209,11 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
 
     msg('Getting characteristics ...');
 
-    discoverServices();
+    _discoverServices();
   }
 
-  disconnectFromDevice() {
+  _disconnectFromDevice() {
     device.disconnect();
-
     msg('Device ${device.name} disconnected');
   }
 
@@ -399,8 +403,8 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
             isVisible: false,
           ),
           primaryYAxis: NumericAxis(
-            minimum: -3,
-            maximum: 3,
+            minimum: -2,
+            maximum: 2,
             isVisible: false,
           ),
           series: <SplineSeries<_ChartData, int>>[
@@ -459,8 +463,8 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
             isVisible: false,
           ),
           primaryYAxis: NumericAxis(
-            minimum: -750,
-            maximum: 750,
+            minimum: -500,
+            maximum: 500,
             isVisible: false,
           ),
           series: <SplineSeries<_ChartData, int>>[
@@ -610,10 +614,12 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
   /* ------------------------------------------------- */
   @override
   Widget build(BuildContext context) {
+    super.build(context);
+
     return Scaffold(
-      // drawer: const Drawer(),
+      key: scaffoldKey,
       appBar: AppBar(
-        toolbarHeight: 40,
+        // toolbarHeight: 40,
         centerTitle: true,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.only(
@@ -625,7 +631,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
         // backgroundColor: Colors.transparent,
         actions: [
           Container(
-            padding: const EdgeInsets.only(right: 11.2),
+            padding: const EdgeInsets.only(right: 18),
             child: MyTooltip(
                 message: isConnected ? 'Connected' : 'Disconnected',
                 child: Icon(
@@ -693,6 +699,12 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
           ),
         ],
       ),
+      drawer: navigationDrawer,
+      onDrawerChanged: ((isOpened) {
+        if (isOpened) {}
+        // toggleDrawer();
+        print(isOpened);
+      }),
       body: Column(
         children: [
           Container(
@@ -1126,7 +1138,6 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
           ),
         ),
       ),
-
       floatingActionButton: SpeedDial(
         direction: SpeedDialDirection.left,
         animatedIcon: AnimatedIcons.menu_close,
@@ -1147,6 +1158,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
                   },
             onLongPress: () {
               if (isConnected) {
+                _disconnectFromDevice();
                 setState(() {
                   isConnected = !isConnected;
                 });
