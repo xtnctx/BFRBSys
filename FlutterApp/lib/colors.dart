@@ -67,3 +67,4 @@ const ColorScheme flexSchemeLight = ColorScheme(
 const Color lineXColor = Color(0xFFC06C84);
 const Color lineYColor = Color(0xFF3B65B9);
 const Color lineZColor = Color(0xFF3BB95D);
+const Color deadLineColor = Colors.transparent;
