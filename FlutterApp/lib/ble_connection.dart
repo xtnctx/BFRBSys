@@ -14,22 +14,24 @@ import 'package:bfrbsys/colors.dart' as custom_color;
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:provider/provider.dart';
+import 'package:bfrbsys/connection_provider.dart';
 
+// ignore: must_be_immutable
 class BluetoothBuilderPage extends StatefulWidget {
-  final Widget? navigationDrawer;
   final Icon navBarIcon = const Icon(Icons.monitor_heart_outlined);
   final Icon navBarIconSelected = const Icon(Icons.monitor_heart);
   final String navBarTitle = 'Monitoring System';
-  final GlobalKey<ScaffoldState>? scaffoldKey = GlobalKey<ScaffoldState>();
 
-  BluetoothBuilderPage({super.key, this.navigationDrawer});
+  const BluetoothBuilderPage({super.key});
 
   @override
   State<BluetoothBuilderPage> createState() => _BluetoothBuilderPageState();
 }
 
-class _BluetoothBuilderPageState extends State<BluetoothBuilderPage>
-    with AutomaticKeepAliveClientMixin<BluetoothBuilderPage> {
+// class _BluetoothBuilderPageState extends State<BluetoothBuilderPage>
+//     with AutomaticKeepAliveClientMixin<BluetoothBuilderPage> {
+class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
   /// INFO: The Generic Attribute Profile (GATT) is the architechture used
   ///       for bluetooth connectivity.
   ///
@@ -55,8 +57,9 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage>
   final String DIST_DATA_UUID = 'bf88b656-3009-4a61-86e0-769c741026c0';
   /* =========================================================================== */
 
-  FlutterBlue flutterBlue = FlutterBlue.instance;
+  FlutterBlue? flutterBlue;
   BluetoothDevice? device;
+  StreamSubscription<dynamic>? deviceState;
 
   // The characteritics here must match in the peripheral
   BluetoothCharacteristic? fileBlockCharacteristic;
@@ -71,7 +74,6 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage>
   BluetoothCharacteristic? distDataCharacteristic;
 
   bool isFileTransferInProgress = false;
-  bool isConnected = false;
   String info = '>_';
   int infoCode = 0;
 
@@ -88,43 +90,55 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage>
   ChartSeriesController? gxAxisController;
   ChartSeriesController? gyAxisController;
   ChartSeriesController? gzAxisController;
-  Widget? navigationDrawer;
-  GlobalKey<ScaffoldState>? scaffoldKey;
 
-  @override
-  bool get wantKeepAlive => true;
+  // @override
+  // bool get wantKeepAlive => true;
+
+  void setConnected(fromContext, bool value) {
+    Provider.of<ConnectionProvider>(fromContext, listen: false).setConnected = value;
+  }
+
+  bool connectionValue(fromContext) {
+    return Provider.of<ConnectionProvider>(fromContext, listen: false).isConnected;
+  }
 
   @override
   void initState() {
     count = 19;
     chartAccData = <_ChartData>[];
     chartGyroData = <_ChartData>[];
-    navigationDrawer = widget.navigationDrawer;
-    scaffoldKey = widget.scaffoldKey;
     super.initState();
   }
 
-  startConnection() {
+  startConnection(context) async {
+    flutterBlue = FlutterBlue.instance;
+    bool isOn = await flutterBlue!.isOn;
+    if (!isOn) {
+      msg("Please turn on your bluetooth", 3);
+      return;
+    }
     msg('Scanning ... ');
-    flutterBlue.startScan(timeout: const Duration(seconds: 4));
+    flutterBlue!.startScan(timeout: const Duration(seconds: 4));
 
-    flutterBlue.scanResults.listen((results) {
+    flutterBlue!.scanResults.listen((results) {
       for (ScanResult r in results) {
         print('${r.device.name} found! rssi: ${r.rssi}');
         if (r.device.name == TARGET_DEVICE_NAME) {
-          msg('Target device found. Getting primary service ...');
-          device = r.device;
-          _connectToDevice();
-          flutterBlue.stopScan();
+          if (r.advertisementData.connectable) {
+            msg('Target device found. Getting primary service ...');
+            device = r.device;
+            _connectToDevice(context);
+          }
         }
       }
     });
+    flutterBlue!.stopScan();
     msg("Can't find your device.", 1);
-    flutterBlue.stopScan();
   }
 
-  _discoverServices() async {
+  Future<void> _discoverServices() async {
     List<BluetoothService> services = await device!.discoverServices();
+
     for (var service in services) {
       if (service.uuid.toString() == SERVICE_UUID) {
         for (var characteristic in service.characteristics) {
@@ -208,39 +222,40 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage>
     }
   }
 
-  _connectToDevice() async {
-    // ignore: unnecessary_null_comparison
+  Future<void> _connectToDevice(context) async {
     if (device == null) return;
 
-    await device!.connect();
+    device!.connect();
 
     msg('Getting characteristics ...');
+
     _discoverServices();
 
     setState(() {
-      isConnected = true;
+      setConnected(context, true);
     });
 
     // Listen from sudden disconnection
-    late StreamSubscription<dynamic> deviceState;
     deviceState = device!.state.listen((event) {
       if (event == BluetoothDeviceState.disconnected) {
-        _disconnectFromDevice();
-        deviceState.cancel();
+        _disconnectFromDevice(context);
       }
     });
   }
 
-  _disconnectFromDevice() {
+  _disconnectFromDevice(context) {
+    deviceState!.cancel();
     device!.disconnect();
-    device = null;
     timer!.cancel();
-    timer = null;
+    msg('Device ${device!.name} disconnected');
 
     setState(() {
-      isConnected = false;
+      setConnected(context, false);
+      deviceState = null;
+      device = null;
+      flutterBlue = null;
+      timer = null;
     });
-    msg('Device ${device!.name} disconnected');
   }
 
   msg(String m, [int statusCode = 0]) {
@@ -256,6 +271,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage>
       -1: const Color(0xFFCA1A1A), // Error
       1: const Color(0xFFD8CB19), // Warning
       2: const Color(0xFF15A349), // Success
+      3: const Color(0xFF404BE4), // Info
     };
     return Text(m, style: TextStyle(color: statusCodeColor[statusCode]));
   }
@@ -440,7 +456,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage>
                 axAxisController = controller;
               },
               dataSource: chartAccData!,
-              color: custom_color.lineXColor,
+              color: connectionValue(context) ? custom_color.lineXColor : custom_color.deadLineColor,
               xValueMapper: (_ChartData data, _) => data.t,
               yValueMapper: (_ChartData data, _) => data.x,
               animationDuration: 0,
@@ -451,7 +467,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage>
                 ayAxisController = controller;
               },
               dataSource: chartAccData!,
-              color: custom_color.lineYColor,
+              color: connectionValue(context) ? custom_color.lineYColor : custom_color.deadLineColor,
               xValueMapper: (_ChartData data, _) => data.t,
               yValueMapper: (_ChartData data, _) => data.y,
               animationDuration: 0,
@@ -462,7 +478,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage>
                 azAxisController = controller;
               },
               dataSource: chartAccData!,
-              color: custom_color.lineZColor,
+              color: connectionValue(context) ? custom_color.lineZColor : custom_color.deadLineColor,
               xValueMapper: (_ChartData data, _) => data.t,
               yValueMapper: (_ChartData data, _) => data.z,
               animationDuration: 0,
@@ -500,7 +516,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage>
                 gxAxisController = controller;
               },
               dataSource: chartGyroData!,
-              color: custom_color.lineXColor,
+              color: connectionValue(context) ? custom_color.lineXColor : custom_color.deadLineColor,
               xValueMapper: (_ChartData data, _) => data.t,
               yValueMapper: (_ChartData data, _) => data.x,
               animationDuration: 0,
@@ -511,7 +527,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage>
                 gyAxisController = controller;
               },
               dataSource: chartGyroData!,
-              color: custom_color.lineYColor,
+              color: connectionValue(context) ? custom_color.lineYColor : custom_color.deadLineColor,
               xValueMapper: (_ChartData data, _) => data.t,
               yValueMapper: (_ChartData data, _) => data.y,
               animationDuration: 0,
@@ -522,7 +538,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage>
                 gzAxisController = controller;
               },
               dataSource: chartGyroData!,
-              color: custom_color.lineZColor,
+              color: connectionValue(context) ? custom_color.lineZColor : custom_color.deadLineColor,
               xValueMapper: (_ChartData data, _) => data.t,
               yValueMapper: (_ChartData data, _) => data.z,
               animationDuration: 0,
@@ -530,59 +546,6 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage>
           ],
         ),
       ),
-    );
-  }
-
-  Row chartLegend() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        Wrap(
-          children: const [
-            Icon(
-              Icons.horizontal_rule_rounded,
-              color: custom_color.lineXColor,
-            ),
-            Text('x'),
-          ],
-        ),
-        Wrap(
-          children: const [
-            Icon(
-              Icons.horizontal_rule_rounded,
-              color: custom_color.lineYColor,
-            ),
-            Text('y'),
-          ],
-        ),
-        Wrap(
-          children: const [
-            Icon(
-              Icons.horizontal_rule_rounded,
-              color: custom_color.lineZColor,
-            ),
-            Text('z'),
-          ],
-        )
-      ],
-    );
-  }
-
-  Widget _buildPopupDialog(BuildContext context, String title, Widget content) {
-    return AlertDialog(
-      title: Text(title),
-      content: content,
-      actions: <Widget>[
-        TextButton(
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-          child: const Text(
-            'Close',
-            style: TextStyle(color: Colors.blue),
-          ),
-        ),
-      ],
     );
   }
 
@@ -613,7 +576,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage>
     chartAccData!.add(_ChartData(count, acc[0], acc[1], acc[2]));
     chartGyroData!.add(_ChartData(count, gyro[0], gyro[1], gyro[2]));
 
-    if (chartAccData!.length == 20) {
+    if (chartAccData!.length == 50) {
       chartAccData!.removeAt(0);
       updateControllerDataSource(chartAccData, axAxisController, true);
       updateControllerDataSource(chartAccData, ayAxisController, true);
@@ -624,7 +587,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage>
       updateControllerDataSource(chartAccData, azAxisController, false);
     }
 
-    if (chartGyroData!.length == 20) {
+    if (chartGyroData!.length == 50) {
       chartGyroData!.removeAt(0);
       updateControllerDataSource(chartGyroData, gxAxisController, true);
       updateControllerDataSource(chartGyroData, gyAxisController, true);
@@ -641,97 +604,8 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage>
   /* ------------------------------------------------- */
   @override
   Widget build(BuildContext context) {
-    super.build(context);
-
+    // super.build(context);
     return Scaffold(
-      key: scaffoldKey,
-      appBar: AppBar(
-        // toolbarHeight: 40,
-        centerTitle: true,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.only(
-            bottomRight: Radius.circular(15),
-            bottomLeft: Radius.circular(15),
-          ),
-        ),
-        // leading: Icon(Icons.line),
-        // backgroundColor: Colors.transparent,
-        actions: [
-          Container(
-            padding: const EdgeInsets.only(right: 18),
-            child: MyTooltip(
-                message: isConnected ? 'Connected' : 'Disconnected',
-                child: Icon(
-                  Icons.rectangle,
-                  size: 10,
-                  color: isConnected ? Colors.greenAccent : Colors.redAccent,
-                )),
-          ),
-          PopupMenuButton(
-            icon: const Icon(Icons.info_outline),
-            itemBuilder: (context) => [
-              // PopupMenuItem 1
-              const PopupMenuItem(value: 1, child: Text('Chart Legend')),
-              const PopupMenuItem(value: 2, child: Text('Sensor Range')),
-            ],
-            onSelected: (value) {
-              if (value == 1) {
-                showDialog(
-                  barrierColor: Theme.of(context).colorScheme.primaryContainer.withAlpha(125),
-                  context: context,
-                  builder: (BuildContext context, [_]) => _buildPopupDialog(
-                    context,
-                    'Chart Legend',
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Column(
-                          children: [
-                            chartLegend(),
-                          ],
-                        )
-                      ],
-                    ),
-                  ),
-                );
-              } else if (value == 2) {
-                showDialog(
-                  barrierColor: Theme.of(context).colorScheme.primaryContainer.withAlpha(125),
-                  context: context,
-                  builder: (BuildContext context, [_]) => _buildPopupDialog(
-                    context,
-                    'Sensor Range',
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Column(
-                          children: const [
-                            Text('Accelerometer : ±4 g'),
-                            SizedBox(height: 5),
-                            Text('Gyroscope : ±2000 dps'),
-                            SizedBox(height: 5),
-                            Text('Distance : 200 cm (max)'),
-                            SizedBox(height: 5),
-                            Text('Temperature : -70 to 382.2°C'),
-                          ],
-                        )
-                      ],
-                    ),
-                  ),
-                );
-              }
-            },
-          ),
-        ],
-      ),
-      drawer: navigationDrawer,
-      onDrawerChanged: ((isOpened) {
-        if (isOpened) {}
-        // toggleDrawer();
-        print(isOpened);
-      }),
       body: Column(
         children: [
           Container(
@@ -744,9 +618,6 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage>
               ],
             ),
           ),
-
-          // SingleChildScrollView(
-          //   scrollDirection: Axis.horizontal,
           CarouselSlider(
             options: CarouselOptions(
               aspectRatio: 2.6,
@@ -1008,7 +879,6 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage>
               ),
             ],
           ),
-
           Expanded(
             child: Container(
               margin: const EdgeInsets.only(bottom: 20, left: 10, right: 10),
@@ -1109,41 +979,6 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage>
               ),
             ),
           ),
-          // const SizedBox(
-          //   height: 80,
-          // ),
-          // ElevatedButton(
-          //   style: ElevatedButton.styleFrom(
-          //     backgroundColor: Colors.green,
-          //   ),
-          //   onPressed: () async {
-          //     // print(bytesToInteger([1, 4, 9, 0]));
-          //   },
-          //   child: const Text('Check'),
-          // ),
-          // const SizedBox(
-          //   height: 80,
-          // ),
-          // ElevatedButton(
-          //   style: ElevatedButton.styleFrom(
-          //     backgroundColor: Colors.red,
-          //   ),
-          //   onPressed: () {
-          //     String dataStr =
-          //         "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.!!!!";
-          //     var fileContents = utf8.encode(dataStr) as Uint8List;
-          //     print("fileContents length is ${fileContents.length}");
-          //     transferFile(fileContents);
-          //   },
-          //   child: const Text('Send'),
-          // ),
-          // const SizedBox(
-          //   height: 80,
-          // ),
-          // Text(
-          //   info,
-          //   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 30),
-          // ),
         ],
       ),
       bottomNavigationBar: ClipRRect(
@@ -1171,18 +1006,19 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage>
         spaceBetweenChildren: 10,
         children: [
           SpeedDialChild(
-            child:
-                !isConnected ? const Icon(Icons.bluetooth_connected) : const Icon(Icons.bluetooth_disabled),
-            onTap: !isConnected
+            child: !connectionValue(context)
+                ? const Icon(Icons.bluetooth_connected)
+                : const Icon(Icons.bluetooth_disabled),
+            onTap: !connectionValue(context)
                 ? () {
-                    startConnection();
+                    startConnection(context);
                   }
                 : () {
                     msg('Hold to disconnect', 1);
                   },
             onLongPress: () {
-              if (isConnected) {
-                _disconnectFromDevice();
+              if (connectionValue(context)) {
+                _disconnectFromDevice(context);
               }
             },
           ),
@@ -1203,15 +1039,8 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage>
               }),
           SpeedDialChild(
               child: const Icon(Icons.build),
-              onTap: () async {
-                bool? state;
-                if (device!.state == BluetoothDeviceState.connected) {
-                  state = true;
-                } else {
-                  state = false;
-                }
-
-                msg('Building model please wait. ${device!.id}');
+              onTap: () {
+                msg('Building model please wait.');
               }),
         ],
       ),
