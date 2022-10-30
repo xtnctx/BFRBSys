@@ -103,8 +103,7 @@ class _LearnFlutterPageState extends State<LearnFlutterPage> {
                     isChecked = newBool;
                   });
                 }),
-            Image.network(
-                'https://staticg.sportskeeda.com/editor/2022/06/f53e6-16560608039433-1920.jpg'),
+            Image.network('https://staticg.sportskeeda.com/editor/2022/06/f53e6-16560608039433-1920.jpg'),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: isSwitched ? Colors.green : Colors.blue,
