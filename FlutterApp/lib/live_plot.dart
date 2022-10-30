@@ -12,6 +12,10 @@ import 'package:syncfusion_flutter_charts/charts.dart';
 class LiveLineChart3D extends StatefulWidget {
   const LiveLineChart3D({super.key});
 
+  final Icon navBarIcon = const Icon(Icons.poll_outlined);
+  final Icon navBarIconSelected = const Icon(Icons.poll);
+  final String navBarTitle = 'Live Line Chart';
+
   @override
   State<LiveLineChart3D> createState() => _LiveLineChart3DState();
 }
@@ -38,7 +42,7 @@ class _LiveLineChart3DState extends State<LiveLineChart3D> {
 
   @override
   Widget build(BuildContext context) {
-    return _buildLiveLineChart();
+    return Scaffold(body: Center(child: _buildLiveLineChart()));
   }
 
   /// Returns the realtime Cartesian line chart.
@@ -87,8 +91,8 @@ class _LiveLineChart3DState extends State<LiveLineChart3D> {
 
   ///Continously updating the data source based on timer
   void _updateDataSource(Timer timer) {
-    chartData!.add(_ChartData(count, 0, 0, 0));
-    if (chartData!.length == 20) {
+    chartData!.add(_ChartData(count, _getRandomInt(10, 50), _getRandomInt(2, 10), _getRandomInt(5, 20)));
+    if (chartData!.length == 30) {
       chartData!.removeAt(0);
       xAxisController?.updateDataSource(
         addedDataIndexes: <int>[chartData!.length - 1],
@@ -114,6 +118,12 @@ class _LiveLineChart3DState extends State<LiveLineChart3D> {
       );
     }
     count = count + 1;
+  }
+
+  ///Get the random data
+  int _getRandomInt(int min, int max) {
+    final math.Random random = math.Random();
+    return min + random.nextInt(max - min);
   }
 }
 
