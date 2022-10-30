@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
 class ResultsPage extends StatefulWidget {
-  const ResultsPage({super.key});
   final Icon navBarIcon = const Icon(Icons.fact_check_outlined);
   final Icon navBarIconSelected = const Icon(Icons.fact_check);
+  final String navBarTitle = 'Results';
+
+  const ResultsPage({super.key});
 
   @override
   State<ResultsPage> createState() => _ResultsPageState();
