@@ -342,7 +342,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
   }
 
   Uint8List integerToBytes(int value) {
-    /// Use case: value > 255
+    /// Best use case: value > 255
     const length = 4;
     return Uint8List(length)..buffer.asByteData().setInt32(0, value, Endian.little);
   }
@@ -1002,8 +1002,10 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
       ),
       floatingActionButton: SpeedDial(
         direction: SpeedDialDirection.left,
-        animatedIcon: AnimatedIcons.menu_close,
         spaceBetweenChildren: 10,
+        icon: Icons.handyman,
+        activeIcon: Icons.close,
+        animationDuration: const Duration(milliseconds: 150),
         children: [
           SpeedDialChild(
             child: !connectionValue(context)
