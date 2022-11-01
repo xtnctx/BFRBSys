@@ -90,8 +90,16 @@ class _RootPageState extends State<RootPage> {
         ]));
   }
 
-  Widget _createDrawerItem({Icon? icon, String? text, GestureTapCallback? onTap}) {
+  Widget _createDrawerItem({
+    Icon? icon,
+    String? text,
+    bool selected = false,
+    Color? selectedColor,
+    GestureTapCallback? onTap,
+  }) {
     return ListTile(
+      selected: selected,
+      selectedColor: selectedColor,
       title: Row(
         children: <Widget>[
           icon!,
@@ -164,6 +172,8 @@ class _RootPageState extends State<RootPage> {
     return Scaffold(
       key: scaffoldKey,
       appBar: AppBar(
+        // toolbarHeight: isPortrait ? null : 30,
+        // backgroundColor: Colors.transparent,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.only(
             bottomRight: Radius.circular(15),
@@ -176,7 +186,7 @@ class _RootPageState extends State<RootPage> {
             ? null
             : [
                 Container(
-                  padding: const EdgeInsets.only(right: 18),
+                  padding: const EdgeInsets.only(right: 25),
                   child: MyTooltip(
                       message: isConnected ? 'Connected' : 'Disconnected',
                       child: Icon(
@@ -186,6 +196,7 @@ class _RootPageState extends State<RootPage> {
                       )),
                 ),
                 PopupMenuButton(
+                  tooltip: 'Show info',
                   icon: const Icon(Icons.info_outline),
                   itemBuilder: (context) => [
                     // PopupMenuItem 1
@@ -232,7 +243,7 @@ class _RootPageState extends State<RootPage> {
                                   SizedBox(height: 5),
                                   Text('Distance : 200 cm (max)'),
                                   SizedBox(height: 5),
-                                  Text('Temperature : -70 to 382.2°C'),
+                                  Text('Temperature : -70 to 382°C'),
                                 ],
                               )
                             ],
@@ -248,7 +259,8 @@ class _RootPageState extends State<RootPage> {
         index: currentPage,
         children: pages!,
       ),
-      drawerEdgeDragWidth: MediaQuery.of(context).size.width / 4,
+      drawerEdgeDragWidth: MediaQuery.of(context).size.width / 40,
+      drawerScrimColor: Theme.of(context).colorScheme.background.withAlpha(125),
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
@@ -258,8 +270,10 @@ class _RootPageState extends State<RootPage> {
               children: List.generate(pages!.length, (int index) {
                 dynamic curWidget = pages![index];
                 return _createDrawerItem(
-                  icon: curWidget.navBarIcon,
+                  icon: currentPage == index ? curWidget.navBarIconSelected : curWidget.navBarIcon,
                   text: curWidget.navBarTitle,
+                  selected: currentPage == index,
+                  selectedColor: Theme.of(context).colorScheme.primary,
                   onTap: () {
                     if (scaffoldKey!.currentState!.isDrawerOpen) {
                       scaffoldKey!.currentState!.closeDrawer();
@@ -285,9 +299,8 @@ class _RootPageState extends State<RootPage> {
             const Divider(),
             _createDrawerItem(icon: const Icon(Icons.coffee), text: 'Buy me a coffee'),
             _createDrawerItem(icon: const Icon(Icons.bug_report), text: 'Bug report'),
-            ListTile(
-              title: const Text('v0.2.9-alpha', style: TextStyle(fontSize: 10)),
-              onTap: () {},
+            const ListTile(
+              title: Text('v0.2.14', style: TextStyle(fontSize: 10)),
             ),
           ],
         ),
