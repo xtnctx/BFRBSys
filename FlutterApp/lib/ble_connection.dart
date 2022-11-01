@@ -16,6 +16,7 @@ import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:provider/provider.dart';
 import 'package:bfrbsys/connection_provider.dart';
+import 'package:flutter_layout_grid/flutter_layout_grid.dart';
 
 // ignore: must_be_immutable
 class BluetoothBuilderPage extends StatefulWidget {
@@ -429,9 +430,10 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
   }
 
   /// Returns the realtime Cartesian line chart.
-  SizedBox _buildLiveAccChart(context) {
+  SizedBox _buildLiveAccChart(context, {double height = 150, double? width}) {
     return SizedBox(
-      height: 150,
+      height: height,
+      width: width,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(10),
         child: SfCartesianChart(
@@ -489,9 +491,10 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
     );
   }
 
-  SizedBox _buildLiveGyroChart(context) {
+  SizedBox _buildLiveGyroChart(context, {double height = 150, double? width}) {
     return SizedBox(
-      height: 150,
+      height: height,
+      width: width,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(10),
         child: SfCartesianChart(
@@ -605,381 +608,467 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
   @override
   Widget build(BuildContext context) {
     // super.build(context);
+    bool isPortrait = MediaQuery.of(context).orientation == Orientation.portrait;
+
     return Scaffold(
-      body: Column(
-        children: [
-          Container(
-            margin: const EdgeInsets.only(left: 10, right: 10, top: 10, bottom: 5),
-            child: Column(
-              children: [
-                _buildLiveAccChart(context),
-                const SizedBox(height: 10.0),
-                _buildLiveGyroChart(context),
-              ],
-            ),
-          ),
-          CarouselSlider(
-            options: CarouselOptions(
-              aspectRatio: 2.6,
-              viewportFraction: 0.5,
-              enlargeCenterPage: true,
-              enlargeStrategy: CenterPageEnlargeStrategy.height,
-            ),
-            items: [
-              // E X T E R N A L S
-              Container(
-                margin: const EdgeInsets.all(5.0),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  color: Theme.of(context).colorScheme.primaryContainer,
-                ),
-                child: Column(
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.only(top: 12),
-                      child: Row(
-                        children: const [
-                          SizedBox(width: 15),
-                          Expanded(
-                            child: Text(
-                              'Externals',
-                              textAlign: TextAlign.left,
-                              style: TextStyle(fontSize: 14, fontStyle: FontStyle.italic),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Expanded(
-                      child: Center(
-                        child: ListView(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.only(top: 3, bottom: 3),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    margin: const EdgeInsets.only(left: 25),
-                                    width: 30,
-                                    height: 30,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(8),
-                                      color: Theme.of(context).colorScheme.secondaryContainer,
-                                    ),
-                                    child: const Icon(Icons.sensors),
-                                  ),
-                                  Expanded(
-                                    child: Column(
-                                      children: const [
-                                        Text('Distance',
-                                            style: TextStyle(
-                                              color: Colors.white54,
-                                              fontSize: 12,
-                                            )),
-                                        Text('123.45cm', style: TextStyle(fontSize: 15)),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.only(top: 3, bottom: 3),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    margin: const EdgeInsets.only(left: 25),
-                                    width: 30,
-                                    height: 30,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(8),
-                                      color: Theme.of(context).colorScheme.secondaryContainer,
-                                    ),
-                                    child: const Icon(Icons.thermostat),
-                                  ),
-                                  Expanded(
-                                    child: Column(
-                                      children: const [
-                                        Text('Temperature',
-                                            style: TextStyle(
-                                              color: Colors.white54,
-                                              fontSize: 12,
-                                            )),
-                                        Text('35.6°C', style: TextStyle(fontSize: 15)),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // S T A T U S
-              Container(
-                margin: const EdgeInsets.all(5.0),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  color: Theme.of(context).colorScheme.primaryContainer,
-                ),
-                child: Column(
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.only(top: 12),
-                      child: Row(
-                        children: const [
-                          SizedBox(width: 15),
-                          Expanded(
-                            child: Text(
-                              'Status',
-                              textAlign: TextAlign.left,
-                              style: TextStyle(fontSize: 14, fontStyle: FontStyle.italic),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Expanded(
-                      child: Center(
-                        child: ListView(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.only(top: 3, bottom: 3),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    margin: const EdgeInsets.only(left: 25),
-                                    width: 30,
-                                    height: 30,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(8),
-                                      color: Theme.of(context).colorScheme.secondaryContainer,
-                                    ),
-                                    child: const Icon(Icons.battery_5_bar),
-                                  ),
-                                  Expanded(
-                                    child: Column(
-                                      children: const [
-                                        Text('Battery level',
-                                            style: TextStyle(
-                                              color: Colors.white54,
-                                              fontSize: 12,
-                                            )),
-                                        Text('85%', style: TextStyle(fontSize: 15)),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.only(top: 3, bottom: 3),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    margin: const EdgeInsets.only(left: 25),
-                                    width: 30,
-                                    height: 30,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(8),
-                                      color: Theme.of(context).colorScheme.secondaryContainer,
-                                    ),
-                                    child: const Icon(Icons.scatter_plot),
-                                  ),
-                                  Expanded(
-                                    child: Column(
-                                      children: const [
-                                        Text('TFLite model',
-                                            style: TextStyle(
-                                              color: Colors.white54,
-                                              fontSize: 12,
-                                            )),
-                                        Text('In use', style: TextStyle(fontSize: 15)),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // M E M E M O R Y   A V A I L A B L E
-              Container(
-                margin: const EdgeInsets.all(5.0),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  color: Theme.of(context).colorScheme.primaryContainer,
-                ),
-                child: Column(
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.only(top: 12),
-                      child: Row(
-                        children: const [
-                          SizedBox(width: 15),
-                          Expanded(
-                            child: Text(
-                              'Memory available',
-                              textAlign: TextAlign.left,
-                              style: TextStyle(fontSize: 14, fontStyle: FontStyle.italic),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Expanded(
-                      child: Center(
-                        child: ListView(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.only(top: 3, bottom: 3),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    margin: const EdgeInsets.only(left: 25),
-                                    width: 40,
-                                    height: 40,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(8),
-                                      color: Theme.of(context).colorScheme.secondaryContainer,
-                                    ),
-                                    child: const Icon(Icons.memory, size: 30),
-                                  ),
-                                  Expanded(
-                                    child: Column(
-                                      children: const [
-                                        Text('256kB', style: TextStyle(fontSize: 20)),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.transparent,
+              connectionValue(context) ? const Color(0x055CF436) : const Color(0x0FF44336),
             ],
           ),
-          Expanded(
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 20, left: 10, right: 10),
+        ),
+        child: LayoutGrid(
+          areas: isPortrait
+              ? '''
+            SfCartesianChart
+            CarouselSlider
+            Buttons
+          '''
+              : '''
+            SfCartesianChart CarouselSlider
+            SfCartesianChart CarouselSlider
+            Buttons          Buttons
+          ''',
+          columnSizes: isPortrait ? [1.fr] : [4.fr, 2.fr],
+          rowSizes: isPortrait ? [4.fr, 2.fr, 1.2.fr] : [4.fr, 4.fr, 3.fr],
+          // rowSizes: const [auto, auto, auto],
+          children: [
+            NamedAreaGridPlacement(
+              areaName: 'SfCartesianChart',
+              child: Container(
+                margin: const EdgeInsets.only(left: 10, right: 10),
+                child: isPortrait
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _buildLiveAccChart(context),
+                            const SizedBox(height: 10.0),
+                            _buildLiveGyroChart(context),
+                          ],
+                        ),
+                      )
+                    : Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Expanded(
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  _buildLiveAccChart(context, height: 150, width: 220),
+                                  const SizedBox(width: 10.0),
+                                  _buildLiveGyroChart(context, height: 150, width: 220),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+              ),
+            ),
+            NamedAreaGridPlacement(
+              areaName: 'CarouselSlider',
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: CarouselSlider(
+                        options: CarouselOptions(
+                          scrollDirection: isPortrait ? Axis.horizontal : Axis.vertical,
+                          aspectRatio: isPortrait ? 2.6 : 1,
+                          viewportFraction: isPortrait ? 0.5 : 0.75,
+                          enlargeCenterPage: true,
+                          enlargeStrategy: CenterPageEnlargeStrategy.height,
+                        ),
+                        items: [
+                          // E X T E R N A L S
+                          Container(
+                            margin: const EdgeInsets.all(5.0),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              color: Theme.of(context).colorScheme.primaryContainer,
+                            ),
+                            child: Column(
+                              children: [
+                                Container(
+                                  margin: const EdgeInsets.only(top: 12),
+                                  child: Row(
+                                    children: const [
+                                      SizedBox(width: 15),
+                                      Expanded(
+                                        child: Text(
+                                          'Externals',
+                                          textAlign: TextAlign.left,
+                                          style: TextStyle(fontSize: 14, fontStyle: FontStyle.italic),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Center(
+                                    child: ListView(
+                                      shrinkWrap: true,
+                                      physics: const NeverScrollableScrollPhysics(),
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.only(top: 3, bottom: 3),
+                                          child: Row(
+                                            children: [
+                                              Container(
+                                                margin: const EdgeInsets.only(left: 25),
+                                                width: 30,
+                                                height: 30,
+                                                decoration: BoxDecoration(
+                                                  borderRadius: BorderRadius.circular(8),
+                                                  color: connectionValue(context)
+                                                      ? Theme.of(context).colorScheme.secondaryContainer
+                                                      : custom_color.disconnectedBox,
+                                                ),
+                                                child: const Icon(Icons.sensors),
+                                              ),
+                                              Expanded(
+                                                child: Column(
+                                                  children: const [
+                                                    Text('Distance',
+                                                        style: TextStyle(
+                                                          color: Colors.white54,
+                                                          fontSize: 12,
+                                                        )),
+                                                    Text('123.45cm', style: TextStyle(fontSize: 15)),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.only(top: 3, bottom: 3),
+                                          child: Row(
+                                            children: [
+                                              Container(
+                                                margin: const EdgeInsets.only(left: 25),
+                                                width: 30,
+                                                height: 30,
+                                                decoration: BoxDecoration(
+                                                  borderRadius: BorderRadius.circular(8),
+                                                  color: connectionValue(context)
+                                                      ? Theme.of(context).colorScheme.secondaryContainer
+                                                      : custom_color.disconnectedBox,
+                                                ),
+                                                child: const Icon(Icons.thermostat),
+                                              ),
+                                              Expanded(
+                                                child: Column(
+                                                  children: const [
+                                                    Text('Temperature',
+                                                        style: TextStyle(
+                                                          color: Colors.white54,
+                                                          fontSize: 12,
+                                                        )),
+                                                    Text('35.6°C', style: TextStyle(fontSize: 15)),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          // S T A T U S
+                          Container(
+                            margin: const EdgeInsets.all(5.0),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              color: Theme.of(context).colorScheme.primaryContainer,
+                            ),
+                            child: Column(
+                              children: [
+                                Container(
+                                  margin: const EdgeInsets.only(top: 12),
+                                  child: Row(
+                                    children: const [
+                                      SizedBox(width: 15),
+                                      Expanded(
+                                        child: Text(
+                                          'Status',
+                                          textAlign: TextAlign.left,
+                                          style: TextStyle(fontSize: 14, fontStyle: FontStyle.italic),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Center(
+                                    child: ListView(
+                                      shrinkWrap: true,
+                                      physics: const NeverScrollableScrollPhysics(),
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.only(top: 3, bottom: 3),
+                                          child: Row(
+                                            children: [
+                                              Container(
+                                                margin: const EdgeInsets.only(left: 25),
+                                                width: 30,
+                                                height: 30,
+                                                decoration: BoxDecoration(
+                                                  borderRadius: BorderRadius.circular(8),
+                                                  color: connectionValue(context)
+                                                      ? Theme.of(context).colorScheme.secondaryContainer
+                                                      : custom_color.disconnectedBox,
+                                                ),
+                                                child: const Icon(Icons.battery_5_bar),
+                                              ),
+                                              Expanded(
+                                                child: Column(
+                                                  children: const [
+                                                    Text('Battery level',
+                                                        style: TextStyle(
+                                                          color: Colors.white54,
+                                                          fontSize: 12,
+                                                        )),
+                                                    Text('85%', style: TextStyle(fontSize: 15)),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.only(top: 3, bottom: 3),
+                                          child: Row(
+                                            children: [
+                                              Container(
+                                                margin: const EdgeInsets.only(left: 25),
+                                                width: 30,
+                                                height: 30,
+                                                decoration: BoxDecoration(
+                                                  borderRadius: BorderRadius.circular(8),
+                                                  color: connectionValue(context)
+                                                      ? Theme.of(context).colorScheme.secondaryContainer
+                                                      : custom_color.disconnectedBox,
+                                                ),
+                                                child: const Icon(Icons.scatter_plot),
+                                              ),
+                                              Expanded(
+                                                child: Column(
+                                                  children: const [
+                                                    Text('TFLite model',
+                                                        style: TextStyle(
+                                                          color: Colors.white54,
+                                                          fontSize: 12,
+                                                        )),
+                                                    Text('In use', style: TextStyle(fontSize: 15)),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          // M E M E M O R Y   A V A I L A B L E
+                          Container(
+                            margin: const EdgeInsets.all(5.0),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              color: Theme.of(context).colorScheme.primaryContainer,
+                            ),
+                            child: Column(
+                              children: [
+                                Container(
+                                  margin: const EdgeInsets.only(top: 12),
+                                  child: Row(
+                                    children: const [
+                                      SizedBox(width: 15),
+                                      Expanded(
+                                        child: Text(
+                                          'Memory available',
+                                          textAlign: TextAlign.left,
+                                          style: TextStyle(fontSize: 14, fontStyle: FontStyle.italic),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Center(
+                                    child: ListView(
+                                      shrinkWrap: true,
+                                      physics: const NeverScrollableScrollPhysics(),
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.only(top: 3, bottom: 3),
+                                          child: Row(
+                                            children: [
+                                              Container(
+                                                margin: const EdgeInsets.only(left: 25),
+                                                width: 40,
+                                                height: 40,
+                                                decoration: BoxDecoration(
+                                                  borderRadius: BorderRadius.circular(8),
+                                                  color: connectionValue(context)
+                                                      ? Theme.of(context).colorScheme.secondaryContainer
+                                                      : custom_color.disconnectedBox,
+                                                ),
+                                                child: const Icon(Icons.memory, size: 30),
+                                              ),
+                                              Expanded(
+                                                child: Column(
+                                                  children: const [
+                                                    Text('256kB', style: TextStyle(fontSize: 20)),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            NamedAreaGridPlacement(
+              areaName: 'Buttons',
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.tertiaryContainer,
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                          child: Row(
+                  Container(
+                    margin: EdgeInsets.only(
+                      left: isPortrait ? 10 : 120,
+                      right: isPortrait ? 10 : 120,
+                      top: isPortrait ? 0 : 10,
+                    ),
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Expanded(
-                                flex: 3,
-                                child: TextButton(
-                                  style: TextButton.styleFrom(
-                                      foregroundColor: Colors.white,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(20),
-                                      )),
-                                  onPressed: () {},
-                                  child: const Text('ADD ON TARGET'),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).colorScheme.tertiaryContainer,
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        flex: 3,
+                                        child: TextButton(
+                                          style: TextButton.styleFrom(
+                                              foregroundColor: Colors.white,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(20),
+                                              )),
+                                          onPressed: () {},
+                                          child: const Text('ADD ON TARGET'),
+                                        ),
+                                      ),
+                                      Expanded(
+                                          flex: 1,
+                                          child: TextButton(
+                                            style: TextButton.styleFrom(
+                                                foregroundColor: Colors.white,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(20),
+                                                )),
+                                            child: Wrap(
+                                              children: const [
+                                                Icon(
+                                                  Icons.delete_outline,
+                                                  color: Colors.red,
+                                                ),
+                                              ],
+                                            ),
+                                            onPressed: () {},
+                                          )),
+                                    ],
+                                  ),
                                 ),
                               ),
+                              const SizedBox(width: 20),
                               Expanded(
-                                  flex: 1,
-                                  child: TextButton(
-                                    style: TextButton.styleFrom(
-                                        foregroundColor: Colors.white,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(20),
-                                        )),
-                                    child: Wrap(
-                                      children: const [
-                                        Icon(
-                                          Icons.delete_outline,
-                                          color: Colors.red,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).colorScheme.tertiaryContainer,
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        flex: 3,
+                                        child: TextButton(
+                                          style: TextButton.styleFrom(
+                                              foregroundColor: Colors.white,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(20),
+                                              )),
+                                          onPressed: () {},
+                                          child: const Text('ADD OFF TARGET'),
                                         ),
-                                      ],
-                                    ),
-                                    onPressed: () {},
-                                  )),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 20),
-                      Expanded(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.tertiaryContainer,
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                flex: 3,
-                                child: TextButton(
-                                  style: TextButton.styleFrom(
-                                      foregroundColor: Colors.white,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(20),
-                                      )),
-                                  onPressed: () {},
-                                  child: const Text('ADD OFF TARGET'),
+                                      ),
+                                      Expanded(
+                                          flex: 1,
+                                          child: TextButton(
+                                            style: TextButton.styleFrom(
+                                                foregroundColor: Colors.white,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(20),
+                                                )),
+                                            child: Wrap(
+                                              children: const [
+                                                Icon(
+                                                  Icons.delete_outline,
+                                                  color: Colors.red,
+                                                ),
+                                              ],
+                                            ),
+                                            onPressed: () {},
+                                          )),
+                                    ],
+                                  ),
                                 ),
                               ),
-                              Expanded(
-                                  flex: 1,
-                                  child: TextButton(
-                                    style: TextButton.styleFrom(
-                                        foregroundColor: Colors.white,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(20),
-                                        )),
-                                    child: Wrap(
-                                      children: const [
-                                        Icon(
-                                          Icons.delete_outline,
-                                          color: Colors.red,
-                                        ),
-                                      ],
-                                    ),
-                                    onPressed: () {},
-                                  )),
                             ],
                           ),
-                        ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ],
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
       bottomNavigationBar: ClipRRect(
         borderRadius: const BorderRadius.only(topLeft: Radius.circular(20)),
@@ -1042,7 +1131,8 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
           SpeedDialChild(
               child: const Icon(Icons.build),
               onTap: () {
-                msg('Building model please wait.');
+                double h = MediaQuery.of(context).size.height;
+                msg('Building model please wait. $h');
               }),
         ],
       ),
