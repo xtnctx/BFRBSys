@@ -4,21 +4,17 @@ import 'dart:async';
 import 'dart:convert' show utf8;
 import 'dart:math';
 import 'dart:typed_data';
-// import 'dart:ffi';
-// import 'package:bfrbsys/device_characteristics.dart';
 import 'package:bfrbsys/crc32_checksum.dart';
 import 'package:flutter/material.dart';
-// import 'package:flutter/services.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 import 'package:bfrbsys/colors.dart' as custom_color;
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:provider/provider.dart';
-import 'package:bfrbsys/connection_provider.dart';
+import 'package:bfrbsys/providers.dart';
 import 'package:flutter_layout_grid/flutter_layout_grid.dart';
 
-// ignore: must_be_immutable
 class BluetoothBuilderPage extends StatefulWidget {
   final Icon navBarIcon = const Icon(Icons.monitor_heart_outlined);
   final Icon navBarIconSelected = const Icon(Icons.monitor_heart);
@@ -33,10 +29,10 @@ class BluetoothBuilderPage extends StatefulWidget {
 // class _BluetoothBuilderPageState extends State<BluetoothBuilderPage>
 //     with AutomaticKeepAliveClientMixin<BluetoothBuilderPage> {
 class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
-  /// INFO: The Generic Attribute Profile (GATT) is the architechture used
+  /// The Generic Attribute Profile (GATT) is the architechture used
   ///       for bluetooth connectivity.
   ///
-  /// NOTE: The length of uuids and characteristics must be the same and takes the
+  /// The length of uuids and characteristics must be the same and takes the
   ///       reference from the Arduino Nano 33 BLE Sense board.
 
   /* ========================== S  E  R  V  I  C  E  =========================== */
@@ -105,13 +101,13 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
 
   @override
   void initState() {
-    count = 19;
+    count = 49;
     chartAccData = <_ChartData>[];
     chartGyroData = <_ChartData>[];
     super.initState();
   }
 
-  startConnection(context) async {
+  Future<void> startConnection(context) async {
     flutterBlue = FlutterBlue.instance;
     bool isOn = await flutterBlue!.isOn;
     if (!isOn) {
@@ -125,11 +121,9 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
       for (ScanResult r in results) {
         print('${r.device.name} found! rssi: ${r.rssi}');
         if (r.device.name == TARGET_DEVICE_NAME) {
-          if (r.advertisementData.connectable) {
-            msg('Target device found. Getting primary service ...');
-            device = r.device;
-            _connectToDevice(context);
-          }
+          msg('Target device found. Getting primary service ...');
+          device = r.device;
+          _connectToDevice(context);
         }
       }
     });
@@ -226,7 +220,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
   Future<void> _connectToDevice(context) async {
     if (device == null) return;
 
-    device!.connect();
+    await device!.connect();
 
     msg('Getting characteristics ...');
 
@@ -244,7 +238,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
     });
   }
 
-  _disconnectFromDevice(context) {
+  void _disconnectFromDevice(context) {
     deviceState!.cancel();
     device!.disconnect();
     timer!.cancel();
@@ -252,6 +246,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
 
     setState(() {
       setConnected(context, false);
+      isFileTransferInProgress = false;
       deviceState = null;
       device = null;
       flutterBlue = null;
@@ -259,7 +254,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
     });
   }
 
-  msg(String m, [int statusCode = 0]) {
+  void msg(String m, [int statusCode = 0]) {
     setState(() {
       info = m;
       infoCode = statusCode;
@@ -282,7 +277,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
   String? distData;
   /* ------------------------------------------------- */
   // EVENT LISTENERS
-  _readData(BluetoothCharacteristic? characteristic) {
+  void _readData(BluetoothCharacteristic? characteristic) {
     characteristic!.value.listen((value) {
       List<int> readData = List.from(value);
       String parsedData = String.fromCharCodes(readData);
@@ -299,7 +294,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
     });
   }
 
-  onTransferStatusChanged(BluetoothCharacteristic? characteristic) {
+  void onTransferStatusChanged(BluetoothCharacteristic? characteristic) {
     characteristic!.value.listen((List<int> value) {
       num statusCode = bytesToInteger(value);
 
@@ -317,7 +312,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
 
   // Called when an error message is received from the device. This describes what
   // went wrong with the transfer in a user-readable form.
-  onErrorMessageChanged(BluetoothCharacteristic? characteristic) {
+  void onErrorMessageChanged(BluetoothCharacteristic? characteristic) {
     characteristic!.value.listen((List<int> value) {
       List<int> readData = List.from(value);
       String errorMessage = String.fromCharCodes(readData);
@@ -349,7 +344,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
   }
   // ----------------------------------------------------------------------------------
 
-  transferFile(Uint8List fileContents) async {
+  Future<void> transferFile(Uint8List fileContents) async {
     var maximumLengthValue = await fileMaximumLengthCharacteristic?.read();
     num maximumLength = bytesToInteger(maximumLengthValue!);
     // var maximumLengthArray = Uint32List.fromList(maximumLengthValue!);
@@ -377,15 +372,15 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
     sendFileBlock(fileContents, 0);
   }
 
-  cancelTransfer() async {
+  Future<void> cancelTransfer() async {
     await commandCharacteristic?.write([2]);
   }
 
   // ------------------------------------------------------------------------------
-// The rest of these functions are internal implementation details, and shouldn't
-// be called by users of this module.
+  // The rest of these functions are internal implementation details, and shouldn't
+  // be called by users of this module.
 
-  onTransferInProgress() {
+  void onTransferInProgress() {
     isFileTransferInProgress = true;
   }
 
@@ -394,7 +389,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
 
   // You'll want to replace these two functions with your own logic, to take what
   // actions your application needs when a file transfer succeeds, or errors out.
-  onTransferSuccess() async {
+  Future<void> onTransferSuccess() async {
     isFileTransferInProgress = false;
     var checksumValue = await fileChecksumCharacteristic?.read();
     var checksum = bytesToInteger(checksumValue!) as int;
@@ -402,12 +397,12 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
   }
 
   // Called when something has gone wrong with a file transfer.
-  onTransferError() {
+  void onTransferError() {
     isFileTransferInProgress = false;
     msg("File transfer error", -1);
   }
 
-  sendFileBlock(fileContents, bytesAlreadySent) async {
+  void sendFileBlock(fileContents, bytesAlreadySent) {
     var bytesRemaining = fileContents.length - bytesAlreadySent;
 
     const maxBlockLength = 128;
@@ -552,7 +547,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
     );
   }
 
-  updateControllerDataSource(listData, controller, isEdge) {
+  void updateControllerDataSource(listData, controller, isEdge) {
     if (isEdge) {
       controller?.updateDataSource(
         addedDataIndexes: <int>[listData!.length - 1],
@@ -618,7 +613,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
             end: Alignment.bottomCenter,
             colors: [
               Colors.transparent,
-              connectionValue(context) ? const Color(0x055CF436) : const Color(0x0FF44336),
+              connectionValue(context) ? const Color(0x165CF436) : const Color(0x20F44336),
             ],
           ),
         ),
@@ -1070,20 +1065,32 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
           ],
         ),
       ),
-      bottomNavigationBar: ClipRRect(
-        borderRadius: const BorderRadius.only(topLeft: Radius.circular(20)),
-        child: BottomAppBar(
-          color: Theme.of(context).colorScheme.primaryContainer,
-          shape: const CircularNotchedRectangle(),
-          notchMargin: 6,
-          child: Padding(
-            padding: const EdgeInsets.all(14.0),
-            child: ClipRRect(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  Flexible(child: _textInfo(info, infoCode)),
-                ],
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.bottomCenter,
+            end: Alignment.topCenter,
+            colors: [
+              Colors.transparent,
+              connectionValue(context) ? const Color(0x165CF436) : const Color(0x20F44336),
+            ],
+          ),
+        ),
+        child: ClipRRect(
+          borderRadius: const BorderRadius.only(topLeft: Radius.circular(20)),
+          child: BottomAppBar(
+            color: Theme.of(context).colorScheme.primaryContainer,
+            shape: const CircularNotchedRectangle(),
+            notchMargin: 6,
+            child: Padding(
+              padding: const EdgeInsets.all(14.0),
+              child: ClipRRect(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Flexible(child: _textInfo(info, infoCode)),
+                  ],
+                ),
               ),
             ),
           ),
