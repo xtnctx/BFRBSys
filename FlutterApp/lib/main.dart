@@ -1,5 +1,5 @@
 import 'package:bfrbsys/ble_connection.dart';
-import 'package:bfrbsys/live_plot.dart';
+
 import 'package:bfrbsys/profile_page.dart';
 import 'package:bfrbsys/home_page.dart';
 import 'package:bfrbsys/results_page.dart';
@@ -8,8 +8,7 @@ import 'package:bfrbsys/settings_page.dart';
 import 'package:flutter/material.dart';
 // import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:bfrbsys/themes.dart';
-import 'package:bfrbsys/connection_provider.dart';
+import 'package:bfrbsys/providers.dart';
 import 'package:provider/provider.dart';
 import 'package:bfrbsys/colors.dart' as custom_color;
 
@@ -38,7 +37,7 @@ class MyApp extends StatelessWidget {
       builder: (context, themeProvider, child) {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
-          theme: themeProvider.getTheme(),
+          theme: themeProvider.getTheme,
           home: RootPage(),
         );
       },
@@ -74,19 +73,29 @@ class _RootPageState extends State<RootPage> {
     super.initState();
   }
 
+  Color getTextColorForBackground(Color backgroundColor) {
+    if (ThemeData.estimateBrightnessForColor(backgroundColor) == Brightness.dark) {
+      return Colors.white;
+    }
+
+    return Colors.black;
+  }
+
   Widget _createHeader() {
     return DrawerHeader(
         margin: EdgeInsets.zero,
         padding: EdgeInsets.zero,
         decoration: const BoxDecoration(
-          image: DecorationImage(fit: BoxFit.fill, image: AssetImage('images/drawerbg.jpg')),
+          image: DecorationImage(fit: BoxFit.cover, image: AssetImage('images/Sakura_Nene_CPP.jpg')),
         ),
         child: Stack(children: const [
           Positioned(
-            bottom: 12.0,
-            left: 16.0,
-            child: Text("BFRB Sense", style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.w500)),
-          ),
+              bottom: 12.0,
+              left: 16.0,
+              child: Text(
+                "xtnctx",
+                style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),
+              )),
         ]));
   }
 
@@ -300,7 +309,7 @@ class _RootPageState extends State<RootPage> {
             _createDrawerItem(icon: const Icon(Icons.coffee), text: 'Buy me a coffee'),
             _createDrawerItem(icon: const Icon(Icons.bug_report), text: 'Bug report'),
             const ListTile(
-              title: Text('v0.2.14', style: TextStyle(fontSize: 10)),
+              title: Text('v0.2.21', style: TextStyle(fontSize: 10)),
             ),
           ],
         ),
