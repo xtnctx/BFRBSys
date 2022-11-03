@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:bfrbsys/themes.dart';
+import 'package:bfrbsys/providers.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsPage extends StatefulWidget {
   final Icon navBarIcon = const Icon(Icons.settings_outlined);
@@ -14,15 +15,25 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
+  late SharedPreferences prefs;
+  late bool isDark;
+
+  Future<void> lightsOff(bool value, {BuildContext? withContext}) async {
+    prefs = await SharedPreferences.getInstance();
+    await prefs.setBool("darkTheme", value);
+    Provider.of<ThemeProvider>(withContext!, listen: false).setDark(value);
+  }
+
   @override
   Widget build(BuildContext context) {
+    isDark = Provider.of<ThemeProvider>(context, listen: true).isDark;
     return Scaffold(
       body: Center(
-        child: ElevatedButton(
-          onPressed: () {
-            Provider.of<ThemeProvider>(context, listen: false).swapTheme();
+        child: Switch(
+          value: isDark,
+          onChanged: (bool newBool) {
+            lightsOff(newBool, withContext: context);
           },
-          child: const Text('Change theme'),
         ),
       ),
     );
