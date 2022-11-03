@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 
 class ThemeProvider extends ChangeNotifier {
   late ThemeData _selectedTheme;
-  late Typography defaultTypography;
-  late SharedPreferences prefs;
+  late bool _isDark;
 
   ThemeData light = FlexThemeData.light(
     scheme: FlexScheme.ebonyClay,
@@ -38,23 +37,21 @@ class ThemeProvider extends ChangeNotifier {
 
   ThemeProvider(bool darkThemeOn) {
     _selectedTheme = darkThemeOn ? dark : light;
+    _isDark = darkThemeOn;
   }
 
-  Future<void> swapTheme() async {
-    prefs = await SharedPreferences.getInstance();
-
-    if (_selectedTheme == dark) {
-      _selectedTheme = light;
-      await prefs.setBool("darkTheme", false);
-    } else {
+  Future<void> setDark(bool value) async {
+    if (value) {
       _selectedTheme = dark;
-      await prefs.setBool("darkTheme", true);
+    } else {
+      _selectedTheme = light;
     }
-
+    _isDark = value;
     notifyListeners();
   }
 
-  ThemeData getTheme() => _selectedTheme;
+  ThemeData get getTheme => _selectedTheme;
+  bool get isDark => _isDark;
 }
 
 class ConnectionProvider extends ChangeNotifier {
