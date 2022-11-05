@@ -43,6 +43,8 @@ dependencies:
   syncfusion_flutter_charts: ^20.3.49
   carousel_slider: ^4.1.1
   flutter_speed_dial: ^6.2.0
+  flutter_layout_grid: ^2.0.1
+  http: ^0.13.5
 
 dev_dependencies:
   flutter_test:
