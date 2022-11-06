@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+    {% extends 'base.html' %}
+    {% load static %}
+    
+<body>
+    
+    {% block content %}
+    
+    <div class="header">
+        <div class="text-box">
+            <h1>Body-focused Repetitive Behavior</h1>
+            <p>
+                Lorem ipsum dolor, sit amet consectetur adipisicing elit. 
+                Nisi dolore, <br> provident id rerum debitis corrupti ex quos.
+            </p>
+            <a class="hero-btn" href="{% url 'api' %}">Learn More</a>
+            
+        </div>
+    </div>
+
+
+    <div class="header2">
+        <div class="text-box">
+            <h1>Monitoring App</h1>
+            <p>
+                Lorem ipsum dolor, sit amet consectetur adipisicing elit. 
+                Nisi dolore, <br> provident id rerum debitis corrupti ex quos.
+            </p>
+            <a class="hero-btn" href="#">Use our App</a>
+            
+        </div>
+    </div>
+
+    
+    <link rel="stylesheet" href="{% static 'apis/styles/home.css' %}">
+    
+    {% endblock %}
+</body>
+
+</html>
