@@ -1,6 +1,6 @@
 import re
 
-def hex_to_c_array(hex_data):
+def hex_to_c_array(hex_data) -> str:
     c_str = ''
 
     # Declare C variable
