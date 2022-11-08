@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from .models import Item, TrainedModel
-from .serializers import ItemSerializer, TrainedModelSerializer
+from .serializers import ItemSerializer, TrainedModelSerializer, UserSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
@@ -14,7 +14,8 @@ from django.conf import settings
 from django.core.files.base import File
 import os
 
-# Create your views here.
+from rest_framework.permissions import IsAdminUser
+from django.contrib.auth.models import User
 
 
 def home(request):
@@ -53,7 +54,6 @@ class NeuralNetworkBuilderApi(APIView):
         # Then save to database
         f = open(USER_TEMP_FILE, 'rb')
         data = {
-            'owner': request.user.id,
             'model_name': named_model,
             'file': File(f, name=str(named_model).replace(" ", "_") + f'--{request.user.username}' + '.h')
         }
@@ -68,3 +68,33 @@ class NeuralNetworkBuilderApi(APIView):
             os.remove(USER_TEMP_FILE) # end of using temp model
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserRecordView(APIView):
+    """
+    API View to create or get a list of all the registered
+    users. GET request returns the registered users whereas
+    a POST request allows to create a new user.
+    """
+    permission_classes = [IsAdminUser]
+
+    def get(self, format=None):
+        users = User.objects.all()
+        serializer = UserSerializer(users, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        serializer = UserSerializer(data=request.data)
+        if serializer.is_valid(raise_exception=ValueError):
+            serializer.create(validated_data=request.data)
+            return Response(
+                serializer.data,
+                status=status.HTTP_201_CREATED
+            )
+        return Response(
+            {
+                "error": True,
+                "error_msg": serializer.error_messages,
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
