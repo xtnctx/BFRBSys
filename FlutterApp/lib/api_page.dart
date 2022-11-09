@@ -21,15 +21,182 @@ class _ApiServiceState extends State<ApiService> {
   final TextEditingController _controller = TextEditingController();
   Future<TrainedModels>? _futureModels;
 
+  Future<UserInfo>? _futureUserInfo;
+  Future<RegisterModel>? _futureRegister;
+  Future<Login>? _futureLogin;
+
+  Future<Logout>? _futureLogout;
+
+  late String userToken;
+
   @override
   void initState() {
     super.initState();
-    _items = httpService.get();
+    // _items = httpService.getItems();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: postWidget());
+    return Scaffold(body: logoutWidget());
+  }
+
+  logoutWidget() {
+    return Center(
+      child: Column(
+        children: [
+          FutureBuilder<Logout>(
+            future: _futureLogout,
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                return Column(
+                  children: [
+                    Text(snapshot.data!.http204Message ?? ""),
+                  ],
+                );
+              } else if (snapshot.hasError) {
+                return Text('${snapshot.error}');
+              }
+
+              // By default, show a loading spinner.
+              return const CircularProgressIndicator();
+            },
+          ),
+          ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _futureLogout = httpService.postLogout(
+                      userToken: '1ce375b6cfe2f85c8e7c76a3b08b47d99b01ef9e4767818e13298fbc09b96da5');
+                });
+              },
+              child: const Text('Logout')),
+          ElevatedButton(
+              onPressed: () {
+                _futureLogout?.then((value) => debugPrint('${value.http204Message}'));
+                print('hello');
+              },
+              child: const Text('print token'))
+        ],
+      ),
+    );
+  }
+
+  loginWidget() {
+    return Center(
+      child: Column(
+        children: [
+          FutureBuilder<Login>(
+            future: _futureLogin,
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                return Column(
+                  children: [
+                    Text(snapshot.data!.user['id'].toString()),
+                    Text(snapshot.data!.user['username']),
+                    Text(snapshot.data!.user['email']),
+                    Text(snapshot.data!.token),
+                  ],
+                );
+              } else if (snapshot.hasError) {
+                return Text('${snapshot.error}');
+              }
+
+              // By default, show a loading spinner.
+              return const CircularProgressIndicator();
+            },
+          ),
+          ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _futureLogin = httpService.postLogin(username: 'dummy6', password: 'dummy6');
+                });
+              },
+              child: const Text('Login')),
+          ElevatedButton(
+              onPressed: () {
+                _futureLogin?.then((value) => debugPrint('${value.toJson}'));
+                print('hello');
+              },
+              child: const Text('print token'))
+        ],
+      ),
+    );
+  }
+
+  registrationWidget() {
+    return Center(
+      child: Column(
+        children: [
+          FutureBuilder<RegisterModel>(
+            future: _futureRegister,
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                return Column(
+                  children: [
+                    Text(snapshot.data!.user['id'].toString()),
+                    Text(snapshot.data!.user['username']),
+                    Text(snapshot.data!.user['email']),
+                    Text(snapshot.data!.token),
+                  ],
+                );
+              } else if (snapshot.hasError) {
+                return Text('${snapshot.error}');
+              }
+
+              // By default, show a loading spinner.
+              return const CircularProgressIndicator();
+            },
+          ),
+          ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _futureRegister = httpService.postRegister(
+                      username: 'dummy14', password: 'dummy14', email: 'dummy14email@gmail.com');
+                });
+              },
+              child: const Text('Register user')),
+          ElevatedButton(
+              onPressed: () {
+                _futureRegister?.then((value) => debugPrint('${value.toJson}'));
+                print('hello');
+              },
+              child: const Text('print token'))
+        ],
+      ),
+    );
+  }
+
+  getUserInfoWidget() {
+    return Center(
+        child: Column(
+      children: [
+        FutureBuilder<UserInfo>(
+          future: _futureUserInfo,
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              return Column(
+                children: [
+                  Text(snapshot.data!.username),
+                  Text(snapshot.data!.email),
+                ],
+              );
+            } else if (snapshot.hasError) {
+              return Text('${snapshot.error}');
+            }
+
+            // By default, show a loading spinner.
+            return const CircularProgressIndicator();
+          },
+        ),
+        ElevatedButton(
+            onPressed: () {
+              setState(() {
+                _futureUserInfo = httpService.getUserInfo(
+                    userToken: '70a5995595c35246b312dde62641da77103db808819a7037d6ec5f7414279800');
+              });
+            },
+            child: const Text('Get user info'))
+      ],
+    ));
   }
 
   Center getWidget() {
@@ -91,7 +258,7 @@ class _ApiServiceState extends State<ApiService> {
         ElevatedButton(
           onPressed: () {
             setState(() {
-              _futureModels = httpService.post(_controller.text);
+              _futureModels = httpService.postModel(_controller.text);
             });
           },
           child: const Text('Create Data'),
