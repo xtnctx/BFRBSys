@@ -4,8 +4,85 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class HttpService {
-  Future<List<Item>> get() async {
-    final response = await http.get(Uri.parse("${Env.URL_PREFIX}/api"));
+  /// [/] Register     - username, password, email     <POST>
+  /// [/] Login        - username, password            <POST>
+  /// [/] Logout       - Token                         <POST>
+  /// [/] UserInfo     - Token                         <GET>
+
+  Future<Logout> postLogout({required String userToken}) async {
+    final response = await http.post(
+      Uri.parse("${Env.URL_PREFIX}/api/auth/logout/"),
+      headers: {'Authorization': 'Token $userToken'},
+    );
+
+    if (response.statusCode == 204) {
+      return Logout.http204();
+    } else {
+      throw Exception(jsonDecode(response.body)['detail']);
+    }
+  }
+
+  Future<Login> postLogin({
+    required String username,
+    required String password,
+  }) async {
+    final response = await http.post(
+      Uri.parse("${Env.URL_PREFIX}/api/auth/login/"),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, String>{
+        'username': username,
+        'password': password,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      return Login.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Failed to login user');
+    }
+  }
+
+  Future<RegisterModel> postRegister({
+    required String username,
+    required String password,
+    required String email,
+  }) async {
+    final response = await http.post(
+      Uri.parse("${Env.URL_PREFIX}/api/auth/register/"),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, String>{
+        'username': username,
+        'password': password,
+        'email': email,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      return RegisterModel.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Failed to register user');
+    }
+  }
+
+  Future<UserInfo> getUserInfo({required String userToken}) async {
+    final response = await http.get(
+      Uri.parse("${Env.URL_PREFIX}/api/auth/user/"),
+      headers: {'Authorization': 'Token $userToken'},
+    );
+
+    if (response.statusCode == 200) {
+      return UserInfo.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Failed to load user info');
+    }
+  }
+
+  Future<List<Item>> getItems() async {
+    final response = await http.get(Uri.parse("${Env.URL_PREFIX}/api/"));
     final items = json.decode(response.body).cast<Map<String, dynamic>>();
 
     List<Item> employees = items.map<Item>((json) {
@@ -15,7 +92,7 @@ class HttpService {
     return employees;
   }
 
-  Future<TrainedModels> post(String modelName) async {
+  Future<TrainedModels> postModel(String modelName) async {
     final response = await http.post(
       Uri.parse("${Env.URL_PREFIX}/api/"),
       headers: <String, String>{
