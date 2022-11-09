@@ -4,30 +4,38 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from .models import Item, TrainedModel
-from .serializers import ItemSerializer, TrainedModelSerializer, UserSerializer
+
+from .serializers import (ItemSerializer, TrainedModelSerializer, UserSerializer,
+    RegisterSerializer, LoginSerializer)
+
 from rest_framework.permissions import IsAuthenticated
-from rest_framework import status
-from rest_framework.authentication import TokenAuthentication, SessionAuthentication
+from rest_framework import status, generics
+from rest_framework.authentication import TokenAuthentication, SessionAuthentication, BasicAuthentication
 from rest_framework.authtoken.models import Token
 from .utils import hex_to_c_array, rmv_file_spaces
 from django.conf import settings
 from django.core.files.base import File
 import os
 
-from rest_framework.permissions import IsAdminUser
-from django.contrib.auth.models import User
+from knox.models import AuthToken
+from knox.views import LoginView as KnoxLoginView
+
+from rest_framework.permissions import AllowAny
+from rest_framework.authtoken.serializers import AuthTokenSerializer
+from django.contrib.auth import login
+
 
 
 def home(request):
     return render(request, 'apis/home.html', {})
 
-class NeuralNetworkBuilderApi(APIView):
+class NeuralNetworkBuilder(APIView):
     """
     TEST TEST TEST TEST TEST TEST TEST TEST 
     """
     
-    # permission_classes = (IsAuthenticated,)
-    # authentication_classes = (SessionAuthentication, TokenAuthentication,)
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (TokenAuthentication,)
 
 
 
@@ -70,31 +78,70 @@ class NeuralNetworkBuilderApi(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class UserRecordView(APIView):
-    """
-    API View to create or get a list of all the registered
-    users. GET request returns the registered users whereas
-    a POST request allows to create a new user.
-    """
-    permission_classes = [IsAdminUser]
+# class UserCreation(APIView):
+#     """
+#     API View to create or get a list of all the registered
+#     users. GET request returns the registered users whereas
+#     a POST request allows to create a new user.
+#     """
+#     permission_classes = [AllowAny]
+    
 
-    def get(self, format=None):
-        users = User.objects.all()
-        serializer = UserSerializer(users, many=True)
-        return Response(serializer.data)
+#     # Delete later
+#     def get(self, format=None):
+#         users = User.objects.all()
+#         serializer = UserSerializer(users, many=True)
+#         return Response(serializer.data)
 
-    def post(self, request):
-        serializer = UserSerializer(data=request.data)
-        if serializer.is_valid(raise_exception=ValueError):
-            serializer.create(validated_data=request.data)
-            return Response(
-                serializer.data,
-                status=status.HTTP_201_CREATED
-            )
-        return Response(
-            {
-                "error": True,
-                "error_msg": serializer.error_messages,
-            },
-            status=status.HTTP_400_BAD_REQUEST
-        )
+#     def post(self, request):
+#         serializer = UserSerializer(data=request.data)
+#         if serializer.is_valid(raise_exception=ValueError):
+#             serializer.create(validated_data=request.data)
+#             return Response(
+#                 serializer.data,
+#                 status=status.HTTP_201_CREATED
+#             )
+#         return Response(
+#             {
+#                 "error": True,
+#                 "error_msg": serializer.error_messages,
+#             },
+#             status=status.HTTP_400_BAD_REQUEST
+#         )
+
+class RegisterAPI(generics.GenericAPIView):
+    serializer_class = RegisterSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        _, token = AuthToken.objects.create(user)
+        return Response({
+            "user": UserSerializer(user, context=self.get_serializer_context()).data,
+            "token": token
+        })
+
+
+
+class LoginAPI(generics.GenericAPIView):
+    serializer_class = LoginSerializer
+    permission_classes = ()
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data
+        _, token = AuthToken.objects.create(user)
+        return Response({
+            "user": UserSerializer(user, context=self.get_serializer_context()).data,
+            "token": token
+        })
+
+
+class UserAPI(generics.RetrieveAPIView):
+  permission_classes = [IsAuthenticated]
+  serializer_class = UserSerializer
+
+  def get_object(self):
+    return self.request.user
