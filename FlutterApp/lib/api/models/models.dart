@@ -35,3 +35,68 @@ class TrainedModels {
         'model_name': modelName,
       };
 }
+
+// GET
+class UserInfo {
+  final int id;
+  final String username;
+  final String email;
+
+  UserInfo({required this.id, required this.username, required this.email});
+
+  factory UserInfo.fromJson(Map<String, dynamic> data) => UserInfo(
+        id: data['id'],
+        username: data['username'],
+        email: data['email'],
+      );
+
+  Map<String, dynamic> toJson() => {
+        "id": id,
+        "username": username,
+        "email": email,
+      };
+}
+
+// POST
+class RegisterModel {
+  final Map<String, dynamic> user; // contains id, username, email
+  final String token;
+
+  RegisterModel({required this.user, required this.token});
+
+  factory RegisterModel.fromJson(Map<String, dynamic> data) => RegisterModel(
+        user: data['user'],
+        token: data['token'],
+      );
+
+  Map<String, dynamic> get toJson => {
+        "user": user,
+        "token": token,
+      };
+}
+
+// POST
+class Login {
+  final Map<String, dynamic> user; // contains id, username, email
+  final String token;
+
+  Login({required this.user, required this.token});
+
+  factory Login.fromJson(Map<String, dynamic> data) => Login(
+        user: data['user'],
+        token: data['token'],
+      );
+
+  Map<String, dynamic> get toJson => {
+        "user": user,
+        "token": token,
+      };
+}
+
+// POST
+class Logout {
+  String? http204Message;
+  Logout({this.http204Message});
+
+  factory Logout.http204() => Logout(http204Message: 'Logout success.');
+}
