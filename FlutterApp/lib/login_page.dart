@@ -131,8 +131,8 @@ class _LoginPageState extends State<LoginPage> {
                   constraints: const BoxConstraints.tightFor(height: 70),
                   child: ElevatedButton(
                     onPressed: () async {
-                      String user = await UserSecureStorage.getUser();
-                      String token = await UserSecureStorage.getToken();
+                      var user = await UserSecureStorage.getUser();
+                      var token = await UserSecureStorage.getToken();
 
                       print('$user $token');
                     },
