@@ -1,4 +1,4 @@
-import re
+import re, os
 
 def hex_to_c_array(hex_data) -> str:
     c_str = ''
@@ -43,3 +43,9 @@ def rmv_file_spaces(file, exclude='') -> str:
 
     parsedFile = x.replace(" ", "").replace("\n","")
     return parsedFile
+
+def remove_file(path: str):
+    try: 
+        os.remove(path)
+    except PermissionError as e:
+        print(e)
