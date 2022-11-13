@@ -1,3 +1,4 @@
 django
 djangorestframework
-httpie
+django-rest-knox
+pandas
