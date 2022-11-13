@@ -16,4 +16,4 @@ class TrainedModel(models.Model):
                             default='settings.MEDIA_ROOT/default.txt'
                             )
     def __str__(self) -> str:
-        return f'{self.owner.username}-{self.model_name}'
+        return f'{self.owner.username}'
