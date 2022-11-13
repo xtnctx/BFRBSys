@@ -1,3 +1,4 @@
+import base64
 from django.shortcuts import render
 from django.http import JsonResponse
 from rest_framework.response import Response
@@ -12,7 +13,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status, generics
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication, BasicAuthentication
 from rest_framework.authtoken.models import Token
-from .utils import hex_to_c_array, rmv_file_spaces
+from .utils import *
 from django.conf import settings
 from django.core.files.base import File
 import os
@@ -23,6 +24,9 @@ from knox.views import LoginView as KnoxLoginView
 from rest_framework.permissions import AllowAny
 from rest_framework.authtoken.serializers import AuthTokenSerializer
 from django.contrib.auth import login
+
+from django.core.files.base import ContentFile
+import pandas as pd
 
 
 
@@ -35,9 +39,6 @@ class NeuralNetworkBuilder(APIView):
     """
     
     permission_classes = (IsAuthenticated,)
-    authentication_classes = (TokenAuthentication,)
-
-
 
     def get(self, request, format=None):
         items = Item.objects.all()
@@ -50,6 +51,12 @@ class NeuralNetworkBuilder(APIView):
     def post(self, request, format=None):
         data = request.data.get('data')
         named_model = request.data.get('model_name')
+        file = request.data.get("file") # Must be csv encoded
+        fileName = request.data.get("fileName") # Must be csv file format
+
+        dataset = ContentFile(base64.b64decode(file), fileName)
+        df = pd.read_csv(dataset)
+        print(df)
 
         if named_model == '':
             named_model = 'NO_NAME'
@@ -62,6 +69,7 @@ class NeuralNetworkBuilder(APIView):
         # Then save to database
         f = open(USER_TEMP_FILE, 'rb')
         data = {
+            'owner': request.user.id,
             'model_name': named_model,
             'file': File(f, name=str(named_model).replace(" ", "_") + f'--{request.user.username}' + '.h')
         }
@@ -73,8 +81,11 @@ class NeuralNetworkBuilder(APIView):
         if serializer.is_valid():
             serializer.save()
             f.close()
-            os.remove(USER_TEMP_FILE) # end of using temp model
+            remove_file(USER_TEMP_FILE) # end of using temp model
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        f.close()
+        remove_file(USER_TEMP_FILE)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
