@@ -1,7 +1,10 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:bfrbsys/api/http_service.dart';
 import 'package:bfrbsys/api/models/models.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:csv/csv.dart';
 
 class ApiService extends StatefulWidget {
   final Icon navBarIcon = const Icon(Icons.api_outlined);
@@ -27,17 +30,97 @@ class _ApiServiceState extends State<ApiService> {
 
   Future<Logout>? _futureLogout;
 
-  late String userToken;
-
   @override
   void initState() {
     super.initState();
     // _items = httpService.getItems();
   }
 
+  Future<String> get _localPath async {
+    final directory = await getApplicationDocumentsDirectory();
+
+    return directory.path;
+  }
+
+  Future<File> get _localFile async {
+    final path = await _localPath;
+    return File('$path/counter.txt');
+  }
+
+  Future<File> writeCounter(int counter) async {
+    final file = await _localFile;
+
+    // Write the file
+    return file.writeAsString('$counter');
+  }
+
+  Future<int> readCounter() async {
+    try {
+      final file = await _localFile;
+
+      // Read the file
+      final contents = await file.readAsString();
+
+      return int.parse(contents);
+    } catch (e) {
+      // If encountering an error, return 0
+      return 0;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: logoutWidget());
+    return Scaffold(body: csvWidget());
+  }
+
+  csvWidget() {
+    return Center(
+      child: Column(
+        children: [
+          ElevatedButton(
+            onPressed: () {
+              generateCsv();
+            },
+            child: const Text('Generate CSV'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              readCsv();
+            },
+            child: const Text('Read CSV'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  generateCsv() async {
+    List<List<String>> data = [
+      ["No.", "Name", "Roll No."],
+      ["1", 'Ryan', '23'],
+      ["2", 'Christopher', '45'],
+      ["3", 'Bahillo', '67']
+    ];
+    String csvData = const ListToCsvConverter().convert(data);
+    final String directory = await _localPath;
+    final path = "$directory/data.csv";
+    print(path);
+    final File file = File(path);
+    await file.writeAsString(csvData);
+  }
+
+  readCsv() async {
+    try {
+      final String directory = await _localPath;
+      final path = "$directory/data.csv";
+      final File file = File(path);
+      // Read the file
+      final contents = await file.readAsString();
+      print(contents);
+    } catch (e) {
+      // If encountering an error, return 0
+      print(e);
+    }
   }
 
   logoutWidget() {
@@ -75,6 +158,50 @@ class _ApiServiceState extends State<ApiService> {
                 print('hello');
               },
               child: const Text('print token'))
+        ],
+      ),
+    );
+  }
+
+  // 3befa2b12befecb421496daeeea4221fbcdfacdcf48b78dc5b81a1705a7aa9f2
+
+  postModelWidget() {
+    return Center(
+      child: Column(
+        children: [
+          FutureBuilder<TrainedModels>(
+            future: _futureModels,
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                return Column(
+                  children: [
+                    Text(snapshot.data!.id.toString()),
+                    Text(snapshot.data!.modelName),
+                    Text(snapshot.data!.createdAt),
+                    Text(snapshot.data!.updatedAt),
+                    Text(snapshot.data!.file),
+                    Text(snapshot.data!.owner.toString()),
+                  ],
+                );
+              } else if (snapshot.hasError) {
+                return Text('${snapshot.error}');
+              }
+
+              // By default, show a loading spinner.
+              return const CircularProgressIndicator();
+            },
+          ),
+          ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _futureModels = httpService.postModel(
+                    fileEncoded: '77u/Q29sMSxDb2wyLENvbDMNCjEsNCw3DQoyLDUsOA0KMyw2LDkNCg==',
+                    modelName: 'dummyModel123',
+                    userToken: '3befa2b12befecb421496daeeea4221fbcdfacdcf48b78dc5b81a1705a7aa9f2',
+                  );
+                });
+              },
+              child: const Text('Create model'))
         ],
       ),
     );
@@ -239,46 +366,46 @@ class _ApiServiceState extends State<ApiService> {
     );
   }
 
-  Container postWidget() {
-    return Container(
-      alignment: Alignment.center,
-      padding: const EdgeInsets.all(8.0),
-      child: (_futureModels == null) ? buildColumn() : buildFutureBuilder(),
-    );
-  }
+  // Container postWidget() {
+  //   return Container(
+  //     alignment: Alignment.center,
+  //     padding: const EdgeInsets.all(8.0),
+  //     child: (_futureModels == null) ? buildColumn() : buildFutureBuilder(),
+  //   );
+  // }
 
-  Column buildColumn() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: <Widget>[
-        TextField(
-          controller: _controller,
-          decoration: const InputDecoration(hintText: 'Enter Title'),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            setState(() {
-              _futureModels = httpService.postModel(_controller.text);
-            });
-          },
-          child: const Text('Create Data'),
-        ),
-      ],
-    );
-  }
+  // Column buildColumn() {
+  //   return Column(
+  //     mainAxisAlignment: MainAxisAlignment.center,
+  //     children: <Widget>[
+  //       TextField(
+  //         controller: _controller,
+  //         decoration: const InputDecoration(hintText: 'Enter Title'),
+  //       ),
+  //       ElevatedButton(
+  //         onPressed: () {
+  //           setState(() {
+  //             _futureModels = httpService.postModel(_controller.text);
+  //           });
+  //         },
+  //         child: const Text('Create Data'),
+  //       ),
+  //     ],
+  //   );
+  // }
 
-  FutureBuilder<TrainedModels> buildFutureBuilder() {
-    return FutureBuilder<TrainedModels>(
-      future: _futureModels,
-      builder: (context, snapshot) {
-        if (snapshot.hasData) {
-          return Text(snapshot.data!.modelName);
-        } else if (snapshot.hasError) {
-          return Text('${snapshot.error}');
-        }
+  // FutureBuilder<TrainedModels> buildFutureBuilder() {
+  //   return FutureBuilder<TrainedModels>(
+  //     future: _futureModels,
+  //     builder: (context, snapshot) {
+  //       if (snapshot.hasData) {
+  //         return Text(snapshot.data!.modelName);
+  //       } else if (snapshot.hasError) {
+  //         return Text('${snapshot.error}');
+  //       }
 
-        return const CircularProgressIndicator();
-      },
-    );
-  }
+  //       return const CircularProgressIndicator();
+  //     },
+  //   );
+  // }
 }
