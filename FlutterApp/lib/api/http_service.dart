@@ -46,8 +46,8 @@ class HttpService {
 
   Future<RegisterModel> postRegister({
     required String username,
-    required String password,
     required String email,
+    required String password,
   }) async {
     final response = await http.post(
       Uri.parse("${Env.URL_PREFIX}/api/auth/register/"),
@@ -56,8 +56,8 @@ class HttpService {
       },
       body: jsonEncode(<String, String>{
         'username': username,
-        'password': password,
         'email': email,
+        'password': password,
       }),
     );
 
