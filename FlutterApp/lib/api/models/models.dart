@@ -69,7 +69,7 @@ class RegisterModel {
         token: data['token'],
       );
 
-  Map<String, dynamic> get toJson => {
+  Map<String, dynamic> toJson() => {
         "user": user,
         "token": token,
       };
