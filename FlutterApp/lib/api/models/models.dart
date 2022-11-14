@@ -20,13 +20,28 @@ class Item {
 class TrainedModels {
   final int id;
   final String modelName;
+  final String createdAt;
+  final String updatedAt;
+  final String file;
+  final int owner;
 
-  TrainedModels({required this.id, required this.modelName});
+  TrainedModels({
+    required this.id,
+    required this.modelName,
+    required this.createdAt,
+    required this.updatedAt,
+    required this.file,
+    required this.owner,
+  });
 
   factory TrainedModels.fromJson(Map<String, dynamic> json) {
     return TrainedModels(
       id: json['id'],
       modelName: json['model_name'],
+      createdAt: json['created_at'],
+      updatedAt: json['updated_at'],
+      file: json['file'],
+      owner: json['owner'],
     );
   }
 
