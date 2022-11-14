@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:bfrbsys/api/env.dart';
 import 'package:bfrbsys/api/models/models.dart';
 import 'package:http/http.dart' as http;
@@ -12,7 +14,10 @@ class HttpService {
   Future<Logout> postLogout({required String userToken}) async {
     final response = await http.post(
       Uri.parse("${Env.URL_PREFIX}/api/auth/logout/"),
-      headers: {'Authorization': 'Token $userToken'},
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Token $userToken',
+      },
     );
 
     if (response.statusCode == 204) {
@@ -71,7 +76,10 @@ class HttpService {
   Future<UserInfo> getUserInfo({required String userToken}) async {
     final response = await http.get(
       Uri.parse("${Env.URL_PREFIX}/api/auth/user/"),
-      headers: {'Authorization': 'Token $userToken'},
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Token $userToken',
+      },
     );
 
     if (response.statusCode == 200) {
@@ -92,25 +100,28 @@ class HttpService {
     return employees;
   }
 
-  Future<TrainedModels> postModel(String modelName) async {
+  /// [fileEncoded] base64
+  Future<TrainedModels> postModel({
+    required String fileEncoded,
+    required String modelName,
+    required String userToken,
+  }) async {
     final response = await http.post(
       Uri.parse("${Env.URL_PREFIX}/api/"),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Token $userToken',
       },
       body: jsonEncode(<String, String>{
+        'file': fileEncoded,
         'model_name': modelName,
       }),
     );
 
     if (response.statusCode == 201) {
-      // If the server did return a 201 CREATED response,
-      // then parse the JSON.
       return TrainedModels.fromJson(jsonDecode(response.body));
     } else {
-      // If the server did not return a 201 CREATED response,
-      // then throw an exception.
-      throw Exception('Failed to create model.');
+      throw Exception(jsonDecode(response.body));
     }
   }
 }
