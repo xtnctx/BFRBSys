@@ -1,4 +1,3 @@
-import 'package:bfrbsys/main.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatefulWidget {
@@ -19,7 +18,7 @@ class _HomePageState extends State<HomePage> {
       body: Center(
         child: ElevatedButton(
           onPressed: () {},
-          child: const Text('This home page, will populate this in future.'),
+          child: const Text('Will populate this in future.'),
         ),
       ),
     );

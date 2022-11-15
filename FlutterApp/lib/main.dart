@@ -1,3 +1,4 @@
+import 'package:bfrbsys/api_page.dart';
 import 'package:bfrbsys/ble_connection.dart';
 
 import 'package:bfrbsys/profile_page.dart';
@@ -11,6 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:bfrbsys/providers.dart';
 import 'package:provider/provider.dart';
 import 'package:bfrbsys/colors.dart' as custom_color;
+import 'package:bfrbsys/login_page.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -68,6 +70,7 @@ class _RootPageState extends State<RootPage> {
       ResultsPage(),
       ProfilePage(),
       SettingsPage(),
+      ApiService(),
     ];
 
     super.initState();
@@ -183,12 +186,6 @@ class _RootPageState extends State<RootPage> {
       appBar: AppBar(
         // toolbarHeight: isPortrait ? null : 30,
         // backgroundColor: Colors.transparent,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.only(
-            bottomRight: Radius.circular(15),
-            bottomLeft: Radius.circular(15),
-          ),
-        ),
         // leading: Icon(Icons.line),
         // backgroundColor: Colors.transparent,
         actions: currentPage != 1
@@ -302,7 +299,15 @@ class _RootPageState extends State<RootPage> {
             // _createDrawerItem(icon: Icons.event, text: 'Events'),
             // _createDrawerItem(icon: Icons.note, text: 'Notes'),
             const Divider(),
-            _createDrawerItem(icon: const Icon(Icons.navigate_next), text: 'Visit our site', onTap: () {}),
+            _createDrawerItem(
+                icon: const Icon(Icons.navigate_next),
+                text: 'Visit our site',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const LoginPage()),
+                  );
+                }),
             _createDrawerItem(icon: const Icon(Icons.read_more), text: 'Documentation'),
             _createDrawerItem(icon: const Icon(Icons.face), text: 'Authors'),
             const Divider(),

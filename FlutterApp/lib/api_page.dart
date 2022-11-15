@@ -115,8 +115,9 @@ class _ApiServiceState extends State<ApiService> {
       final path = "$directory/data.csv";
       final File file = File(path);
       // Read the file
-      final contents = await file.readAsString();
-      print(contents);
+
+      String base64file = base64Encode(file.readAsBytesSync());
+      print(base64file);
     } catch (e) {
       // If encountering an error, return 0
       print(e);
