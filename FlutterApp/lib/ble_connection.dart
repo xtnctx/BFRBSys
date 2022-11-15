@@ -1,10 +1,13 @@
 // ignore_for_file: avoid_print, non_constant_identifier_names
 
 import 'dart:async';
-import 'dart:convert' show utf8;
+import 'dart:convert' show base64Encode, utf8;
+import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:bfrbsys/crc32_checksum.dart';
+import 'package:bfrbsys/device_storage.dart';
+import 'package:csv/csv.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 import 'package:bfrbsys/colors.dart' as custom_color;
@@ -14,6 +17,7 @@ import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:provider/provider.dart';
 import 'package:bfrbsys/providers.dart';
 import 'package:flutter_layout_grid/flutter_layout_grid.dart';
+import 'package:bfrbsys/neural_network_request.dart';
 
 class BluetoothBuilderPage extends StatefulWidget {
   final Icon navBarIcon = const Icon(Icons.monitor_heart_outlined);
@@ -1099,14 +1103,68 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
           SpeedDialChild(
               child: const Icon(Icons.build),
               onTap: () {
-                double h = MediaQuery.of(context).size.height;
-                msg('Building model please wait. $h');
+                openBuildForm();
               }),
         ],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
     );
   }
+
+  Future openBuildForm() {
+    _textController.value = TextEditingValue.empty;
+    return showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Build'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  autofocus: true,
+                  decoration: const InputDecoration(hintText: 'Enter your model name'),
+                  controller: _textController,
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () async {
+                  msg('Building model please wait.');
+                  Navigator.of(context).pop();
+
+                  await AppStorage.generateCSV(data: data, fileName: _textController.text);
+                  var token = await UserSecureStorage.getToken();
+                  var fileEncoded = await AppStorage.fileToBase64Encoded(
+                    fileName: '${_textController.text}.csv',
+                  );
+
+                  buildClass.build(
+                    fileEncoded: fileEncoded,
+                    modelName: _textController.text,
+                    userToken: token,
+                  );
+
+                  var response = await buildClass.response;
+                  print(response);
+                },
+                child: const Text('Submit'),
+              )
+            ],
+          );
+        });
+  }
+
+  NeuralNetworkRequestBuild buildClass = NeuralNetworkRequestBuild();
+  final TextEditingController _textController = TextEditingController();
+
+  List<List<String>> data = [
+    ["No.", "Name", "Roll No."],
+    ["1", 'Ryan', '23'],
+    ["2", 'Christopher', '45'],
+    ["3", 'Bahillo', '67']
+  ];
 }
 
 /// Private calss for storing the chart series data points.
