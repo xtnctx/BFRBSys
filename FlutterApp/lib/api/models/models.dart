@@ -48,6 +48,10 @@ class TrainedModels {
   Map<String, dynamic> toJson() => {
         'id': id,
         'model_name': modelName,
+        'created_at': createdAt,
+        'updated_at': updatedAt,
+        'file': file,
+        'owner': owner,
       };
 }
 
