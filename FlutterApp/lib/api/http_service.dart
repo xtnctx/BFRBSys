@@ -14,10 +14,7 @@ class HttpService {
   Future<Logout> postLogout({required String userToken}) async {
     final response = await http.post(
       Uri.parse("${Env.URL_PREFIX}/api/auth/logout/"),
-      headers: {
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Authorization': 'Token $userToken',
-      },
+      headers: {'Authorization': 'Token $userToken'},
     );
 
     if (response.statusCode == 204) {
@@ -27,10 +24,7 @@ class HttpService {
     }
   }
 
-  Future<Login> postLogin({
-    required String username,
-    required String password,
-  }) async {
+  Future<Login> postLogin({required String username, required String password}) async {
     final response = await http.post(
       Uri.parse("${Env.URL_PREFIX}/api/auth/login/"),
       headers: <String, String>{
@@ -45,7 +39,7 @@ class HttpService {
     if (response.statusCode == 200) {
       return Login.fromJson(jsonDecode(response.body));
     } else {
-      throw Exception('Failed to login user');
+      throw Exception(jsonDecode(response.body));
     }
   }
 
