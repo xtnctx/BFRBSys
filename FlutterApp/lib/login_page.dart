@@ -1,6 +1,11 @@
+// ignore_for_file: deprecated_member_use
+
+import 'package:bfrbsys/api/http_service.dart';
+import 'package:bfrbsys/api/models/models.dart';
 import 'package:bfrbsys/register_page.dart';
 import 'package:bfrbsys/user_secure_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class LoginPage extends StatefulWidget {
@@ -11,7 +16,14 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  final userNameController = TextEditingController();
+  final passwordController = TextEditingController();
+
+  final storage = const FlutterSecureStorage();
   bool _obscureText = true;
+
+  HttpService httpService = HttpService();
+  Future<Login>? _futureLogin;
 
   // late Map<String, dynamic> user;
   // late String token;
@@ -52,15 +64,16 @@ class _LoginPageState extends State<LoginPage> {
                     border: Border.all(color: Colors.white),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const TextField(
+                  child: TextField(
+                    controller: userNameController,
                     autocorrect: false,
-                    toolbarOptions: ToolbarOptions(
+                    toolbarOptions: const ToolbarOptions(
                       copy: true,
                       cut: true,
                       paste: true,
                       selectAll: true,
                     ),
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       border: InputBorder.none,
                       focusedBorder: InputBorder.none,
                       enabledBorder: InputBorder.none,
@@ -88,6 +101,7 @@ class _LoginPageState extends State<LoginPage> {
                     children: [
                       Expanded(
                         child: TextField(
+                          controller: passwordController,
                           obscureText: _obscureText,
                           autocorrect: false,
                           enableSuggestions: false,
@@ -131,10 +145,17 @@ class _LoginPageState extends State<LoginPage> {
                   constraints: const BoxConstraints.tightFor(height: 70),
                   child: ElevatedButton(
                     onPressed: () async {
-                      var user = await UserSecureStorage.getUser();
-                      var token = await UserSecureStorage.getToken();
+                      setState(() {
+                        _futureLogin = httpService.postLogin(
+                          username: userNameController.text,
+                          password: passwordController.text,
+                        );
+                      });
 
-                      print('$user $token');
+                      _futureLogin?.then((value) async {
+                        await UserSecureStorage.setUser(user: value.user);
+                        await UserSecureStorage.setToken(token: value.token);
+                      });
                     },
                     child: const Text(
                       'Sign In',
