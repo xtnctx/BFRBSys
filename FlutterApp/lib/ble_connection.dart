@@ -30,9 +30,9 @@ class BluetoothBuilderPage extends StatefulWidget {
   State<BluetoothBuilderPage> createState() => _BluetoothBuilderPageState();
 }
 
-// class _BluetoothBuilderPageState extends State<BluetoothBuilderPage>
-//     with AutomaticKeepAliveClientMixin<BluetoothBuilderPage> {
-class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
+class _BluetoothBuilderPageState extends State<BluetoothBuilderPage>
+    with AutomaticKeepAliveClientMixin<BluetoothBuilderPage> {
+// class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
   /// The Generic Attribute Profile (GATT) is the architechture used
   ///       for bluetooth connectivity.
   ///
@@ -92,8 +92,8 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
   ChartSeriesController? gyAxisController;
   ChartSeriesController? gzAxisController;
 
-  // @override
-  // bool get wantKeepAlive => true;
+  @override
+  bool get wantKeepAlive => true;
 
   void setConnected(fromContext, bool value) {
     Provider.of<ConnectionProvider>(fromContext, listen: false).setConnected = value;
@@ -606,7 +606,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
   /* ------------------------------------------------- */
   @override
   Widget build(BuildContext context) {
-    // super.build(context);
+    super.build(context);
     bool isPortrait = MediaQuery.of(context).orientation == Orientation.portrait;
 
     return Scaffold(
