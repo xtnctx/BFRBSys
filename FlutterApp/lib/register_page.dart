@@ -4,13 +4,14 @@ import 'dart:convert';
 
 import 'package:bfrbsys/api/http_service.dart';
 import 'package:bfrbsys/api/models/models.dart';
-import 'package:bfrbsys/user_secure_storage.dart';
+import 'package:bfrbsys/device_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class RegisterPage extends StatefulWidget {
-  const RegisterPage({super.key});
+  const RegisterPage({super.key, this.pageController});
+  final PageController? pageController;
 
   @override
   State<RegisterPage> createState() => _RegisterPageState();
@@ -219,6 +220,8 @@ class _RegisterPageState extends State<RegisterPage> {
                         await UserSecureStorage.setUser(user: value.user);
                         await UserSecureStorage.setToken(token: value.token);
                       });
+
+                      widget.pageController?.jumpToPage(0);
                     },
                     child: const Text(
                       'Sign Up',
