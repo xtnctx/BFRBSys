@@ -3,13 +3,14 @@
 import 'package:bfrbsys/api/http_service.dart';
 import 'package:bfrbsys/api/models/models.dart';
 import 'package:bfrbsys/register_page.dart';
-import 'package:bfrbsys/user_secure_storage.dart';
+import 'package:bfrbsys/device_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  const LoginPage({super.key, this.pageController});
+  final PageController? pageController;
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -48,7 +49,7 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 10),
               const Center(
                 child: Text(
-                  'Welcome back, you\'ve been missed!',
+                  'Enter your credentials to proceed',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 18),
                 ),
@@ -145,17 +146,19 @@ class _LoginPageState extends State<LoginPage> {
                   constraints: const BoxConstraints.tightFor(height: 70),
                   child: ElevatedButton(
                     onPressed: () async {
-                      setState(() {
-                        _futureLogin = httpService.postLogin(
-                          username: userNameController.text,
-                          password: passwordController.text,
-                        );
-                      });
+                      // setState(() {
+                      //   _futureLogin = httpService.postLogin(
+                      //     username: userNameController.text,
+                      //     password: passwordController.text,
+                      //   );
+                      // });
 
-                      _futureLogin?.then((value) async {
-                        await UserSecureStorage.setUser(user: value.user);
-                        await UserSecureStorage.setToken(token: value.token);
-                      });
+                      // _futureLogin?.then((value) async {
+                      //   await UserSecureStorage.setUser(user: value.user);
+                      //   await UserSecureStorage.setToken(token: value.token);
+                      // });
+
+                      widget.pageController?.jumpToPage(0);
                     },
                     child: const Text(
                       'Sign In',
