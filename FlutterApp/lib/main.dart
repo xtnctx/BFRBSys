@@ -4,15 +4,19 @@ import 'package:bfrbsys/ble_connection.dart';
 import 'package:bfrbsys/profile_page.dart';
 import 'package:bfrbsys/home_page.dart';
 import 'package:bfrbsys/results_page.dart';
-// import 'package:bfrbsys/results_page.dart';
 import 'package:bfrbsys/settings_page.dart';
 import 'package:flutter/material.dart';
-// import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:bfrbsys/providers.dart';
 import 'package:provider/provider.dart';
 import 'package:bfrbsys/colors.dart' as custom_color;
+
+import 'package:bfrbsys/api/env.dart';
+import 'package:http/http.dart' as http;
+import 'package:bfrbsys/device_storage.dart';
 import 'package:bfrbsys/login_page.dart';
+
+import 'package:bfrbsys/api/api_response_widget.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -47,10 +51,13 @@ class MyApp extends StatelessWidget {
   }
 }
 
+int currentPage = 0;
+
 class RootPage extends StatefulWidget {
   RootPage({super.key});
 
   final GlobalKey<ScaffoldState>? scaffoldKey = GlobalKey<ScaffoldState>();
+  final PageController pageController = PageController();
 
   @override
   State<RootPage> createState() => _RootPageState();
@@ -59,22 +66,57 @@ class RootPage extends StatefulWidget {
 class _RootPageState extends State<RootPage> {
   List<Widget>? pages;
   GlobalKey<ScaffoldState>? scaffoldKey;
-  int currentPage = 0;
+  PageController? pageController;
+
+  late Future auth;
+
+  late dynamic apiResponse;
 
   @override
   void initState() {
     scaffoldKey = widget.scaffoldKey;
-    pages = const [
-      HomePage(),
-      BluetoothBuilderPage(),
-      ResultsPage(),
-      ProfilePage(),
-      SettingsPage(),
-      ApiService(),
+    pageController = widget.pageController;
+    pages = [
+      const HomePage(),
+      const BluetoothBuilderPage(),
+      const ResultsPage(),
+      ProfilePage(pageController: pageController!),
+      const SettingsPage(),
+      const ApiService(),
     ];
-
+    auth = authenticate();
+    auth.then((value) {
+      setState(() {
+        apiResponse = value;
+      });
+    });
     super.initState();
   }
+
+  Future authenticate() async {
+    var token = await UserSecureStorage.getToken();
+
+    // ignore: unnecessary_null_comparison
+    if (token == null) {
+      return false; // then proceed the login page
+    } else {
+      final response = await http.get(
+        Uri.parse("${Env.URL_PREFIX}/api/auth/user/"),
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Token $token',
+        },
+      ).onError((error, _) {
+        return http.Response(error.toString(), 408);
+      });
+
+      return response;
+    }
+  }
+
+  // fetchUser() {
+  //   _futureUserInfo = httpService.getUserInfo(userToken: userToken);
+  // }
 
   Color getTextColorForBackground(Color backgroundColor) {
     if (ThemeData.estimateBrightnessForColor(backgroundColor) == Brightness.dark) {
@@ -178,16 +220,13 @@ class _RootPageState extends State<RootPage> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
+  // todo: refactor to separate file
+  Widget allowUserWidget() {
     bool isConnected = Provider.of<ConnectionProvider>(context, listen: true).isConnected;
+
     return Scaffold(
       key: scaffoldKey,
       appBar: AppBar(
-        // toolbarHeight: isPortrait ? null : 30,
-        // backgroundColor: Colors.transparent,
-        // leading: Icon(Icons.line),
-        // backgroundColor: Colors.transparent,
         actions: currentPage != 1
             ? null
             : [
@@ -261,10 +300,15 @@ class _RootPageState extends State<RootPage> {
                 ),
               ],
       ),
-      body: IndexedStack(
-        index: currentPage,
+      body: PageView(
+        physics: const NeverScrollableScrollPhysics(),
+        controller: pageController,
         children: pages!,
       ),
+      // body: IndexedStack(
+      //   index: currentPage,
+      //   children: pages!,
+      // ),
       drawerEdgeDragWidth: MediaQuery.of(context).size.width / 40,
       drawerScrimColor: Theme.of(context).colorScheme.background.withAlpha(125),
       drawer: Drawer(
@@ -286,6 +330,7 @@ class _RootPageState extends State<RootPage> {
                     }
                     setState(() {
                       currentPage = index;
+                      pageController?.jumpToPage(index);
                     });
                     // pageController.jumpToPage(index);
 
@@ -303,10 +348,7 @@ class _RootPageState extends State<RootPage> {
                 icon: const Icon(Icons.navigate_next),
                 text: 'Visit our site',
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const LoginPage()),
-                  );
+                  print(apiResponse);
                 }),
             _createDrawerItem(icon: const Icon(Icons.read_more), text: 'Documentation'),
             _createDrawerItem(icon: const Icon(Icons.face), text: 'Authors'),
@@ -320,5 +362,31 @@ class _RootPageState extends State<RootPage> {
         ),
       ),
     );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    try {
+      // Successful authentication.
+      if (apiResponse.statusCode == 200) {
+        return allowUserWidget();
+      }
+      // New user or device
+      else if (apiResponse == false) {
+        return LoginPage(pageController: pageController);
+      }
+      // Invalid token: user may not be present in database or token might be expired.
+      else if (apiResponse.statusCode == 401) {
+        return LoginPage(pageController: pageController);
+      }
+      // Request Timeout | HTTP Class 500
+      else {
+        return ResponseCodeWidget(response: apiResponse);
+      }
+    } catch (_) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
   }
 }
