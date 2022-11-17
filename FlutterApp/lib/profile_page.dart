@@ -2,7 +2,6 @@ import 'package:bfrbsys/api/http_service.dart';
 import 'package:bfrbsys/api/models/models.dart';
 import 'package:bfrbsys/device_storage.dart';
 import 'package:bfrbsys/login_page.dart';
-import 'package:bfrbsys/main.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -10,8 +9,7 @@ class ProfilePage extends StatefulWidget {
   final Icon navBarIcon = const Icon(Icons.person_outlined);
   final Icon navBarIconSelected = const Icon(Icons.person);
   final String navBarTitle = 'Profile';
-  final PageController pageController;
-  const ProfilePage({super.key, required this.pageController});
+  const ProfilePage({super.key});
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -57,7 +55,7 @@ class _ProfilePageState extends State<ProfilePage> {
             Text(
               email ?? 'loading...',
               textAlign: TextAlign.center,
-              style: GoogleFonts.notoSans(fontSize: 18),
+              style: const TextStyle(fontSize: 18),
             ),
             const SizedBox(height: 50),
 
@@ -85,11 +83,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
                 _futureLogout!.then((value) {
                   if (value.http204Message != null) {
-                    currentPage = 0;
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const LoginPage()),
-                    );
+                    Navigator.popAndPushNamed(context, '/login');
                   }
                 });
               },
