@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:flex_color_scheme/flex_color_scheme.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class ThemeProvider extends ChangeNotifier {
   late ThemeData _selectedTheme;
@@ -17,8 +18,7 @@ class ThemeProvider extends ChangeNotifier {
       fabSchemeColor: SchemeColor.tertiaryContainer,
     ),
     visualDensity: FlexColorScheme.comfortablePlatformDensity,
-    // To use the playground font, add GoogleFonts package and uncomment
-    // fontFamily: GoogleFonts.notoSans().fontFamily,
+    fontFamily: GoogleFonts.notoSans().fontFamily,
   );
 
   ThemeData dark = FlexThemeData.dark(
@@ -31,8 +31,7 @@ class ThemeProvider extends ChangeNotifier {
       fabSchemeColor: SchemeColor.tertiaryContainer,
     ),
     visualDensity: FlexColorScheme.comfortablePlatformDensity,
-    // To use the playground font, add GoogleFonts package and uncomment
-    // fontFamily: GoogleFonts.notoSans().fontFamily,
+    fontFamily: GoogleFonts.notoSans().fontFamily,
   );
 
   ThemeProvider(bool darkThemeOn) {
