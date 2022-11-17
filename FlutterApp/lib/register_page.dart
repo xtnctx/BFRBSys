@@ -10,8 +10,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class RegisterPage extends StatefulWidget {
-  const RegisterPage({super.key, this.pageController});
-  final PageController? pageController;
+  const RegisterPage({super.key});
 
   @override
   State<RegisterPage> createState() => _RegisterPageState();
@@ -29,10 +28,36 @@ class _RegisterPageState extends State<RegisterPage> {
   HttpService httpService = HttpService();
   Future<RegisterModel>? _futureRegister;
 
+  Future showRegisterErrorDialog(RegisterModel error, stackTrace) {
+    Map<String, dynamic>? nerror = error.errorMsg;
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text(
+            'Error',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          content: Text('${nerror!.values.first[0]}'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text(
+                'OK',
+                style: TextStyle(color: Colors.blue),
+              ),
+            )
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[300],
       body: SafeArea(
         child: Center(
           child: ListView(
@@ -52,7 +77,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 child: Text(
                   'Create an account, ready your wearable.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 18),
+                  style: TextStyle(fontSize: 16),
                 ),
               ),
               const SizedBox(height: 50),
@@ -62,8 +87,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 25.0),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    border: Border.all(color: Colors.white),
+                    border: Border.all(color: Theme.of(context).colorScheme.outline),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: TextField(
@@ -95,8 +119,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 25.0),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    border: Border.all(color: Colors.white),
+                    border: Border.all(color: Theme.of(context).colorScheme.outline),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: TextField(
@@ -129,8 +152,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 25.0),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    border: Border.all(color: Colors.white),
+                    border: Border.all(color: Theme.of(context).colorScheme.outline),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -174,8 +196,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 25.0),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    border: Border.all(color: Colors.white),
+                    border: Border.all(color: Theme.of(context).colorScheme.outline),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: TextField(
@@ -199,7 +220,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
               const SizedBox(height: 25),
 
-              // Sign in button
+              // Sign up button
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 25.0),
                 child: ConstrainedBox(
@@ -217,11 +238,12 @@ class _RegisterPageState extends State<RegisterPage> {
 
                       // Save response (user credentials) to secure storage
                       _futureRegister?.then((value) async {
+                        Navigator.popAndPushNamed(context, '/');
                         await UserSecureStorage.setUser(user: value.user);
                         await UserSecureStorage.setToken(token: value.token);
+                      }).onError((error, _) {
+                        showRegisterErrorDialog(error as RegisterModel, _);
                       });
-
-                      widget.pageController?.jumpToPage(0);
                     },
                     child: const Text(
                       'Sign Up',
