@@ -1,5 +1,7 @@
 // ignore_for_file: deprecated_member_use
 
+import 'dart:convert';
+
 import 'package:bfrbsys/api/http_service.dart';
 import 'package:bfrbsys/api/models/models.dart';
 import 'package:bfrbsys/register_page.dart';
@@ -9,8 +11,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key, this.pageController});
-  final PageController? pageController;
+  const LoginPage({super.key});
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -29,10 +30,37 @@ class _LoginPageState extends State<LoginPage> {
   // late Map<String, dynamic> user;
   // late String token;
 
+  Future showLoginErrorDialog(Login error, stackTrace) {
+    Map<String, dynamic>? nerror = error.errorMsg;
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text(
+            'Error',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          content: Text('${nerror!.values.first[0]}'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text(
+                'OK',
+                style: TextStyle(color: Colors.blue),
+              ),
+            )
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[300],
+      // backgroundColor: Colors.grey[300],
       body: SafeArea(
         child: Center(
           child: ListView(
@@ -51,7 +79,7 @@ class _LoginPageState extends State<LoginPage> {
                 child: Text(
                   'Enter your credentials to proceed',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 18),
+                  style: TextStyle(fontSize: 16),
                 ),
               ),
               const SizedBox(height: 50),
@@ -61,8 +89,7 @@ class _LoginPageState extends State<LoginPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 25.0),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    border: Border.all(color: Colors.white),
+                    border: Border.all(color: Theme.of(context).colorScheme.outline),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: TextField(
@@ -94,8 +121,7 @@ class _LoginPageState extends State<LoginPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 25.0),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    border: Border.all(color: Colors.white),
+                    border: Border.all(color: Theme.of(context).colorScheme.outline),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -146,19 +172,20 @@ class _LoginPageState extends State<LoginPage> {
                   constraints: const BoxConstraints.tightFor(height: 70),
                   child: ElevatedButton(
                     onPressed: () async {
-                      // setState(() {
-                      //   _futureLogin = httpService.postLogin(
-                      //     username: userNameController.text,
-                      //     password: passwordController.text,
-                      //   );
-                      // });
+                      setState(() {
+                        _futureLogin = httpService.postLogin(
+                          username: userNameController.text,
+                          password: passwordController.text,
+                        );
+                      });
 
-                      // _futureLogin?.then((value) async {
-                      //   await UserSecureStorage.setUser(user: value.user);
-                      //   await UserSecureStorage.setToken(token: value.token);
-                      // });
-
-                      widget.pageController?.jumpToPage(0);
+                      _futureLogin?.then((value) async {
+                        Navigator.popAndPushNamed(context, '/');
+                        await UserSecureStorage.setUser(user: value.user);
+                        await UserSecureStorage.setToken(token: value.token);
+                      }).onError((error, _) {
+                        showLoginErrorDialog(error as Login, _);
+                      });
                     },
                     child: const Text(
                       'Sign In',
