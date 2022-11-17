@@ -80,12 +80,19 @@ class UserInfo {
 class RegisterModel {
   final Map<String, dynamic> user; // contains id, username, email
   final String token;
+  final Map<String, dynamic>? errorMsg;
 
-  RegisterModel({required this.user, required this.token});
+  RegisterModel({required this.user, required this.token, this.errorMsg});
 
   factory RegisterModel.fromJson(Map<String, dynamic> data) => RegisterModel(
         user: data['user'],
         token: data['token'],
+      );
+
+  factory RegisterModel.onError(Map<String, dynamic>? data) => RegisterModel(
+        errorMsg: data,
+        token: '',
+        user: {},
       );
 
   Map<String, dynamic> toJson() => {
@@ -98,12 +105,19 @@ class RegisterModel {
 class Login {
   final Map<String, dynamic> user; // contains id, username, email
   final String token;
+  final Map<String, dynamic>? errorMsg;
 
-  Login({required this.user, required this.token});
+  Login({required this.user, required this.token, this.errorMsg});
 
   factory Login.fromJson(Map<String, dynamic> data) => Login(
         user: data['user'],
         token: data['token'],
+      );
+
+  factory Login.onError(Map<String, dynamic>? data) => Login(
+        errorMsg: data,
+        token: '',
+        user: {},
       );
 
   Map<String, dynamic> get toJson => {
