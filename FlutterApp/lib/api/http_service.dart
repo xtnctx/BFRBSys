@@ -39,7 +39,7 @@ class HttpService {
     if (response.statusCode == 200) {
       return Login.fromJson(jsonDecode(response.body));
     } else {
-      throw Exception(jsonDecode(response.body));
+      throw Login.onError(jsonDecode(response.body));
     }
   }
 
@@ -63,7 +63,7 @@ class HttpService {
     if (response.statusCode == 200) {
       return RegisterModel.fromJson(jsonDecode(response.body));
     } else {
-      throw Exception('Failed to register user');
+      throw RegisterModel.onError(jsonDecode(response.body));
     }
   }
 
