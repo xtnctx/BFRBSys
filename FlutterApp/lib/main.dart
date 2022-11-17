@@ -42,16 +42,18 @@ class MyApp extends StatelessWidget {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         return MaterialApp(
+          title: 'Bfrbsys',
           debugShowCheckedModeBanner: false,
           theme: themeProvider.getTheme,
-          home: RootPage(),
+          routes: {
+            '/': (context) => RootPage(),
+            '/login': (context) => const LoginPage(),
+          },
         );
       },
     );
   }
 }
-
-int currentPage = 0;
 
 class RootPage extends StatefulWidget {
   RootPage({super.key});
@@ -67,6 +69,7 @@ class _RootPageState extends State<RootPage> {
   List<Widget>? pages;
   GlobalKey<ScaffoldState>? scaffoldKey;
   PageController? pageController;
+  int currentPage = 0;
 
   late Future auth;
 
@@ -76,13 +79,13 @@ class _RootPageState extends State<RootPage> {
   void initState() {
     scaffoldKey = widget.scaffoldKey;
     pageController = widget.pageController;
-    pages = [
-      const HomePage(),
-      const BluetoothBuilderPage(),
-      const ResultsPage(),
-      ProfilePage(pageController: pageController!),
-      const SettingsPage(),
-      const ApiService(),
+    pages = const [
+      HomePage(),
+      BluetoothBuilderPage(),
+      ResultsPage(),
+      ProfilePage(),
+      SettingsPage(),
+      ApiService(),
     ];
     auth = authenticate();
     auth.then((value) {
@@ -300,15 +303,10 @@ class _RootPageState extends State<RootPage> {
                 ),
               ],
       ),
-      body: PageView(
-        physics: const NeverScrollableScrollPhysics(),
-        controller: pageController,
+      body: IndexedStack(
+        index: currentPage,
         children: pages!,
       ),
-      // body: IndexedStack(
-      //   index: currentPage,
-      //   children: pages!,
-      // ),
       drawerEdgeDragWidth: MediaQuery.of(context).size.width / 40,
       drawerScrimColor: Theme.of(context).colorScheme.background.withAlpha(125),
       drawer: Drawer(
@@ -330,7 +328,6 @@ class _RootPageState extends State<RootPage> {
                     }
                     setState(() {
                       currentPage = index;
-                      pageController?.jumpToPage(index);
                     });
                     // pageController.jumpToPage(index);
 
@@ -356,7 +353,7 @@ class _RootPageState extends State<RootPage> {
             _createDrawerItem(icon: const Icon(Icons.coffee), text: 'Buy me a coffee'),
             _createDrawerItem(icon: const Icon(Icons.bug_report), text: 'Bug report'),
             const ListTile(
-              title: Text('v0.2.21', style: TextStyle(fontSize: 10)),
+              title: Text('v0.2.6', style: TextStyle(fontSize: 10)),
             ),
           ],
         ),
@@ -373,17 +370,17 @@ class _RootPageState extends State<RootPage> {
       }
       // New user or device
       else if (apiResponse == false) {
-        return LoginPage(pageController: pageController);
+        return const LoginPage();
       }
       // Invalid token: user may not be present in database or token might be expired.
       else if (apiResponse.statusCode == 401) {
-        return LoginPage(pageController: pageController);
+        return const LoginPage();
       }
       // Request Timeout | HTTP Class 500
       else {
         return ResponseCodeWidget(response: apiResponse);
       }
-    } catch (_) {
+    } catch (error) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
