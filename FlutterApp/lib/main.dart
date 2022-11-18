@@ -109,17 +109,19 @@ class _RootPageState extends State<RootPage> {
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Token $token',
         },
-      ).onError((error, _) {
-        return http.Response(error.toString(), 408);
-      });
+      ).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          return http.Response('Connection timed out', 408);
+        },
+      );
+      //     .onError((error, _) {
+      //   return http.Response(error.toString(), 408);
+      // });
 
       return response;
     }
   }
-
-  // fetchUser() {
-  //   _futureUserInfo = httpService.getUserInfo(userToken: userToken);
-  // }
 
   Color getTextColorForBackground(Color backgroundColor) {
     if (ThemeData.estimateBrightnessForColor(backgroundColor) == Brightness.dark) {
@@ -353,7 +355,7 @@ class _RootPageState extends State<RootPage> {
             _createDrawerItem(icon: const Icon(Icons.coffee), text: 'Buy me a coffee'),
             _createDrawerItem(icon: const Icon(Icons.bug_report), text: 'Bug report'),
             const ListTile(
-              title: Text('v0.2.6', style: TextStyle(fontSize: 10)),
+              title: Text('v0.2.66', style: TextStyle(fontSize: 10)),
             ),
           ],
         ),
