@@ -18,6 +18,7 @@ import 'package:provider/provider.dart';
 import 'package:bfrbsys/providers.dart';
 import 'package:flutter_layout_grid/flutter_layout_grid.dart';
 import 'package:bfrbsys/neural_network_request.dart';
+import 'package:http/http.dart' as http;
 
 class BluetoothBuilderPage extends StatefulWidget {
   final Icon navBarIcon = const Icon(Icons.monitor_heart_outlined);
@@ -1139,8 +1140,10 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
                     fileName: '${_textController.text}.csv',
                   );
 
-                  buildClass.build(
-                    fileEncoded: fileEncoded,
+                  String localPath = await AppStorage.localPath();
+
+                  buildClass.sendInput(
+                    filePath: '$localPath/${_textController.text}.csv',
                     modelName: _textController.text,
                     userToken: token,
                   );
