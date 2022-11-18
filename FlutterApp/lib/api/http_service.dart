@@ -118,4 +118,29 @@ class HttpService {
       throw Exception(jsonDecode(response.body));
     }
   }
+
+  Future<TrainedModels> sendInput({
+    required String filePath,
+    required String modelName,
+    required String userToken,
+  }) async {
+    var request = http.MultipartRequest('POST', Uri.parse("${Env.URL_PREFIX}/api/"))
+      ..headers.addAll({"Authorization": "Token $userToken"})
+      ..fields['model_name'] = modelName
+      ..files.add(
+        http.MultipartFile(
+          'file',
+          File(filePath).readAsBytes().asStream(),
+          File(filePath).lengthSync(),
+          filename: filePath.split("/").last,
+        ),
+      );
+    http.Response response = await http.Response.fromStream(await request.send());
+
+    if (response.statusCode == 201) {
+      return TrainedModels.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception(jsonDecode(response.body));
+    }
+  }
 }
