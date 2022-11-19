@@ -100,7 +100,7 @@ class _RootPageState extends State<RootPage> {
     var token = await UserSecureStorage.getToken();
 
     // ignore: unnecessary_null_comparison
-    if (token == null) {
+    if (token == '') {
       return false; // then proceed the login page
     } else {
       final response = await http.get(
@@ -366,13 +366,13 @@ class _RootPageState extends State<RootPage> {
   @override
   Widget build(BuildContext context) {
     try {
-      // Successful authentication.
-      if (apiResponse.statusCode == 200) {
-        return allowUserWidget();
-      }
       // New user or device
-      else if (apiResponse == false) {
+      if (apiResponse == false) {
         return const LoginPage();
+      }
+      // Successful authentication.
+      else if (apiResponse.statusCode == 200) {
+        return allowUserWidget();
       }
       // Invalid token: user may not be present in database or token might be expired.
       else if (apiResponse.statusCode == 401) {
@@ -383,6 +383,7 @@ class _RootPageState extends State<RootPage> {
         return ResponseCodeWidget(response: apiResponse);
       }
     } catch (error) {
+      print(error);
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
