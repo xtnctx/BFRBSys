@@ -383,7 +383,6 @@ class _RootPageState extends State<RootPage> {
         return ResponseCodeWidget(response: apiResponse);
       }
     } catch (error) {
-      print(error);
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
