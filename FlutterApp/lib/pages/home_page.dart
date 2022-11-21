@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+part of 'page_handler.dart';
 
 class HomePage extends StatefulWidget {
   final Icon navBarIcon = const Icon(Icons.home_outlined);

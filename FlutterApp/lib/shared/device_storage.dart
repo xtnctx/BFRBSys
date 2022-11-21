@@ -1,8 +1,4 @@
-import 'dart:convert';
-import 'dart:io';
-import 'package:csv/csv.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:path_provider/path_provider.dart';
+part of 'shared.dart';
 
 class UserSecureStorage {
   static const _storage = FlutterSecureStorage();

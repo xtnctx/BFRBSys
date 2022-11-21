@@ -1,7 +1,4 @@
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:bfrbsys/providers.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+part of 'page_handler.dart';
 
 class SettingsPage extends StatefulWidget {
   final Icon navBarIcon = const Icon(Icons.settings_outlined);

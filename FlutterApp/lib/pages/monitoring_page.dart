@@ -1,24 +1,6 @@
 // ignore_for_file: avoid_print, non_constant_identifier_names
 
-import 'dart:async';
-import 'dart:convert' show utf8;
-import 'dart:math';
-import 'dart:typed_data';
-
-import 'package:bfrbsys/crc32_checksum.dart';
-import 'package:bfrbsys/device_storage.dart';
-import 'package:bfrbsys/external_sensor_widget.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_blue/flutter_blue.dart';
-import 'package:bfrbsys/colors.dart' as custom_color;
-import 'package:carousel_slider/carousel_slider.dart';
-import 'package:syncfusion_flutter_charts/charts.dart';
-import 'package:flutter_speed_dial/flutter_speed_dial.dart';
-import 'package:provider/provider.dart';
-import 'package:bfrbsys/providers.dart';
-import 'package:flutter_layout_grid/flutter_layout_grid.dart';
-import 'package:bfrbsys/neural_network_request.dart';
-import 'package:google_fonts/google_fonts.dart';
+part of 'page_handler.dart';
 
 class BluetoothBuilderPage extends StatefulWidget {
   final Icon navBarIcon = const Icon(Icons.monitor_heart_outlined);
@@ -90,6 +72,20 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
   ChartSeriesController? gxAxisController;
   ChartSeriesController? gyAxisController;
   ChartSeriesController? gzAxisController;
+
+  String? accData;
+  String? gyroData;
+  String? distData;
+
+  NeuralNetworkRequestBuild buildClass = NeuralNetworkRequestBuild();
+  final TextEditingController _textController = TextEditingController();
+
+  List<List<String>> data = [
+    ["No.", "Name", "Roll No."],
+    ["1", 'Ryan', '23'],
+    ["2", 'Christopher', '45'],
+    ["3", 'Bahillo', '67']
+  ];
 
   void setConnected(fromContext, bool value) {
     Provider.of<ConnectionProvider>(fromContext, listen: false).setConnected = value;
@@ -272,9 +268,6 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
     return Text(m, style: TextStyle(color: statusCodeColor[statusCode]));
   }
 
-  String? accData;
-  String? gyroData;
-  String? distData;
   /* ------------------------------------------------- */
   // EVENT LISTENERS
   void _readData(BluetoothCharacteristic? characteristic) {
@@ -322,27 +315,6 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
       }
     });
   }
-
-  // ----------------------------------------------------------------------------------
-  // This part is to configure the flutter_blue BluetoothCharacteristic because
-  // the read and write values is a type of byte array.
-  num bytesToInteger(List<int> bytes) {
-    num value = 0;
-    if (Endian.host == Endian.big) {
-      bytes = List.from(bytes.reversed);
-    }
-    for (var i = 0, length = bytes.length; i < length; i++) {
-      value += bytes[i] * pow(256, i);
-    }
-    return value;
-  }
-
-  Uint8List integerToBytes(int value) {
-    /// Best use case: value > 255
-    const length = 4;
-    return Uint8List(length)..buffer.asByteData().setInt32(0, value, Endian.little);
-  }
-  // ----------------------------------------------------------------------------------
 
   Future<void> transferFile(Uint8List fileContents) async {
     var maximumLengthValue = await fileMaximumLengthCharacteristic?.read();
@@ -443,7 +415,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
                 axAxisController = controller;
               },
               dataSource: chartAccData!,
-              color: connectionValue(context) ? custom_color.lineXColor : custom_color.deadLineColor,
+              color: connectionValue(context) ? CustomColor.lineXColor : CustomColor.deadLineColor,
               xValueMapper: (_ChartData data, _) => data.t,
               yValueMapper: (_ChartData data, _) => data.x,
               animationDuration: 0,
@@ -454,7 +426,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
                 ayAxisController = controller;
               },
               dataSource: chartAccData!,
-              color: connectionValue(context) ? custom_color.lineYColor : custom_color.deadLineColor,
+              color: connectionValue(context) ? CustomColor.lineYColor : CustomColor.deadLineColor,
               xValueMapper: (_ChartData data, _) => data.t,
               yValueMapper: (_ChartData data, _) => data.y,
               animationDuration: 0,
@@ -465,7 +437,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
                 azAxisController = controller;
               },
               dataSource: chartAccData!,
-              color: connectionValue(context) ? custom_color.lineZColor : custom_color.deadLineColor,
+              color: connectionValue(context) ? CustomColor.lineZColor : CustomColor.deadLineColor,
               xValueMapper: (_ChartData data, _) => data.t,
               yValueMapper: (_ChartData data, _) => data.z,
               animationDuration: 0,
@@ -504,7 +476,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
                 gxAxisController = controller;
               },
               dataSource: chartGyroData!,
-              color: connectionValue(context) ? custom_color.lineXColor : custom_color.deadLineColor,
+              color: connectionValue(context) ? CustomColor.lineXColor : CustomColor.deadLineColor,
               xValueMapper: (_ChartData data, _) => data.t,
               yValueMapper: (_ChartData data, _) => data.x,
               animationDuration: 0,
@@ -515,7 +487,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
                 gyAxisController = controller;
               },
               dataSource: chartGyroData!,
-              color: connectionValue(context) ? custom_color.lineYColor : custom_color.deadLineColor,
+              color: connectionValue(context) ? CustomColor.lineYColor : CustomColor.deadLineColor,
               xValueMapper: (_ChartData data, _) => data.t,
               yValueMapper: (_ChartData data, _) => data.y,
               animationDuration: 0,
@@ -526,7 +498,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
                 gzAxisController = controller;
               },
               dataSource: chartGyroData!,
-              color: connectionValue(context) ? custom_color.lineZColor : custom_color.deadLineColor,
+              color: connectionValue(context) ? CustomColor.lineZColor : CustomColor.deadLineColor,
               xValueMapper: (_ChartData data, _) => data.t,
               yValueMapper: (_ChartData data, _) => data.z,
               animationDuration: 0,
@@ -550,17 +522,10 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
     }
   }
 
-  List<double> dataParse(String data) {
-    double x = double.parse(data.split(',')[0]);
-    double y = double.parse(data.split(',')[1]);
-    double z = double.parse(data.split(',')[2]);
-    return [x, y, z];
-  }
-
   // Continously updating the data source based on timer
   void _updateDataSource(Timer timer) {
-    List<double> acc = dataParse(accData!);
-    List<double> gyro = dataParse(gyroData!);
+    List<double> acc = imuParse(accData!);
+    List<double> gyro = imuParse(gyroData!);
     chartAccData!.add(_ChartData(count, acc[0], acc[1], acc[2]));
     chartGyroData!.add(_ChartData(count, gyro[0], gyro[1], gyro[2]));
 
@@ -596,14 +561,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            margin: const EdgeInsets.only(left: 10, right: 10),
-            child: Text(
-              'IMU Sensor',
-              textAlign: TextAlign.left,
-              style: GoogleFonts.bebasNeue(fontSize: 25),
-            ),
-          ),
+          const ChartHeader(title: 'IMU Sensor'),
           Container(
             margin: const EdgeInsets.only(left: 10, right: 10),
             child: Center(
@@ -618,14 +576,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
             ),
           ),
           const SizedBox(height: 10),
-          Container(
-            margin: const EdgeInsets.only(left: 10, right: 10),
-            child: Text(
-              'Externals',
-              textAlign: TextAlign.left,
-              style: GoogleFonts.bebasNeue(fontSize: 25),
-            ),
-          ),
+          const ChartHeader(title: 'Externals'),
 
           // Externals
           Container(
@@ -660,102 +611,11 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
                     right: 10,
                     top: 0,
                   ),
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Theme.of(context).colorScheme.tertiaryContainer,
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      flex: 3,
-                                      child: TextButton(
-                                        style: TextButton.styleFrom(
-                                            foregroundColor: Colors.white,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(20),
-                                            )),
-                                        onPressed: () {},
-                                        child: const Text('ADD ON TARGET'),
-                                      ),
-                                    ),
-                                    Expanded(
-                                        flex: 1,
-                                        child: TextButton(
-                                          style: TextButton.styleFrom(
-                                              foregroundColor: Colors.white,
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(20),
-                                              )),
-                                          child: Wrap(
-                                            children: const [
-                                              Icon(
-                                                Icons.delete_outline,
-                                                color: Colors.red,
-                                              ),
-                                            ],
-                                          ),
-                                          onPressed: () {},
-                                        )),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 20),
-                            Expanded(
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Theme.of(context).colorScheme.tertiaryContainer,
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      flex: 3,
-                                      child: TextButton(
-                                        style: TextButton.styleFrom(
-                                            foregroundColor: Colors.white,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(20),
-                                            )),
-                                        onPressed: () {},
-                                        child: const Text('ADD OFF TARGET'),
-                                      ),
-                                    ),
-                                    Expanded(
-                                        flex: 1,
-                                        child: TextButton(
-                                          style: TextButton.styleFrom(
-                                              foregroundColor: Colors.white,
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(20),
-                                              )),
-                                          child: Wrap(
-                                            children: const [
-                                              Icon(
-                                                Icons.delete_outline,
-                                                color: Colors.red,
-                                              ),
-                                            ],
-                                          ),
-                                          onPressed: () {},
-                                        )),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                  child: DataButton(
+                    onAddOnTarget: () {},
+                    onAddOffTarget: () {},
+                    onDeleteOnTarget: () {},
+                    onDeleteOffTarget: () {},
                   ),
                 ),
               ],
@@ -857,9 +717,6 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
 
                   await AppStorage.generateCSV(data: data, fileName: _textController.text);
                   var token = await UserSecureStorage.getToken();
-                  var fileEncoded = await AppStorage.fileToBase64Encoded(
-                    fileName: '${_textController.text}.csv',
-                  );
 
                   String localPath = await AppStorage.localPath();
 
@@ -878,16 +735,6 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
           );
         });
   }
-
-  NeuralNetworkRequestBuild buildClass = NeuralNetworkRequestBuild();
-  final TextEditingController _textController = TextEditingController();
-
-  List<List<String>> data = [
-    ["No.", "Name", "Roll No."],
-    ["1", 'Ryan', '23'],
-    ["2", 'Christopher', '45'],
-    ["3", 'Bahillo', '67']
-  ];
 }
 
 /// Private calss for storing the chart series data points.
@@ -897,30 +744,4 @@ class _ChartData {
   final num x;
   final num y;
   final num z;
-}
-
-class MyTooltip extends StatelessWidget {
-  final Widget child;
-  final String message;
-
-  const MyTooltip({super.key, required this.message, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    final key = GlobalKey<State<Tooltip>>();
-    return Tooltip(
-      key: key,
-      message: message,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () => _onTap(key),
-        child: child,
-      ),
-    );
-  }
-
-  void _onTap(GlobalKey key) {
-    final dynamic tooltip = key.currentState;
-    tooltip?.ensureTooltipVisible();
-  }
 }

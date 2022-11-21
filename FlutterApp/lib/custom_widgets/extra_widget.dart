@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class ExternalSensorWidget extends StatelessWidget {
   const ExternalSensorWidget({
@@ -64,6 +65,23 @@ class ExternalSensorWidget extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class ChartHeader extends StatelessWidget {
+  const ChartHeader({super.key, required this.title});
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(left: 10, right: 10),
+      child: Text(
+        title,
+        textAlign: TextAlign.left,
+        style: GoogleFonts.bebasNeue(fontSize: 25),
       ),
     );
   }

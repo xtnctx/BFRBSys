@@ -1,9 +1,4 @@
-import 'package:bfrbsys/api/http_service.dart';
-import 'package:bfrbsys/api/models/models.dart';
-import 'package:bfrbsys/device_storage.dart';
-import 'package:bfrbsys/login_page.dart';
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+part of 'page_handler.dart';
 
 class ProfilePage extends StatefulWidget {
   final Icon navBarIcon = const Icon(Icons.person_outlined);

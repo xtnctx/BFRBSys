@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+part of 'shared.dart';
 
 const ColorScheme flexSchemeDark = ColorScheme(
   brightness: Brightness.dark,
@@ -64,8 +64,10 @@ const ColorScheme flexSchemeLight = ColorScheme(
   surfaceTint: Color(0xff202541),
 );
 
-const Color lineXColor = Color(0xFFC06C84);
-const Color lineYColor = Color(0xFF3B65B9);
-const Color lineZColor = Color(0xFF3BB95D);
-const Color deadLineColor = Colors.transparent;
-const Color disconnectedBox = Color(0x36A40F04);
+class CustomColor {
+  static const Color lineXColor = Color(0xFFC06C84);
+  static const Color lineYColor = Color(0xFF3B65B9);
+  static const Color lineZColor = Color(0xFF3BB95D);
+  static const Color deadLineColor = Colors.transparent;
+  static const Color disconnectedBox = Color(0x36A40F04);
+}

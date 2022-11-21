@@ -1,36 +1,26 @@
 // ignore_for_file: deprecated_member_use
+part of 'account_setup.dart';
 
-import 'dart:convert';
-
-import 'package:bfrbsys/api/http_service.dart';
-import 'package:bfrbsys/api/models/models.dart';
-import 'package:bfrbsys/register_page.dart';
-import 'package:bfrbsys/device_storage.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:google_fonts/google_fonts.dart';
-
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+class RegisterPage extends StatefulWidget {
+  const RegisterPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<RegisterPage> createState() => _RegisterPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _RegisterPageState extends State<RegisterPage> {
   final userNameController = TextEditingController();
+  final emailController = TextEditingController();
   final passwordController = TextEditingController();
+  final confirmPasswordController = TextEditingController();
 
   final storage = const FlutterSecureStorage();
   bool _obscureText = true;
 
   HttpService httpService = HttpService();
-  Future<Login>? _futureLogin;
+  Future<RegisterModel>? _futureRegister;
 
-  // late Map<String, dynamic> user;
-  // late String token;
-
-  Future showLoginErrorDialog(Login error, stackTrace) {
+  Future showRegisterErrorDialog(RegisterModel error, stackTrace) {
     Map<String, dynamic>? nerror = error.errorMsg;
     return showDialog(
       context: context,
@@ -60,24 +50,24 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // backgroundColor: Colors.grey[300],
       body: SafeArea(
         child: Center(
           child: ListView(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
+            // mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // Hello Again
               Center(
                 child: Text(
-                  'Sign In',
+                  'Sign Up',
                   style: GoogleFonts.bebasNeue(fontSize: 50),
                 ),
               ),
               const SizedBox(height: 10),
               const Center(
                 child: Text(
-                  'Enter your credentials to proceed',
+                  'Create an account, ready your wearable.',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 16),
                 ),
@@ -116,6 +106,39 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 10),
 
+              // Email textfield
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 25.0),
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Theme.of(context).colorScheme.outline),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: TextField(
+                    controller: emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    autocorrect: false,
+                    toolbarOptions: const ToolbarOptions(
+                      copy: true,
+                      cut: true,
+                      paste: true,
+                      selectAll: true,
+                    ),
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      errorBorder: InputBorder.none,
+                      disabledBorder: InputBorder.none,
+                      hintText: 'Email',
+                      contentPadding: EdgeInsets.only(left: 20.0),
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
               // Password textfield
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 25.0),
@@ -133,12 +156,7 @@ class _LoginPageState extends State<LoginPage> {
                           autocorrect: false,
                           enableSuggestions: false,
                           textAlignVertical: TextAlignVertical.center,
-                          toolbarOptions: const ToolbarOptions(
-                            copy: true,
-                            cut: true,
-                            paste: true,
-                            selectAll: true,
-                          ),
+                          toolbarOptions: const ToolbarOptions(),
                           decoration: InputDecoration(
                             suffixIcon: IconButton(
                               onPressed: () {
@@ -163,32 +181,64 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
 
+              const SizedBox(height: 10),
+
+              // Confirm password textfield
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 25.0),
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Theme.of(context).colorScheme.outline),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: TextField(
+                    controller: confirmPasswordController,
+                    autocorrect: false,
+                    enableSuggestions: false,
+                    obscureText: true,
+                    toolbarOptions: const ToolbarOptions(),
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      errorBorder: InputBorder.none,
+                      disabledBorder: InputBorder.none,
+                      hintText: 'Confirm password',
+                      contentPadding: EdgeInsets.only(left: 20.0),
+                    ),
+                  ),
+                ),
+              ),
+
               const SizedBox(height: 25),
 
-              // Sign in button
+              // Sign up button
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 25.0),
                 child: ConstrainedBox(
                   constraints: const BoxConstraints.tightFor(height: 70),
                   child: ElevatedButton(
-                    onPressed: () async {
+                    onPressed: () {
+                      // Send post request to server
                       setState(() {
-                        _futureLogin = httpService.postLogin(
+                        _futureRegister = httpService.postRegister(
                           username: userNameController.text,
+                          email: emailController.text,
                           password: passwordController.text,
                         );
                       });
 
-                      _futureLogin?.then((value) async {
+                      // Save response (user credentials) to secure storage
+                      _futureRegister?.then((value) async {
                         Navigator.popAndPushNamed(context, '/');
                         await UserSecureStorage.setUser(user: value.user);
                         await UserSecureStorage.setToken(token: value.token);
                       }).onError((error, _) {
-                        showLoginErrorDialog(error as Login, _);
+                        showRegisterErrorDialog(error as RegisterModel, _);
                       });
                     },
                     child: const Text(
-                      'Sign In',
+                      'Sign Up',
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -205,18 +255,15 @@ class _LoginPageState extends State<LoginPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Text(
-                    'Don\'t have an account?',
+                    'Already have an account?',
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   GestureDetector(
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const RegisterPage()),
-                      );
+                      Navigator.of(context).pop();
                     },
                     child: const Text(
-                      ' Sign Up',
+                      ' Sign In',
                       style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
                     ),
                   ),

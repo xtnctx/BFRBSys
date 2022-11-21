@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+part of 'page_handler.dart';
 
 class ResultsPage extends StatefulWidget {
   final Icon navBarIcon = const Icon(Icons.fact_check_outlined);

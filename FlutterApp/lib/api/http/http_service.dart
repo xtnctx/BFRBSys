@@ -1,9 +1,13 @@
-import 'dart:io';
+import 'package:bfrbsys/shared/shared.dart';
 
-import 'package:bfrbsys/api/env.dart';
-import 'package:bfrbsys/api/models/models.dart';
-import 'package:http/http.dart' as http;
+import '../env.dart';
+import '../models.dart';
+
+import 'dart:io';
 import 'dart:convert';
+import 'package:http/http.dart' as http;
+
+part 'neural_network_request.dart';
 
 class HttpService {
   /// [/] Register     - username, password, email     <POST>
@@ -141,6 +145,33 @@ class HttpService {
       return TrainedModels.fromJson(jsonDecode(response.body));
     } else {
       throw Exception(jsonDecode(response.body));
+    }
+  }
+
+  Future authenticate() async {
+    var token = await UserSecureStorage.getToken();
+
+    // ignore: unnecessary_null_comparison
+    if (token == '') {
+      return false; // then proceed the login page
+    } else {
+      final response = await http.get(
+        Uri.parse("${Env.URL_PREFIX}/api/auth/user/"),
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Token $token',
+        },
+      ).onError((error, _) {
+        return http.Response(error.toString(), 408);
+      });
+      // .timeout(
+      //   const Duration(seconds: 10),
+      //   onTimeout: () {
+      //     return http.Response('Connection timed out', 408);
+      //   },
+      // );
+
+      return response;
     }
   }
 }

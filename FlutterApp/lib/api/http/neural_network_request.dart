@@ -1,10 +1,4 @@
-import 'dart:convert';
-import 'dart:io';
-import 'package:bfrbsys/api/http_service.dart';
-import 'package:bfrbsys/api/models/models.dart';
-import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:csv/csv.dart';
+part of 'http_service.dart';
 
 class NeuralNetworkRequestBuild {
   HttpService httpService = HttpService();
