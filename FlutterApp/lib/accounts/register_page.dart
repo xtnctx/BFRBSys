@@ -1,5 +1,5 @@
 // ignore_for_file: deprecated_member_use
-part of 'account_setup.dart';
+part of 'accounts.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
