@@ -51,7 +51,10 @@ class ExternalSensorWidget extends StatelessWidget {
                       children: [
                         Text(
                           title,
-                          style: const TextStyle(fontSize: 12),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Theme.of(context).colorScheme.inverseSurface.withAlpha(128),
+                          ),
                         ),
                         Text(
                           valueDisplay,
