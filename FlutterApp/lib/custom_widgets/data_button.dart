@@ -7,11 +7,15 @@ class DataButton extends StatelessWidget {
     required this.onAddOffTarget,
     required this.onDeleteOnTarget,
     required this.onDeleteOffTarget,
+    this.onTargetText,
+    this.offTargetText,
   });
-  final void Function() onAddOnTarget;
-  final void Function() onDeleteOnTarget;
-  final void Function() onAddOffTarget;
-  final void Function() onDeleteOffTarget;
+  final void Function()? onAddOnTarget;
+  final void Function()? onDeleteOnTarget;
+  final void Function()? onAddOffTarget;
+  final void Function()? onDeleteOffTarget;
+  final String? onTargetText;
+  final String? offTargetText;
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +43,7 @@ class DataButton extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(20),
                               )),
                           onPressed: onAddOnTarget,
-                          child: const Text('ADD ON TARGET'),
+                          child: Text(onTargetText ?? 'ADD ON TARGET'),
                         ),
                       ),
                       Expanded(
@@ -82,7 +86,7 @@ class DataButton extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(20),
                               )),
                           onPressed: onAddOffTarget,
-                          child: const Text('ADD OFF TARGET'),
+                          child: Text(offTargetText ?? 'ADD OFF TARGET'),
                         ),
                       ),
                       Expanded(

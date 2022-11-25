@@ -62,6 +62,9 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
   Crc32 crc = Crc32();
 
   Timer? timer;
+  Timer? onCaptureTimer;
+  Timer? offCaptureTimer;
+
   List<_ChartData>? chartAccData;
   List<_ChartData>? chartGyroData;
   late int count;
@@ -73,6 +76,9 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
   ChartSeriesController? gyAxisController;
   ChartSeriesController? gzAxisController;
 
+  String? onTargetText;
+  String? offTargetText;
+
   String? accData;
   String? gyroData;
   String? distData;
@@ -80,12 +86,33 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
   NeuralNetworkRequestBuild buildClass = NeuralNetworkRequestBuild();
   final TextEditingController _textController = TextEditingController();
 
-  List<List<String>> data = [
-    ["No.", "Name", "Roll No."],
-    ["1", 'Ryan', '23'],
-    ["2", 'Christopher', '45'],
-    ["3", 'Bahillo', '67']
+  List<List<String>> dummyData = [
+    ["ax", "ay", "az", "gx", "gy", "gz", "class"],
+    ['0.574', '0.094', '-0.779', '1.465', '-0.061', '-0.732', '1'],
+    ['0.575', '0.103', '-0.791', '1.648', '1.16', '-0.427', '1'],
+    ['0.565', '0.115', '-0.796', '0.549', '0.61', '0.183', '1'],
+    ['0.586', '0.113', '-0.79', '1.099', '4.395', '-0.366', '1'],
+    ['0.579', '0.112', '-0.818', '1.526', '1.892', '-0.122', '1'],
+    ['0.578', '0.125', '-0.826', '0.488', '1.709', '0.488', '1'],
+    ['0.576', '0.11', '-0.799', '0.305', '0.732', '0.549', '1'],
+    ['0.553', '0.11', '-0.819', '1.221', '-0.732', '-0.916', '1'],
+    ['0.575', '0.117', '-0.809', '0.916', '0.854', '0.488', '1'],
+    ['0.565', '0.112', '-0.814', '0.549', '0.488', '0.793', '1'],
+    ['-0.007', '-0.051', '0.982', '0.61', '0.61', '0.122', '0'],
+    ['-0.007', '-0.053', '0.981', '0.732', '0.732', '0.366', '0'],
+    ['-0.006', '-0.053', '0.982', '0.61', '0.488', '0.183', '0'],
+    ['-0.005', '-0.052', '0.984', '0.61', '0.61', '0.366', '0'],
+    ['-0.006', '-0.052', '0.983', '0.793', '0.488', '0.183', '0'],
+    ['-0.006', '-0.053', '0.982', '0.732', '0.427', '0.305', '0'],
+    ['-0.007', '-0.051', '0.983', '0.671', '0.61', '0.366', '0'],
+    ['-0.006', '-0.052', '0.983', '0.793', '0.793', '0.305', '0'],
+    ['-0.006', '-0.052', '0.982', '0.793', '0.488', '0.366', '0'],
+    ['-0.006', '-0.051', '0.982', '0.732', '0.671', '0.305', '0']
   ];
+
+  final List<String> header = ["ax", "ay", "az", "gx", "gy", "gz", "class"];
+  List<List<String>> onData = [];
+  List<List<String>> offData = [];
 
   void setConnected(fromContext, bool value) {
     Provider.of<ConnectionProvider>(fromContext, listen: false).setConnected = value;
@@ -396,7 +423,10 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
         child: SfCartesianChart(
           title: ChartTitle(
             text: 'Accelerometer',
-            textStyle: const TextStyle(fontSize: 12),
+            textStyle: TextStyle(
+              fontSize: 12,
+              color: Theme.of(context).colorScheme.inverseSurface.withAlpha(125),
+            ),
           ),
           backgroundColor: Theme.of(context).colorScheme.primaryContainer,
           plotAreaBorderWidth: 0,
@@ -457,7 +487,10 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
         child: SfCartesianChart(
           title: ChartTitle(
             text: 'Gyroscope',
-            textStyle: const TextStyle(fontSize: 12),
+            textStyle: TextStyle(
+              fontSize: 12,
+              color: Theme.of(context).colorScheme.inverseSurface.withAlpha(125),
+            ),
           ),
           backgroundColor: Theme.of(context).colorScheme.primaryContainer,
           plotAreaBorderWidth: 0,
@@ -554,6 +587,55 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
     count = count + 1;
   }
 
+  bool isCapturing = false;
+  _captureData(BuildContext context, int sender) {
+    //
+    setState(() {
+      isCapturing = true;
+    });
+    //
+    int n = 1;
+    onCaptureTimer = Timer.periodic(const Duration(seconds: 1), (Timer timer) {
+      print('$n seconds');
+      if (connectionValue(context)) {
+        List<double> acc = imuParse(accData!);
+        List<double> gyro = imuParse(gyroData!);
+
+        List<String> captured = [
+          // Accelerometer
+          acc[0].toString(),
+          acc[1].toString(),
+          acc[2].toString(),
+          // Gyroscope
+          gyro[0].toString(),
+          gyro[1].toString(),
+          gyro[2].toString(),
+          // Label
+          sender.toString(),
+        ];
+
+        if (sender == 1) {
+          onData.add(captured);
+        } else {
+          offData.add(captured);
+        }
+      }
+
+      if (n == 10) {
+        timer.cancel();
+        setState(() {
+          isCapturing = false;
+          if (sender == 1) {
+            onTargetText = 'DONE';
+          } else {
+            offTargetText = 'DONE';
+          }
+        });
+      }
+      n += 1;
+    });
+  }
+
   /* ------------------------------------------------- */
   @override
   Widget build(BuildContext context) {
@@ -561,6 +643,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const SizedBox(height: 10),
           const ChartHeader(title: 'IMU Sensor'),
           Container(
             margin: const EdgeInsets.only(left: 10, right: 10),
@@ -612,10 +695,35 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
                     top: 0,
                   ),
                   child: DataButton(
-                    onAddOnTarget: () {},
-                    onAddOffTarget: () {},
-                    onDeleteOnTarget: () {},
-                    onDeleteOffTarget: () {},
+                    // Add
+                    onAddOnTarget: (!isCapturing && onTargetText == null)
+                        ? () {
+                            _captureData(context, 1);
+                          }
+                        : () {},
+                    onAddOffTarget: (!isCapturing && offTargetText == null)
+                        ? () {
+                            _captureData(context, 0);
+                          }
+                        : () {},
+
+                    // Delete
+                    onDeleteOnTarget: () {
+                      setState(() {
+                        onTargetText = null;
+                        onData.clear();
+                      });
+                    },
+                    onDeleteOffTarget: () {
+                      setState(() {
+                        offTargetText = null;
+                        onData.clear();
+                      });
+                    },
+
+                    // Label
+                    onTargetText: onTargetText,
+                    offTargetText: offTargetText,
                   ),
                 ),
               ],
@@ -704,7 +812,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
               children: [
                 TextField(
                   autofocus: true,
-                  decoration: const InputDecoration(hintText: 'Enter your model name'),
+                  decoration: const InputDecoration(hintText: 'Enter model name'),
                   controller: _textController,
                 ),
               ],
@@ -715,7 +823,12 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
                   msg('Building model please wait.');
                   Navigator.of(context).pop();
 
-                  await AppStorage.generateCSV(data: data, fileName: _textController.text);
+                  // await AppStorage.generateCSV(
+                  //   data: [header, ...onData, ...offData],
+                  //   fileName: _textController.text,
+                  // );
+
+                  await AppStorage.generateCSV(data: dummyData, fileName: _textController.text);
                   var token = await UserSecureStorage.getToken();
 
                   String localPath = await AppStorage.localPath();

@@ -5,7 +5,7 @@ import 'dart:convert' show utf8;
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:bfrbsys/accounts/account_setup.dart';
+import 'package:bfrbsys/accounts/accounts.dart';
 import 'package:bfrbsys/shared/shared.dart';
 
 import 'package:bfrbsys/api/error_response_widget.dart';

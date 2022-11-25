@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:bfrbsys/pages/page_handler.dart';
 import 'package:bfrbsys/shared/shared.dart';
-import 'package:bfrbsys/accounts/account_setup.dart';
+import 'package:bfrbsys/accounts/accounts.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
