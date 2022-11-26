@@ -2,60 +2,20 @@
 
 part of 'page_handler.dart';
 
-class BluetoothBuilderPage extends StatefulWidget {
+class MonitoringPage extends StatefulWidget {
   final Icon navBarIcon = const Icon(Icons.monitor_heart_outlined);
   final Icon navBarIconSelected = const Icon(Icons.monitor_heart);
-  final String navBarTitle = 'Monitoring System';
+  final String navBarTitle = 'Monitoring App';
 
-  const BluetoothBuilderPage({super.key});
+  const MonitoringPage({super.key});
 
   @override
-  State<BluetoothBuilderPage> createState() => _BluetoothBuilderPageState();
+  State<MonitoringPage> createState() => _MonitoringPageState();
 }
 
-class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
-  /// The Generic Attribute Profile (GATT) is the architechture used
-  ///       for bluetooth connectivity.
-  ///
-  /// The length of uuids and characteristics must be the same and takes the
-  ///       reference from the Arduino Nano 33 BLE Sense board.
-
-  /* ========================== S  E  R  V  I  C  E  =========================== */
-  final String SERVICE_UUID = 'bf88b656-0000-4a61-86e0-769c741026c0';
-  final String TARGET_DEVICE_NAME = "BFRB Sense";
-  /* =========================================================================== */
-
-  /* ********************** C H A R A C T E R I S T I C S ********************** */
-  final String FILE_BLOCK_UUID = 'bf88b656-3000-4a61-86e0-769c741026c0';
-  final String FILE_LENGTH_UUID = 'bf88b656-3001-4a61-86e0-769c741026c0';
-  final String FILE_MAXIMUM_LENGTH_UUID = 'bf88b656-3002-4a61-86e0-769c741026c0';
-  final String FILE_CHECKSUM_UUID = 'bf88b656-3003-4a61-86e0-769c741026c0';
-  final String COMMAND_UUID = 'bf88b656-3004-4a61-86e0-769c741026c0';
-  final String TRANSFER_STATUS_UUID = 'bf88b656-3005-4a61-86e0-769c741026c0';
-  final String ERROR_MESSAGE_UUID = 'bf88b656-3006-4a61-86e0-769c741026c0';
-
-  final String ACC_DATA_UUID = 'bf88b656-3007-4a61-86e0-769c741026c0';
-  final String GYRO_DATA_UUID = 'bf88b656-3008-4a61-86e0-769c741026c0';
-  final String DIST_DATA_UUID = 'bf88b656-3009-4a61-86e0-769c741026c0';
-  /* =========================================================================== */
-
-  FlutterBlue? flutterBlue;
-  BluetoothDevice? device;
-  StreamSubscription<dynamic>? deviceState;
-
-  // The characteritics here must match in the peripheral
-  BluetoothCharacteristic? fileBlockCharacteristic;
-  BluetoothCharacteristic? fileLengthCharacteristic;
-  BluetoothCharacteristic? fileMaximumLengthCharacteristic;
-  BluetoothCharacteristic? fileChecksumCharacteristic;
-  BluetoothCharacteristic? commandCharacteristic;
-  BluetoothCharacteristic? transferStatusCharacteristic;
-  BluetoothCharacteristic? errorMessageCharacteristic;
-  BluetoothCharacteristic? accDataCharacteristic;
-  BluetoothCharacteristic? gyroDataCharacteristic;
-  BluetoothCharacteristic? distDataCharacteristic;
-
-  bool isFileTransferInProgress = false;
+class _MonitoringPageState extends State<MonitoringPage> {
+  BluetoothBuilder ble = BluetoothBuilder();
+  bool isBuildingModel = false;
   String info = '>_';
   int infoCode = 0;
 
@@ -64,6 +24,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
   Timer? timer;
   Timer? onCaptureTimer;
   Timer? offCaptureTimer;
+  Timer? loadingTextTimer;
 
   List<_ChartData>? chartAccData;
   List<_ChartData>? chartGyroData;
@@ -130,153 +91,12 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
     super.initState();
   }
 
-  Future<void> startConnection(context) async {
-    flutterBlue = FlutterBlue.instance;
-    bool isOn = await flutterBlue!.isOn;
-    if (!isOn) {
-      msg("Please turn on your bluetooth", 3);
-      return;
-    }
-    msg('Scanning ... ');
-    flutterBlue!.startScan(timeout: const Duration(seconds: 4));
-
-    flutterBlue!.scanResults.listen((results) {
-      for (ScanResult r in results) {
-        print('${r.device.name} found! rssi: ${r.rssi}');
-        if (r.device.name == TARGET_DEVICE_NAME) {
-          msg('Target device found. Getting primary service ...');
-          device = r.device;
-          _connectToDevice(context);
-        }
-      }
-    });
-    flutterBlue!.stopScan();
-    msg("Can't find your device.", 1);
-  }
-
-  Future<void> _discoverServices() async {
-    List<BluetoothService> services = await device!.discoverServices();
-
-    for (var service in services) {
-      if (service.uuid.toString() == SERVICE_UUID) {
-        for (var characteristic in service.characteristics) {
-          String characteristicUUID = characteristic.uuid.toString();
-          print('################ Searching $characteristicUUID ...');
-
-          // FILE_BLOCK_UUID : fileBlockCharacteristic
-          if (characteristicUUID == FILE_BLOCK_UUID) {
-            fileBlockCharacteristic = characteristic;
-            print('Connected to $FILE_BLOCK_UUID');
-          }
-
-          // FILE_LENGTH_UUID : fileLengthCharacteristic
-          else if (characteristicUUID == FILE_LENGTH_UUID) {
-            fileLengthCharacteristic = characteristic;
-            print('Connected to $FILE_LENGTH_UUID');
-          }
-
-          // FILE_MAXIMUM_LENGTH_UUID : fileMaximumLengthCharacteristic
-          else if (characteristicUUID == FILE_MAXIMUM_LENGTH_UUID) {
-            fileMaximumLengthCharacteristic = characteristic;
-            print('Connected to $FILE_MAXIMUM_LENGTH_UUID');
-          }
-
-          // FILE_CHECKSUM_UUID : fileChecksumCharacteristic
-          else if (characteristicUUID == FILE_CHECKSUM_UUID) {
-            fileChecksumCharacteristic = characteristic;
-            print('Connected to $FILE_CHECKSUM_UUID');
-          }
-
-          // COMMAND_UUID : commandCharacteristic
-          else if (characteristicUUID == COMMAND_UUID) {
-            commandCharacteristic = characteristic;
-            print('Connected to $COMMAND_UUID');
-          }
-
-          // TRANSFER_STATUS_UUID : transferStatusCharacteristic
-          else if (characteristicUUID == TRANSFER_STATUS_UUID) {
-            transferStatusCharacteristic = characteristic;
-            await transferStatusCharacteristic?.setNotifyValue(true);
-            onTransferStatusChanged(transferStatusCharacteristic);
-            print('Connected to $TRANSFER_STATUS_UUID');
-          }
-
-          // ERROR_MESSAGE_UUID : errorMessageCharacteristic
-          else if (characteristicUUID == ERROR_MESSAGE_UUID) {
-            errorMessageCharacteristic = characteristic;
-            await errorMessageCharacteristic?.setNotifyValue(true);
-            onErrorMessageChanged(errorMessageCharacteristic);
-            print('Connected to $ERROR_MESSAGE_UUID');
-          }
-
-          // ACC_DATA_UUID : accDataCharacteristic
-          else if (characteristicUUID == ACC_DATA_UUID) {
-            accDataCharacteristic = characteristic;
-            await accDataCharacteristic?.setNotifyValue(true);
-            print('Connected to $ACC_DATA_UUID');
-            _readData(accDataCharacteristic);
-          }
-
-          // GYRO_DATA_UUID : gyroDataCharacteristic
-          else if (characteristicUUID == GYRO_DATA_UUID) {
-            gyroDataCharacteristic = characteristic;
-            await gyroDataCharacteristic?.setNotifyValue(true);
-            print('Connected to $GYRO_DATA_UUID');
-            _readData(gyroDataCharacteristic);
-          }
-
-          // DIST_DATA_UUID : distDataCharacteristic
-          else if (characteristicUUID == DIST_DATA_UUID) {
-            distDataCharacteristic = characteristic;
-            await distDataCharacteristic?.setNotifyValue(true);
-            print('Connected to $DIST_DATA_UUID');
-            _readData(distDataCharacteristic);
-          }
-        }
-        timer = Timer.periodic(const Duration(milliseconds: 100), _updateDataSource);
-
-        msg('Connected to ${device!.name}');
-      }
-    }
-  }
-
-  Future<void> _connectToDevice(context) async {
-    if (device == null) return;
-
-    await device!.connect();
-
-    msg('Getting characteristics ...');
-
-    _discoverServices();
-
-    setState(() {
-      setConnected(context, true);
-    });
-
-    // Listen from sudden disconnection
-    deviceState = device!.state.listen((event) {
-      if (event == BluetoothDeviceState.disconnected) {
-        _disconnectFromDevice(context);
-      }
-    });
-  }
-
-  void _disconnectFromDevice(context) {
-    deviceState!.cancel();
-    device!.disconnect();
-    timer!.cancel();
-    msg('Device ${device!.name} disconnected');
-
-    setState(() {
-      setConnected(context, false);
-      isFileTransferInProgress = false;
-      deviceState = null;
-      device = null;
-      flutterBlue = null;
-      timer = null;
-    });
-  }
-
+  /// ### [statusCode]
+  /// * -2 = Crash (pink-purple)
+  /// * -1 = Error (red)
+  /// * 1 = Warning (yellow)
+  /// * 2 = Success (green)
+  /// * 3 = Info (blue)
   void msg(String m, [int statusCode = 0]) {
     setState(() {
       info = m;
@@ -303,113 +123,15 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
       String parsedData = String.fromCharCodes(readData);
 
       if (readData.isNotEmpty && readData != []) {
-        if (characteristic.uuid.toString() == ACC_DATA_UUID) {
+        print(parsedData);
+        if (characteristic.uuid.toString() == ble.ACC_DATA_UUID) {
           accData = parsedData;
-        } else if (characteristic.uuid.toString() == GYRO_DATA_UUID) {
+        } else if (characteristic.uuid.toString() == ble.GYRO_DATA_UUID) {
           gyroData = parsedData;
-        } else if (characteristic.uuid.toString() == DIST_DATA_UUID) {
+        } else if (characteristic.uuid.toString() == ble.DIST_DATA_UUID) {
           distData = parsedData;
         }
       }
-    });
-  }
-
-  void onTransferStatusChanged(BluetoothCharacteristic? characteristic) {
-    characteristic!.value.listen((List<int> value) {
-      num statusCode = bytesToInteger(value);
-
-      if (value.isEmpty) return;
-
-      if (statusCode == 0) {
-        onTransferSuccess();
-      } else if (statusCode == 1) {
-        onTransferError();
-      } else if (statusCode == 2) {
-        onTransferInProgress();
-      }
-    });
-  }
-
-  // Called when an error message is received from the device. This describes what
-  // went wrong with the transfer in a user-readable form.
-  void onErrorMessageChanged(BluetoothCharacteristic? characteristic) {
-    characteristic!.value.listen((List<int> value) {
-      List<int> readData = List.from(value);
-      String errorMessage = String.fromCharCodes(readData);
-
-      if (readData.isNotEmpty && readData != []) {
-        msg("Error message = $errorMessage", -1);
-      }
-    });
-  }
-
-  Future<void> transferFile(Uint8List fileContents) async {
-    var maximumLengthValue = await fileMaximumLengthCharacteristic?.read();
-    num maximumLength = bytesToInteger(maximumLengthValue!);
-    // var maximumLengthArray = Uint32List.fromList(maximumLengthValue!);
-    // ByteData byteData = maximumLengthArray.buffer.asByteData();
-    // int value = byteData.getUint32(0, Endian.little);
-    if (fileContents.length > maximumLength) {
-      msg("File length is too long: ${fileContents.length} bytes but maximum is $maximumLength", 1);
-      return;
-    }
-
-    if (isFileTransferInProgress) {
-      msg("Another file transfer is already in progress", 1);
-      return;
-    }
-
-    var contentsLengthArray = integerToBytes(fileContents.length);
-    await fileLengthCharacteristic?.write(contentsLengthArray);
-
-    int fileChecksum = crc.crc32(fileContents);
-    var fileChecksumArray = integerToBytes(fileChecksum);
-    await fileChecksumCharacteristic?.write(fileChecksumArray);
-
-    await commandCharacteristic?.write([1]);
-
-    sendFileBlock(fileContents, 0);
-  }
-
-  Future<void> cancelTransfer() async {
-    await commandCharacteristic?.write([2]);
-  }
-
-  void onTransferInProgress() {
-    isFileTransferInProgress = true;
-  }
-
-  Future<void> onTransferSuccess() async {
-    isFileTransferInProgress = false;
-    var checksumValue = await fileChecksumCharacteristic?.read();
-    var checksum = bytesToInteger(checksumValue!) as int;
-    msg("File transfer succeeded: Checksum 0x${checksum.toRadixString(16)}", 2);
-  }
-
-  void onTransferError() {
-    isFileTransferInProgress = false;
-    msg("File transfer error", -1);
-  }
-
-  void sendFileBlock(fileContents, bytesAlreadySent) {
-    var bytesRemaining = fileContents.length - bytesAlreadySent;
-
-    const maxBlockLength = 128;
-    int blockLength = min(bytesRemaining, maxBlockLength);
-    Uint8List blockView = Uint8List.view(fileContents.buffer, bytesAlreadySent, blockLength);
-    print(blockView.toList());
-
-    fileBlockCharacteristic?.write(blockView).then((_) {
-      bytesRemaining -= blockLength;
-      print(isFileTransferInProgress);
-      if ((bytesRemaining > 0) && isFileTransferInProgress) {
-        msg("File block written - $bytesRemaining bytes remaining");
-        bytesAlreadySent += blockLength;
-        sendFileBlock(fileContents, bytesAlreadySent);
-      }
-    }).catchError((error) {
-      print(error);
-      msg("File block write error with $bytesRemaining bytes remaining", -1);
     });
   }
 
@@ -557,6 +279,7 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
 
   // Continously updating the data source based on timer
   void _updateDataSource(Timer timer) {
+    print(accData!);
     List<double> acc = imuParse(accData!);
     List<double> gyro = imuParse(gyroData!);
     chartAccData!.add(_ChartData(count, acc[0], acc[1], acc[2]));
@@ -763,44 +486,82 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
                 : const Icon(Icons.bluetooth_disabled),
             onTap: !connectionValue(context)
                 ? () {
-                    startConnection(context);
+                    ble.connect().then((_) {
+                      print(
+                          'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
+                    });
+
+                    setState(() {
+                      setConnected(context, true);
+                    });
                   }
                 : () {
                     msg('Hold to disconnect', 1);
                   },
             onLongPress: () {
               if (connectionValue(context)) {
-                _disconnectFromDevice(context);
+                ble.disconnect();
+                timer!.cancel();
+                setState(() {
+                  setConnected(context, false);
+                  ble.isFileTransferInProgress = false;
+                  // deviceState = null;
+                  ble.device = null;
+                  ble.flutterBlue = null;
+                  timer = null;
+                });
               }
             },
           ),
           SpeedDialChild(
-              child: const Icon(Icons.send),
-              onTap: () {
-                String dataStr =
-                    "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.!!!!";
-                var fileContents = utf8.encode(dataStr) as Uint8List;
-                print("fileContents length is ${fileContents.length}");
-                transferFile(fileContents);
-              }),
+            child: const Icon(Icons.send),
+            onTap: () {
+              String dataStr =
+                  "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.!!!!";
+              var fileContents = utf8.encode(dataStr) as Uint8List;
+              print("fileContents length is ${fileContents.length}");
+              ble.transferFile(fileContents);
+            },
+          ),
           SpeedDialChild(
-              child: const Icon(Icons.cancel),
-              onTap: () async {
-                msg('Trying to cancel transfer ...');
-                await commandCharacteristic?.write([2]);
-              }),
+            child: const Icon(Icons.cancel),
+            onTap: () {
+              // msg('Trying to cancel transfer ...');
+              // ble.cancelTransfer();
+              // print(ble.transferStatusCharacteristic!.isNotifying);
+
+              _readData(ble.accDataCharacteristic);
+              _readData(ble.gyroDataCharacteristic);
+              _readData(ble.distDataCharacteristic);
+              timer = Timer.periodic(const Duration(milliseconds: 100), _updateDataSource);
+            },
+          ),
           SpeedDialChild(
-              child: const Icon(Icons.build),
-              onTap: () {
-                openBuildForm();
-              }),
+            child: const Icon(Icons.build),
+            onTap: !isBuildingModel
+                ? () {
+                    openBuildForm();
+                  }
+                : null,
+          ),
         ],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
     );
   }
 
+  startLoadingBar() {
+    int i = 0;
+    List<String> m = ['|', '/', '-', '\\'];
+    loadingTextTimer = Timer.periodic(const Duration(milliseconds: 100), (Timer timer) {
+      if (i == m.length) i = 0;
+      msg("Building model...       ${m[i]}");
+      i += 1;
+    });
+  }
+
   Future openBuildForm() {
+    final formKey = GlobalKey<FormState>();
     _textController.value = TextEditingValue.empty;
     return showDialog(
         context: context,
@@ -810,37 +571,60 @@ class _BluetoothBuilderPageState extends State<BluetoothBuilderPage> {
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TextField(
-                  autofocus: true,
-                  decoration: const InputDecoration(hintText: 'Enter model name'),
-                  controller: _textController,
+                Form(
+                  key: formKey,
+                  child: TextFormField(
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
+                    validator: (value) => _textController.text != '' ? null : 'Cannot be empty',
+                    autofocus: true,
+                    decoration: const InputDecoration(hintText: 'Enter model name'),
+                    controller: _textController,
+                  ),
                 ),
               ],
             ),
             actions: [
               TextButton(
                 onPressed: () async {
-                  msg('Building model please wait.');
-                  Navigator.of(context).pop();
+                  if (formKey.currentState!.validate()) {
+                    setState(() {
+                      isBuildingModel = true;
+                    });
 
-                  // await AppStorage.generateCSV(
-                  //   data: [header, ...onData, ...offData],
-                  //   fileName: _textController.text,
-                  // );
+                    Navigator.of(context).pop();
+                    startLoadingBar();
 
-                  await AppStorage.generateCSV(data: dummyData, fileName: _textController.text);
-                  var token = await UserSecureStorage.getToken();
+                    // await AppStorage.generateCSV(
+                    //   data: [header, ...onData, ...offData],
+                    //   fileName: _textController.text,
+                    // );
 
-                  String localPath = await AppStorage.localPath();
+                    await AppStorage.generateCSV(data: dummyData, fileName: _textController.text);
+                    var user = await UserSecureStorage.getUser();
+                    var token = await UserSecureStorage.getToken();
 
-                  buildClass.sendInput(
-                    filePath: '$localPath/${_textController.text}.csv',
-                    modelName: _textController.text,
-                    userToken: token,
-                  );
+                    String localPath = await AppStorage.localPath();
 
-                  var response = await buildClass.response;
-                  print(response);
+                    buildClass.sendInput(
+                      filePath: '$localPath/${user['username']}/data/${_textController.text}.csv',
+                      modelName: _textController.text,
+                      userToken: token,
+                    );
+
+                    Future<TrainedModels> model = buildClass.model;
+                    model.then((value) {
+                      var response = value.toJson();
+                      msg('Build success, ready to send!', 2);
+                      print(response);
+                    }).onError((error, _) {
+                      msg(error.toString(), -1);
+                    }).whenComplete(() {
+                      setState(() {
+                        isBuildingModel = false;
+                      });
+                      loadingTextTimer!.cancel();
+                    });
+                  }
                 },
                 child: const Text('Submit'),
               )
