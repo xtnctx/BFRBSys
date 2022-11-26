@@ -21,6 +21,8 @@ import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:bfrbsys/api/bluetooth_builder.dart';
+import 'dart:io' as io;
 
 part 'home_page.dart';
 part 'monitoring_page.dart';
@@ -53,7 +55,7 @@ class _PageHandlerState extends State<PageHandler> {
 
     pages = const [
       HomePage(),
-      BluetoothBuilderPage(),
+      MonitoringPage(),
       ResultsPage(),
       ProfilePage(),
       SettingsPage(),
@@ -283,7 +285,7 @@ class _PageHandlerState extends State<PageHandler> {
             _createDrawerItem(icon: const Icon(Icons.coffee), text: 'Buy me a coffee'),
             _createDrawerItem(icon: const Icon(Icons.bug_report), text: 'Bug report'),
             const ListTile(
-              title: Text('v0.2.66', style: TextStyle(fontSize: 10)),
+              title: Text('v0.2.8', style: TextStyle(fontSize: 10)),
             ),
           ],
         ),
@@ -296,6 +298,7 @@ class _PageHandlerState extends State<PageHandler> {
     try {
       // New user or device
       if (apiResponse == false) {
+        return _allowUserWidget();
         return const LoginPage();
       }
       // Successful authentication.
