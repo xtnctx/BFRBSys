@@ -83,6 +83,9 @@ class _MonitoringPageState extends State<MonitoringPage> {
     return Provider.of<ConnectionProvider>(fromContext, listen: false).isConnected;
   }
 
+  StreamSubscription? subscription;
+  StreamSubscription? deviceState;
+
   @override
   void initState() {
     count = 49;
@@ -123,7 +126,6 @@ class _MonitoringPageState extends State<MonitoringPage> {
       String parsedData = String.fromCharCodes(readData);
 
       if (readData.isNotEmpty && readData != []) {
-        print(parsedData);
         if (characteristic.uuid.toString() == ble.ACC_DATA_UUID) {
           accData = parsedData;
         } else if (characteristic.uuid.toString() == ble.GYRO_DATA_UUID) {
@@ -264,6 +266,49 @@ class _MonitoringPageState extends State<MonitoringPage> {
     );
   }
 
+  _connectFromDevice() {
+    ble.connect();
+    subscription = ble.discoverController.stream.listen(null);
+
+    subscription!.onData((value) {
+      print('DAAAAATAAAAA $value');
+      // if (value) {
+      //   setState(() {
+      //     setConnected(context, true);
+      //   });
+      // }
+      if (value) {
+        _readData(ble.accDataCharacteristic);
+        _readData(ble.gyroDataCharacteristic);
+        _readData(ble.distDataCharacteristic);
+        timer = Timer.periodic(const Duration(milliseconds: 100), _updateDataSource);
+        setState(() {
+          setConnected(context, true);
+        });
+
+        // Listen from sudden disconnection
+        deviceState = ble.device!.state.listen((event) {
+          if (event == BluetoothDeviceState.disconnected) {
+            _disconnectFromDevice();
+          }
+        });
+        // subscription!.cancel();
+      }
+    });
+  }
+
+  _disconnectFromDevice() {
+    ble.disconnect();
+    deviceState!.cancel();
+    timer!.cancel();
+    setState(() {
+      setConnected(context, false);
+      subscription = null;
+      deviceState = null;
+      timer = null;
+    });
+  }
+
   void updateControllerDataSource(listData, controller, isEdge) {
     if (isEdge) {
       controller?.updateDataSource(
@@ -362,6 +407,7 @@ class _MonitoringPageState extends State<MonitoringPage> {
   /* ------------------------------------------------- */
   @override
   Widget build(BuildContext context) {
+    ValueNotifier<bool> isDialOpen = ValueNotifier(false);
     return Scaffold(
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -413,8 +459,8 @@ class _MonitoringPageState extends State<MonitoringPage> {
               children: [
                 Container(
                   margin: const EdgeInsets.only(
-                    left: 10,
-                    right: 10,
+                    left: 30,
+                    right: 30,
                     top: 0,
                   ),
                   child: DataButton(
@@ -474,6 +520,8 @@ class _MonitoringPageState extends State<MonitoringPage> {
         ),
       ),
       floatingActionButton: SpeedDial(
+        closeManually: true,
+        openCloseDial: isDialOpen,
         direction: SpeedDialDirection.left,
         spaceBetweenChildren: 10,
         icon: Icons.handyman,
@@ -486,36 +534,23 @@ class _MonitoringPageState extends State<MonitoringPage> {
                 : const Icon(Icons.bluetooth_disabled),
             onTap: !connectionValue(context)
                 ? () {
-                    ble.connect().then((_) {
-                      print(
-                          'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
-                    });
-
-                    setState(() {
-                      setConnected(context, true);
-                    });
+                    isDialOpen.value = false;
+                    _connectFromDevice();
                   }
                 : () {
                     msg('Hold to disconnect', 1);
                   },
             onLongPress: () {
               if (connectionValue(context)) {
-                ble.disconnect();
-                timer!.cancel();
-                setState(() {
-                  setConnected(context, false);
-                  ble.isFileTransferInProgress = false;
-                  // deviceState = null;
-                  ble.device = null;
-                  ble.flutterBlue = null;
-                  timer = null;
-                });
+                isDialOpen.value = false;
+                _disconnectFromDevice();
               }
             },
           ),
           SpeedDialChild(
             child: const Icon(Icons.send),
             onTap: () {
+              isDialOpen.value = false;
               String dataStr =
                   "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.!!!!";
               var fileContents = utf8.encode(dataStr) as Uint8List;
@@ -526,23 +561,22 @@ class _MonitoringPageState extends State<MonitoringPage> {
           SpeedDialChild(
             child: const Icon(Icons.cancel),
             onTap: () {
+              isDialOpen.value = false;
               // msg('Trying to cancel transfer ...');
               // ble.cancelTransfer();
               // print(ble.transferStatusCharacteristic!.isNotifying);
-
-              _readData(ble.accDataCharacteristic);
-              _readData(ble.gyroDataCharacteristic);
-              _readData(ble.distDataCharacteristic);
-              timer = Timer.periodic(const Duration(milliseconds: 100), _updateDataSource);
             },
           ),
           SpeedDialChild(
             child: const Icon(Icons.build),
             onTap: !isBuildingModel
                 ? () {
+                    isDialOpen.value = false;
                     openBuildForm();
                   }
-                : null,
+                : () {
+                    isDialOpen.value = false;
+                  },
           ),
         ],
       ),
