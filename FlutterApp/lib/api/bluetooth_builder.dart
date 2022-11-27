@@ -1,6 +1,7 @@
 // ignore_for_file: non_constant_identifier_names
 
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:bfrbsys/shared/shared.dart';
@@ -34,7 +35,6 @@ abstract class GATTProtocolAttr {
 
   FlutterBlue? flutterBlue;
   BluetoothDevice? device;
-  // StreamSubscription<dynamic>? deviceState;
 
   // The characteritics here must match in the peripheral
   BluetoothCharacteristic? fileBlockCharacteristic;
@@ -69,12 +69,14 @@ abstract class GATTProtocolAttr {
 }
 
 class BluetoothBuilder extends GATTProtocolAttr {
+  StreamController discoverController = StreamController();
+
   bool isFileTransferInProgress = false;
   Crc32 crc = Crc32();
-  StreamSubscription? scanSubScription;
 
-  void _discoverServices() async {
+  Future<void> _discoverServices() async {
     List<BluetoothService> services = await device!.discoverServices();
+    discoverController.add(false);
 
     for (var service in services) {
       if (service.uuid.toString() == SERVICE_UUID) {
@@ -161,28 +163,25 @@ class BluetoothBuilder extends GATTProtocolAttr {
         // timer = Timer.periodic(const Duration(milliseconds: 100), _updateDataSource);
 
         print('Connected to ${device!.name}');
-        scanSubScription!.cancel();
+
+        discoverController.add(true);
+
         return;
       }
     }
   }
 
   void _connectToDevice() async {
+    await Future.delayed(const Duration(milliseconds: 500));
     if (device == null) return;
 
     await device!.connect();
 
     print('Getting characteristics ...');
 
-    _discoverServices();
-    return;
+    await _discoverServices();
 
-    // Listen from sudden disconnection
-    // deviceState = device!.state.listen((event) {
-    //   if (event == BluetoothDeviceState.disconnected) {
-    //     _disconnectFromDevice();
-    //   }
-    // });
+    return;
   }
 
   ///////////////////////////////////
@@ -256,7 +255,7 @@ class BluetoothBuilder extends GATTProtocolAttr {
 
   ///////////////////////////////////
 
-  Future<void> connect() async {
+  void connect() async {
     flutterBlue = FlutterBlue.instance;
     bool isOn = await flutterBlue!.isOn;
     if (!isOn) {
@@ -265,28 +264,29 @@ class BluetoothBuilder extends GATTProtocolAttr {
     }
     print('Scanning ... ');
 
-    scanSubScription = flutterBlue!.scan(timeout: const Duration(seconds: 30)).listen((r) {
-      print('${r.device.name} found! rssi: ${r.rssi}');
-      if (r.device.name == TARGET_DEVICE_NAME) {
-        print('Target device found. Getting primary service ...');
-        device = r.device;
-        _connectToDevice();
-        return;
+    flutterBlue!.startScan(timeout: const Duration(seconds: 5));
+    StreamSubscription subscription = flutterBlue!.scanResults.listen(null);
+    subscription.onData((results) {
+      for (ScanResult r in results) {
+        print('${r.device.name} found! rssi: ${r.rssi}');
+        if (r.device.name == TARGET_DEVICE_NAME) {
+          print('Target device found. Getting primary service ...');
+          device = r.device;
+          _connectToDevice();
+          subscription.cancel();
+        }
       }
-    }, onDone: () {
-      flutterBlue!.stopScan();
       print("Can't find your device. 1");
     });
   }
 
   void disconnect() {
-    // deviceState!.cancel();
     device!.disconnect();
 
     print('Device ${device!.name} disconnected');
 
     isFileTransferInProgress = false;
-    // deviceState = null;
+    discoverController.add(false);
     device = null;
     flutterBlue = null;
   }
