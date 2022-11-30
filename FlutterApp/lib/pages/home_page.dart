@@ -18,7 +18,7 @@ class _HomePageState extends State<HomePage> {
       body: Center(
         child: ElevatedButton(
           onPressed: () {},
-          child: const Text('Will populate this in future.'),
+          child: const Text('Home'),
         ),
       ),
     );

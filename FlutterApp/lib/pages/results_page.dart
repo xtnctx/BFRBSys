@@ -15,12 +15,28 @@ class _ResultsPageState extends State<ResultsPage> {
   List dataFile = [];
   List<String> historyList = <String>['Accuracy', 'Loss'];
   late String dropdownValue;
+  List modelItems = ['Model 1', 'Model 2', 'Model 3', 'Model 4', 'Model 5'];
+  bool chartVisibility = true;
+  bool transferWidgetVisibility = true;
+  int _selectedIndex = 0;
+  late String selectedModel;
 
   @override
   void initState() {
     _listofData();
     dropdownValue = historyList.first;
+    selectedModel = modelItems[0];
+    // modelItems = ['Model 1', 'Model 2', 'Model 3', 'Model 4', 'Model 5'];
     super.initState();
+  }
+
+  String getFirstTwoWordLetter(String word) {
+    String twoLetters = '';
+    List<String> words = word.split(' ').sublist(0, 2);
+    for (var word in words) {
+      twoLetters += word[0];
+    }
+    return twoLetters.toUpperCase();
   }
 
   void _listofData() async {
@@ -32,8 +48,7 @@ class _ResultsPageState extends State<ResultsPage> {
     });
   }
 
-  bool transferWidgetVisibility = false;
-
+  void doNothing(BuildContext context) {}
   @override
   Widget build(BuildContext context) {
     final List<ChartData> trainingData = [
@@ -75,122 +90,134 @@ class _ResultsPageState extends State<ResultsPage> {
                 style: GoogleFonts.bebasNeue(fontSize: 30),
               ),
               subtitle: Text(
-                'my-model-name',
+                selectedModel,
                 textAlign: TextAlign.left,
                 style: GoogleFonts.bebasNeue(fontSize: 18),
               ),
+              trailing: IconButton(
+                iconSize: 30,
+                onPressed: () {
+                  setState(() {
+                    chartVisibility = !chartVisibility;
+                  });
+                },
+                icon: Icon(!chartVisibility ? Icons.arrow_drop_down : Icons.arrow_drop_up),
+              ),
             ),
           ),
-          SizedBox(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10.0),
-              child: Column(
-                children: [
-                  SizedBox(
-                    height: 40,
-                    child: ClipRRect(
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(10),
-                        topRight: Radius.circular(10),
-                      ),
-                      child: Container(
-                        color: Theme.of(context).colorScheme.primary,
+          Visibility(
+            visible: chartVisibility,
+            child: SizedBox(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                child: Column(
+                  children: [
+                    SizedBox(
+                      height: 40,
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(10),
+                          topRight: Radius.circular(10),
+                        ),
                         child: Container(
-                          margin: const EdgeInsets.only(left: 20, right: 10),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              DropdownButton(
-                                value: dropdownValue,
-                                underline: Container(height: 0),
-                                items: historyList.map<DropdownMenuItem<String>>((String value) {
-                                  return DropdownMenuItem<String>(
-                                    value: value,
-                                    child: Text(value),
-                                  );
-                                }).toList(),
-                                onChanged: (String? value) {
-                                  // This is called when the user selects an item.
-                                  setState(() {
-                                    dropdownValue = value!;
-                                  });
-                                },
+                          color: Theme.of(context).colorScheme.primary,
+                          child: Container(
+                            margin: const EdgeInsets.only(left: 20, right: 10),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                DropdownButton(
+                                  value: dropdownValue,
+                                  underline: Container(height: 0),
+                                  items: historyList.map<DropdownMenuItem<String>>((String value) {
+                                    return DropdownMenuItem<String>(
+                                      value: value,
+                                      child: Text(value),
+                                    );
+                                  }).toList(),
+                                  onChanged: (String? value) {
+                                    // This is called when the user selects an item.
+                                    setState(() {
+                                      dropdownValue = value!;
+                                    });
+                                  },
+                                ),
+                                // Legends
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    Wrap(
+                                      children: const [
+                                        Icon(
+                                          Icons.horizontal_rule_rounded,
+                                          color: CustomColor.trainingLineColor,
+                                        ),
+                                        Text('training'),
+                                      ],
+                                    ),
+                                    Wrap(
+                                      children: const [
+                                        Icon(
+                                          Icons.horizontal_rule_rounded,
+                                          color: CustomColor.validationLineColor,
+                                        ),
+                                        Text('validation'),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Center(
+                      child: SizedBox(
+                        height: 210,
+                        // width: width,
+                        child: ClipRRect(
+                          borderRadius: const BorderRadius.only(
+                            bottomLeft: Radius.circular(10),
+                            bottomRight: Radius.circular(10),
+                          ),
+                          child: SfCartesianChart(
+                            title: ChartTitle(
+                              text: 'Model history',
+                              textStyle: TextStyle(
+                                fontSize: 12,
+                                color: Theme.of(context).colorScheme.inverseSurface.withAlpha(125),
                               ),
-                              // Legends
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  Wrap(
-                                    children: const [
-                                      Icon(
-                                        Icons.horizontal_rule_rounded,
-                                        color: CustomColor.trainingLineColor,
-                                      ),
-                                      Text('training'),
-                                    ],
-                                  ),
-                                  Wrap(
-                                    children: const [
-                                      Icon(
-                                        Icons.horizontal_rule_rounded,
-                                        color: CustomColor.validationLineColor,
-                                      ),
-                                      Text('validation'),
-                                    ],
-                                  ),
-                                ],
-                              ),
+                            ),
+                            // plotAreaBorderWidth: 0,
+                            primaryXAxis: NumericAxis(
+                              title: AxisTitle(text: 'Epoch', textStyle: const TextStyle(fontSize: 12)),
+                            ),
+                            primaryYAxis: NumericAxis(
+                              minimum: 0.0,
+                              maximum: 1.0,
+                              title: AxisTitle(text: 'Accuracy', textStyle: const TextStyle(fontSize: 12)),
+                            ),
+                            backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                            series: <ChartSeries>[
+                              // Renders line chart
+                              LineSeries<ChartData, int>(
+                                  dataSource: trainingData,
+                                  color: CustomColor.trainingLineColor,
+                                  xValueMapper: (ChartData data, _) => data.x,
+                                  yValueMapper: (ChartData data, _) => data.y),
+                              LineSeries<ChartData, int>(
+                                  dataSource: validationData,
+                                  color: CustomColor.validationLineColor,
+                                  xValueMapper: (ChartData data, _) => data.x,
+                                  yValueMapper: (ChartData data, _) => data.y),
                             ],
                           ),
                         ),
                       ),
                     ),
-                  ),
-                  Center(
-                    child: SizedBox(
-                      height: 210,
-                      // width: width,
-                      child: ClipRRect(
-                        borderRadius: const BorderRadius.only(
-                          bottomLeft: Radius.circular(10),
-                          bottomRight: Radius.circular(10),
-                        ),
-                        child: SfCartesianChart(
-                          title: ChartTitle(
-                            text: 'Model history',
-                            textStyle: TextStyle(
-                              fontSize: 12,
-                              color: Theme.of(context).colorScheme.inverseSurface.withAlpha(125),
-                            ),
-                          ),
-                          // plotAreaBorderWidth: 0,
-                          primaryXAxis: NumericAxis(
-                            title: AxisTitle(text: 'Epoch', textStyle: const TextStyle(fontSize: 12)),
-                          ),
-                          primaryYAxis: NumericAxis(
-                            minimum: 0.0,
-                            maximum: 1.0,
-                            title: AxisTitle(text: 'Accuracy', textStyle: const TextStyle(fontSize: 12)),
-                          ),
-                          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                          series: <ChartSeries>[
-                            // Renders line chart
-                            LineSeries<ChartData, int>(
-                                dataSource: trainingData,
-                                color: CustomColor.trainingLineColor,
-                                xValueMapper: (ChartData data, _) => data.x,
-                                yValueMapper: (ChartData data, _) => data.y),
-                            LineSeries<ChartData, int>(
-                                dataSource: validationData,
-                                color: CustomColor.validationLineColor,
-                                xValueMapper: (ChartData data, _) => data.x,
-                                yValueMapper: (ChartData data, _) => data.y),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -199,30 +226,25 @@ class _ResultsPageState extends State<ResultsPage> {
             padding: EdgeInsets.symmetric(horizontal: 10.0),
             child: Divider(),
           ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 10.0),
-                child: Text(
-                  'Transfer',
-                  textAlign: TextAlign.left,
-                  style: GoogleFonts.bebasNeue(fontSize: 20),
-                ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10.0),
+            child: ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(
+                'Transfer',
+                textAlign: TextAlign.left,
+                style: GoogleFonts.bebasNeue(fontSize: 20),
               ),
-              Container(
-                margin: const EdgeInsets.only(right: 10),
-                child: IconButton(
-                  iconSize: 30,
-                  onPressed: () {
-                    setState(() {
-                      transferWidgetVisibility = !transferWidgetVisibility;
-                    });
-                  },
-                  icon: Icon(!transferWidgetVisibility ? Icons.arrow_drop_down : Icons.arrow_drop_up),
-                ),
+              trailing: IconButton(
+                iconSize: 30,
+                onPressed: () {
+                  setState(() {
+                    transferWidgetVisibility = !transferWidgetVisibility;
+                  });
+                },
+                icon: Icon(!transferWidgetVisibility ? Icons.arrow_drop_down : Icons.arrow_drop_up),
               ),
-            ],
+            ),
           ),
           Visibility(
             visible: transferWidgetVisibility,
@@ -242,7 +264,7 @@ class _ResultsPageState extends State<ResultsPage> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10.0),
                   child: const SizedBox(
-                    height: 20,
+                    height: 10,
                     child: ClipRRect(
                       borderRadius: BorderRadius.all(Radius.circular(10)),
                       child: LinearProgressIndicator(
@@ -275,15 +297,33 @@ class _ResultsPageState extends State<ResultsPage> {
               style: GoogleFonts.bebasNeue(fontSize: 20),
             ),
           ),
+          const SizedBox(height: 5),
           Expanded(
             child: ListView.builder(
-              itemCount: dataFile.length,
+              itemCount: modelItems.length,
               itemBuilder: (BuildContext context, int index) {
-                return TextButton(
-                    onPressed: () {
-                      print(dataFile[index].toString().split('/').last);
+                return Card(
+                  child: ListTile(
+                    title: Text(modelItems[index]),
+                    tileColor:
+                        index == _selectedIndex ? Theme.of(context).colorScheme.tertiaryContainer : null,
+                    onTap: () {
+                      setState(() {
+                        _selectedIndex = index;
+                        selectedModel = modelItems[index];
+                      });
                     },
-                    child: Text(dataFile[index].toString().split('/').last));
+                    leading: CircleAvatar(child: Text(getFirstTwoWordLetter(modelItems[index]))),
+                    trailing: PopupMenuButton(
+                      itemBuilder: (context) => [
+                        // PopupMenuItem 1
+                        const PopupMenuItem(value: 1, child: Text('View size')),
+                        const PopupMenuItem(value: 2, child: Text('Delete')),
+                      ],
+                      icon: const Icon(Icons.more_vert),
+                    ),
+                  ),
+                );
               },
             ),
           ),

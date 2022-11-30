@@ -1,8 +1,8 @@
 import 'package:bfrbsys/custom_widgets/data_button.dart';
+import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:convert' show utf8;
-import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:bfrbsys/accounts/accounts.dart';
@@ -169,6 +169,7 @@ class _PageHandlerState extends State<PageHandler> {
     return Scaffold(
       key: scaffoldKey,
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
         actions: currentPage != 1
             ? null
             : [
@@ -285,7 +286,7 @@ class _PageHandlerState extends State<PageHandler> {
             _createDrawerItem(icon: const Icon(Icons.coffee), text: 'Buy me a coffee'),
             _createDrawerItem(icon: const Icon(Icons.bug_report), text: 'Bug report'),
             const ListTile(
-              title: Text('v0.2.8', style: TextStyle(fontSize: 10)),
+              title: Text('v0.3.0', style: TextStyle(fontSize: 10)),
             ),
           ],
         ),
@@ -295,10 +296,11 @@ class _PageHandlerState extends State<PageHandler> {
 
   @override
   Widget build(BuildContext context) {
+    return _allowUserWidget();
     try {
       // New user or device
       if (apiResponse == false) {
-        return _allowUserWidget();
+        // return _allowUserWidget();
         return const LoginPage();
       }
       // Successful authentication.
@@ -311,6 +313,7 @@ class _PageHandlerState extends State<PageHandler> {
       }
       // Request Timeout | HTTP Class 500
       else {
+        // return _allowUserWidget();
         return ResponseCodeWidget(response: apiResponse);
       }
     } catch (error) {
