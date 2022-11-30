@@ -43,7 +43,10 @@ class DataButton extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(20),
                               )),
                           onPressed: onAddOnTarget,
-                          child: Text(onTargetText ?? 'ADD ON TARGET'),
+                          child: Text(
+                            onTargetText ?? 'ADD ON TARGET',
+                            style: const TextStyle(fontSize: 12),
+                          ),
                         ),
                       ),
                       Expanded(
@@ -86,7 +89,10 @@ class DataButton extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(20),
                               )),
                           onPressed: onAddOffTarget,
-                          child: Text(offTargetText ?? 'ADD OFF TARGET'),
+                          child: Text(
+                            offTargetText ?? 'ADD OFF TARGET',
+                            style: const TextStyle(fontSize: 12),
+                          ),
                         ),
                       ),
                       Expanded(
