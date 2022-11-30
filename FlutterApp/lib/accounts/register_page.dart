@@ -15,6 +15,8 @@ class _RegisterPageState extends State<RegisterPage> {
   final confirmPasswordController = TextEditingController();
 
   final storage = const FlutterSecureStorage();
+  final _formKey = GlobalKey<FormState>();
+
   bool _obscureText = true;
 
   HttpService httpService = HttpService();
@@ -46,8 +48,6 @@ class _RegisterPageState extends State<RegisterPage> {
       },
     );
   }
-
-  final _formKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
