@@ -60,3 +60,28 @@ class ConnectionProvider extends ChangeNotifier {
 
   bool get isConnected => _value;
 }
+
+class BluetoothValueProvider extends ChangeNotifier {
+  String _accValue = '';
+  String _gyroValue = '';
+  String _distValue = '';
+
+  set setAcc(String value) {
+    _accValue = value;
+    notifyListeners();
+  }
+
+  set setGyro(String value) {
+    _gyroValue = value;
+    notifyListeners();
+  }
+
+  set setDist(String value) {
+    _distValue = value;
+    notifyListeners();
+  }
+
+  String get accValue => _accValue;
+  String get gyroValue => _gyroValue;
+  String get distValue => _distValue;
+}

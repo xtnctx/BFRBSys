@@ -70,4 +70,6 @@ class CustomColor {
   static const Color lineZColor = Color(0xFF3BB95D);
   static const Color deadLineColor = Colors.transparent;
   static const Color disconnectedBox = Color(0x36A40F04);
+  static const Color trainingLineColor = Color(0xFF567AC1);
+  static const Color validationLineColor = Color(0xFFC06C84);
 }
