@@ -318,7 +318,7 @@ class _ResultsPageState extends State<ResultsPage> {
                       itemBuilder: (context) => [
                         // PopupMenuItem 1
                         const PopupMenuItem(value: 1, child: Text('View size')),
-                        const PopupMenuItem(value: 2, child: Text('Delete')),
+                        PopupMenuItem(value: 2, onTap: _deleteModel, child: const Text('Delete')),
                       ],
                       icon: const Icon(Icons.more_vert),
                     ),
@@ -330,6 +330,27 @@ class _ResultsPageState extends State<ResultsPage> {
         ],
       ),
     );
+  }
+
+  _deleteModel() {
+    return showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Delete __?'),
+            content: const Text('Are you sure you want to delete?'),
+            actions: [
+              TextButton(
+                child: const Text("Cancel"),
+                onPressed: () => Navigator.pop(context),
+              ),
+              TextButton(
+                child: const Text("Delete"),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
+          );
+        });
   }
 }
 
