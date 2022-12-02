@@ -57,6 +57,9 @@ class NeuralNetworkBuilder(APIView):
         named_model = request.data.get('model_name')
         file = request.data.get("file")
         fileName = request.data.get("fileName")
+        
+        if named_model == '':
+            named_model = 'NO_NAME_MODEL'
 
         df = pd.read_csv(file)
 
@@ -129,6 +132,10 @@ class NeuralNetworkBuilder(APIView):
         history = model.fit(inputs_train, outputs_train, epochs=N_EPOCH, batch_size=1,
                             validation_data=(inputs_validate, outputs_validate))
 
+        
+
+        
+
 
         # print("Evaluate on test data")
         # results = model.evaluate(inputs_test, outputs_test)
@@ -152,13 +159,16 @@ class NeuralNetworkBuilder(APIView):
         converter.optimizations = [tf.lite.Optimize.OPTIMIZE_FOR_SIZE]
         tflite_model = converter.convert()
 
+        owner_file = str(named_model).replace(" ", "_") + f'--{request.user.username}'
         data = {
             'owner': request.user.id,
             'model_name': named_model,
-            'file': ContentFile(bytes(hex_to_c_array(tflite_model), 'utf-8'), name=named_model+'.h')
+            'file': ContentFile(bytes(hex_to_c_array(tflite_model), 'utf-8'), 
+                                name=owner_file + '.h'
+                                ),
+            'callback_file': ContentFile(bytes(callback_string(history), 'utf-8'), 
+                                name=owner_file + '.csv'),
         }
-        
-        
 
         serializer = TrainedModelSerializer(data=data)
         if serializer.is_valid():
