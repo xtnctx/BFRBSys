@@ -15,5 +15,9 @@ class TrainedModel(models.Model):
                             upload_to='TrainedModels', 
                             default='settings.MEDIA_ROOT/default.txt'
                             )
+    callback_file = models.FileField(
+                            upload_to='Callbacks', 
+                            default='settings.MEDIA_ROOT/default.txt'
+                            )
     def __str__(self) -> str:
         return f'{self.owner.username}'
