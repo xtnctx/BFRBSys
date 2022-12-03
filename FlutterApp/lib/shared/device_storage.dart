@@ -34,24 +34,41 @@ class UserSecureStorage {
   }
 }
 
+/// === TREE ===
+/// ```
+/// /ApplicationDocumentsDirectory
+///     |
+///     --> /data
+///             |
+///             --> /user.username
+/// ```
 class AppStorage {
+  static Future<String> getDir() async {
+    String applicationDocumentsDirectory = await localPath();
+    var user = await UserSecureStorage.getUser();
+    String username = user['username'];
+    return "$applicationDocumentsDirectory/data/$username";
+  }
+
   static Future<String> localPath() async {
     final directory = await getApplicationDocumentsDirectory();
     return directory.path;
   }
 
-  static Future<void> generateCSV({required List<List<String>> data, required String fileName}) async {
-    String directory = await localPath();
-    File file = File("$directory/$fileName.csv");
-
+  static void writeCsv({required List<List<String>> data, required String filePath}) {
+    File file = File(filePath);
     String csvData = const ListToCsvConverter().convert(data);
-    await file.writeAsString(csvData);
+    file.writeAsStringSync(csvData);
   }
 
-  static Future<String> fileToBase64Encoded({required String fileName}) async {
+  static void writeJson({required Map<String, dynamic> data, required String filePath}) {
+    File file = File(filePath);
+    file.writeAsStringSync(json.encode(data));
+  }
+
+  static Future<String> fileToBase64Encoded({required String filePath}) async {
     try {
-      String directory = await localPath();
-      File file = File("$directory/$fileName");
+      File file = File(filePath);
       return base64Encode(file.readAsBytesSync());
     } catch (e) {
       return '$e';
