@@ -1,4 +1,5 @@
 import 'package:bfrbsys/shared/shared.dart';
+import 'package:flutter/foundation.dart';
 
 import '../env.dart';
 import '../models.dart';
@@ -17,7 +18,7 @@ class HttpService {
 
   Future<Logout> postLogout({required String userToken}) async {
     final response = await http.post(
-      Uri.parse("${Env.URL_PREFIX}/api/auth/logout/"),
+      Uri.parse("${Env.BASE_URL}/api/auth/logout/"),
       headers: {'Authorization': 'Token $userToken'},
     );
 
@@ -30,7 +31,7 @@ class HttpService {
 
   Future<Login> postLogin({required String username, required String password}) async {
     final response = await http.post(
-      Uri.parse("${Env.URL_PREFIX}/api/auth/login/"),
+      Uri.parse("${Env.BASE_URL}/api/auth/login/"),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
@@ -53,7 +54,7 @@ class HttpService {
     required String password,
   }) async {
     final response = await http.post(
-      Uri.parse("${Env.URL_PREFIX}/api/auth/register/"),
+      Uri.parse("${Env.BASE_URL}/api/auth/register/"),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
@@ -73,7 +74,7 @@ class HttpService {
 
   Future<UserInfo> getUserInfo({required String userToken}) async {
     final response = await http.get(
-      Uri.parse("${Env.URL_PREFIX}/api/auth/user/"),
+      Uri.parse("${Env.BASE_URL}/api/auth/user/"),
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Token $userToken',
@@ -88,7 +89,7 @@ class HttpService {
   }
 
   Future<List<Item>> getItems() async {
-    final response = await http.get(Uri.parse("${Env.URL_PREFIX}/api/"));
+    final response = await http.get(Uri.parse("${Env.BASE_URL}/api/"));
     final items = json.decode(response.body).cast<Map<String, dynamic>>();
 
     List<Item> employees = items.map<Item>((json) {
@@ -105,7 +106,7 @@ class HttpService {
     required String userToken,
   }) async {
     final response = await http.post(
-      Uri.parse("${Env.URL_PREFIX}/api/"),
+      Uri.parse("${Env.BASE_URL}/api/"),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Token $userToken',
@@ -128,7 +129,7 @@ class HttpService {
     required String modelName,
     required String userToken,
   }) async {
-    var request = http.MultipartRequest('POST', Uri.parse("${Env.URL_PREFIX}/api/"))
+    var request = http.MultipartRequest('POST', Uri.parse("${Env.BASE_URL}/api/"))
       ..headers.addAll({"Authorization": "Token $userToken"})
       ..fields['model_name'] = modelName
       ..files.add(
@@ -156,7 +157,7 @@ class HttpService {
       return false; // then proceed the login page
     } else {
       final response = await http.get(
-        Uri.parse("${Env.URL_PREFIX}/api/auth/user/"),
+        Uri.parse("${Env.BASE_URL}/api/auth/user/"),
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
           'Authorization': 'Token $token',
@@ -172,6 +173,26 @@ class HttpService {
       // );
 
       return response;
+    }
+  }
+
+  Future<String> downloadFile(String fileUrl, String location) async {
+    HttpClient httpClient = HttpClient();
+
+    try {
+      var request = await httpClient.getUrl(Uri.parse("${Env.BASE_URL}/$fileUrl"));
+      var response = await request.close();
+
+      if (response.statusCode == 200) {
+        var bytes = await consolidateHttpClientResponseBytes(response);
+        File file = File(location);
+        await file.writeAsBytes(bytes);
+        return 'Done downloading ${location.split('/').last}... ';
+      } else {
+        throw Exception('Error code: ${response.statusCode}');
+      }
+    } catch (_) {
+      throw Exception('Can not fetch url');
     }
   }
 }

@@ -20,6 +20,7 @@ class TrainedModels {
   final String createdAt;
   final String updatedAt;
   final String file;
+  final String callbackFile;
   final int owner;
 
   TrainedModels({
@@ -28,6 +29,7 @@ class TrainedModels {
     required this.createdAt,
     required this.updatedAt,
     required this.file,
+    required this.callbackFile,
     required this.owner,
   });
 
@@ -38,6 +40,7 @@ class TrainedModels {
       createdAt: json['created_at'],
       updatedAt: json['updated_at'],
       file: json['file'],
+      callbackFile: json['callback_file'],
       owner: json['owner'],
     );
   }
@@ -48,6 +51,7 @@ class TrainedModels {
         'created_at': createdAt,
         'updated_at': updatedAt,
         'file': file,
+        'callback_file': callbackFile,
         'owner': owner,
       };
 }
