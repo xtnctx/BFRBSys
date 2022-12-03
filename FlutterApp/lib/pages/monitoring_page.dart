@@ -633,22 +633,56 @@ class _MonitoringPageState extends State<MonitoringPage> {
                     //   fileName: _textController.text,
                     // );
 
-                    await AppStorage.generateCSV(data: dummyData, fileName: _textController.text);
-                    var user = await UserSecureStorage.getUser();
+                    String fileName = _textController.text;
                     var token = await UserSecureStorage.getToken();
 
-                    String localPath = await AppStorage.localPath();
+                    String dir = await AppStorage.getDir();
+                    String fileInputPath = "$dir/$fileName/${fileName}_input.csv";
+                    String fileModelPath = "$dir/$fileName/${fileName}_model.h";
+                    String fileCallbackPath = "$dir/$fileName/${fileName}_callback.csv";
+                    String fileInfoPath = "$dir/$fileName/${fileName}_info.json";
+
+                    AppStorage.writeCsv(data: dummyData, filePath: fileInputPath);
 
                     buildClass.sendInput(
-                      filePath: '$localPath/${user['username']}/data/${_textController.text}.csv',
+                      filePath: fileInputPath,
                       modelName: _textController.text,
                       userToken: token,
                     );
 
                     Future<TrainedModels> model = buildClass.model;
                     model.then((value) {
+                      int errorsCount = 0;
                       var response = value.toJson();
-                      msg('Build success, ready to send!', 2);
+
+                      // save response as json
+                      AppStorage.writeJson(data: response, filePath: fileInfoPath);
+
+                      msg('Downloading your model, please wait.');
+                      // MODEL
+                      buildClass
+                          .downloadFile(fileUrl: response['file'], location: fileModelPath)
+                          .then((value) {
+                        msg(value);
+                      }).onError((error, _) {
+                        errorsCount += 1;
+                      });
+
+                      // CALLBACK
+                      buildClass
+                          .downloadFile(fileUrl: response['callback_file'], location: fileCallbackPath)
+                          .then((value) {
+                        msg(value);
+                      }).onError((error, _) {
+                        errorsCount += 1;
+                      });
+
+                      if (errorsCount == 0) {
+                        msg('Build success, ready to send!', 2);
+                      } else {
+                        msg('Error downloading the file', -1);
+                      }
+
                       print(response);
                     }).onError((error, _) {
                       msg(error.toString(), -1);

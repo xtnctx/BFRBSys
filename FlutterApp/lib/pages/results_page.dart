@@ -43,7 +43,7 @@ class _ResultsPageState extends State<ResultsPage> {
     String localPath = await AppStorage.localPath();
     var user = await UserSecureStorage.getUser();
     setState(() {
-      // dataFile = io.Directory("$localPath/${user['username']}/data/").listSync();
+      // dataFile = io.Directory("$localPath/data/${user['username']}/").listSync();
       dataFile = io.Directory("$localPath/").listSync();
     });
   }
