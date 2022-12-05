@@ -584,7 +584,7 @@ class _MonitoringPageState extends State<MonitoringPage> {
     );
   }
 
-  startLoadingBar() {
+  startSpinningBar() {
     int i = 0;
     List<String> m = ['|', '/', '-', '\\'];
     loadingTextTimer = Timer.periodic(const Duration(milliseconds: 100), (Timer timer) {
@@ -626,7 +626,7 @@ class _MonitoringPageState extends State<MonitoringPage> {
                     });
 
                     Navigator.of(context).pop();
-                    startLoadingBar();
+                    startSpinningBar();
 
                     // await AppStorage.generateCSV(
                     //   data: [header, ...onData, ...offData],
@@ -642,7 +642,7 @@ class _MonitoringPageState extends State<MonitoringPage> {
                     String fileCallbackPath = "$dir/$fileName/${fileName}_callback.csv";
                     String fileInfoPath = "$dir/$fileName/${fileName}_info.json";
 
-                    AppStorage.writeCsv(data: dummyData, filePath: fileInputPath);
+                    await AppStorage.writeCsv(data: dummyData, filePath: fileInputPath);
 
                     buildClass.sendInput(
                       filePath: fileInputPath,
@@ -651,12 +651,12 @@ class _MonitoringPageState extends State<MonitoringPage> {
                     );
 
                     Future<TrainedModels> model = buildClass.model;
-                    model.then((value) {
+                    model.then((value) async {
                       int errorsCount = 0;
                       var response = value.toJson();
 
                       // save response as json
-                      AppStorage.writeJson(data: response, filePath: fileInfoPath);
+                      await AppStorage.writeJson(data: response, filePath: fileInfoPath);
 
                       msg('Downloading your model, please wait.');
                       // MODEL

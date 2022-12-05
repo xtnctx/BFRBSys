@@ -286,7 +286,7 @@ class _PageHandlerState extends State<PageHandler> {
             _createDrawerItem(icon: const Icon(Icons.coffee), text: 'Buy me a coffee'),
             _createDrawerItem(icon: const Icon(Icons.bug_report), text: 'Bug report'),
             const ListTile(
-              title: Text('v0.3.2', style: TextStyle(fontSize: 10)),
+              title: Text('v0.3.0', style: TextStyle(fontSize: 10)),
             ),
           ],
         ),
