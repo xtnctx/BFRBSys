@@ -55,15 +55,15 @@ class AppStorage {
     return directory.path;
   }
 
-  static void writeCsv({required List<List<String>> data, required String filePath}) {
+  static Future<void> writeCsv({required List<List<String>> data, required String filePath}) async {
     File file = File(filePath);
     String csvData = const ListToCsvConverter().convert(data);
-    file.writeAsStringSync(csvData);
+    await file.writeAsString(csvData);
   }
 
-  static void writeJson({required Map<String, dynamic> data, required String filePath}) {
+  static Future<void> writeJson({required Map<String, dynamic> data, required String filePath}) async {
     File file = File(filePath);
-    file.writeAsStringSync(json.encode(data));
+    await file.writeAsString(json.encode(data));
   }
 
   static Future<String> fileToBase64Encoded({required String filePath}) async {
