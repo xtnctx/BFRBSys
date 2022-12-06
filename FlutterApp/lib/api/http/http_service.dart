@@ -180,14 +180,14 @@ class HttpService {
     HttpClient httpClient = HttpClient();
 
     try {
-      var request = await httpClient.getUrl(Uri.parse("${Env.BASE_URL}/$fileUrl"));
+      var request = await httpClient.getUrl(Uri.parse("${Env.BASE_URL}$fileUrl"));
       var response = await request.close();
 
       if (response.statusCode == 200) {
         var bytes = await consolidateHttpClientResponseBytes(response);
         File file = File(location);
         await file.writeAsBytes(bytes);
-        return 'Done downloading ${location.split('/').last}... ';
+        return 'Prepairing data... ';
       } else {
         throw Exception('Error code: ${response.statusCode}');
       }
