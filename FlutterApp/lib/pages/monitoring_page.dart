@@ -547,24 +547,31 @@ class _MonitoringPageState extends State<MonitoringPage> {
               }
             },
           ),
+          // SpeedDialChild(
+          //   child: const Icon(Icons.send),
+          //   onTap: () {
+          //     isDialOpen.value = false;
+          //     String dataStr =
+          //         "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.!!!!";
+          //     var fileContents = utf8.encode(dataStr) as Uint8List;
+          //     print("fileContents length is ${fileContents.length}");
+          //     ble.transferFile(fileContents);
+          //   },
+          // ),
+          // SpeedDialChild(
+          //   child: const Icon(Icons.cancel),
+          //   onTap: () {
+          //     isDialOpen.value = false;
+          //     // msg('Trying to cancel transfer ...');
+          //     // ble.cancelTransfer();
+          //     // print(ble.transferStatusCharacteristic!.isNotifying);
+          //   },
+          // ),
           SpeedDialChild(
-            child: const Icon(Icons.send),
+            child: const Icon(Icons.fact_check),
             onTap: () {
               isDialOpen.value = false;
-              String dataStr =
-                  "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.!!!!";
-              var fileContents = utf8.encode(dataStr) as Uint8List;
-              print("fileContents length is ${fileContents.length}");
-              ble.transferFile(fileContents);
-            },
-          ),
-          SpeedDialChild(
-            child: const Icon(Icons.cancel),
-            onTap: () {
-              isDialOpen.value = false;
-              // msg('Trying to cancel transfer ...');
-              // ble.cancelTransfer();
-              // print(ble.transferStatusCharacteristic!.isNotifying);
+              Navigator.of(context).push(MaterialPageRoute(builder: (context) => const ResultsPage()));
             },
           ),
           SpeedDialChild(
@@ -660,7 +667,7 @@ class _MonitoringPageState extends State<MonitoringPage> {
 
                       msg('Downloading your model, please wait.');
                       // MODEL
-                      buildClass
+                      await buildClass
                           .downloadFile(fileUrl: response['file'], location: fileModelPath)
                           .then((value) {
                         msg(value);
@@ -669,7 +676,7 @@ class _MonitoringPageState extends State<MonitoringPage> {
                       });
 
                       // CALLBACK
-                      buildClass
+                      await buildClass
                           .downloadFile(fileUrl: response['callback_file'], location: fileCallbackPath)
                           .then((value) {
                         msg(value);
@@ -680,7 +687,7 @@ class _MonitoringPageState extends State<MonitoringPage> {
                       if (errorsCount == 0) {
                         msg('Build success, ready to send!', 2);
                       } else {
-                        msg('Error downloading the file', -1);
+                        msg('Error building the model', -1);
                       }
 
                       print(response);

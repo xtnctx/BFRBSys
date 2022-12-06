@@ -56,7 +56,7 @@ class _PageHandlerState extends State<PageHandler> {
     pages = const [
       HomePage(),
       MonitoringPage(),
-      ResultsPage(),
+      // ResultsPage(),
       ProfilePage(),
       SettingsPage(),
     ];
@@ -286,7 +286,7 @@ class _PageHandlerState extends State<PageHandler> {
             _createDrawerItem(icon: const Icon(Icons.coffee), text: 'Buy me a coffee'),
             _createDrawerItem(icon: const Icon(Icons.bug_report), text: 'Bug report'),
             const ListTile(
-              title: Text('v0.3.0', style: TextStyle(fontSize: 10)),
+              title: Text('v0.3.2', style: TextStyle(fontSize: 10)),
             ),
           ],
         ),
@@ -296,7 +296,7 @@ class _PageHandlerState extends State<PageHandler> {
 
   @override
   Widget build(BuildContext context) {
-    return _allowUserWidget();
+    // return _allowUserWidget();
     try {
       // New user or device
       if (apiResponse == false) {

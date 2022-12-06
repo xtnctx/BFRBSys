@@ -12,40 +12,33 @@ class ResultsPage extends StatefulWidget {
 }
 
 class _ResultsPageState extends State<ResultsPage> {
-  List dataFile = [];
+  String? dir;
+  List<io.FileSystemEntity> dataFile = [];
+  List<String> modelItems = [];
+  String selectedModel = '';
+
   List<String> historyList = <String>['Accuracy', 'Loss'];
   late String dropdownValue;
-  List modelItems = ['Model 1', 'Model 2', 'Model 3', 'Model 4', 'Model 5'];
   bool chartVisibility = true;
   bool transferWidgetVisibility = true;
   int _selectedIndex = 0;
-  late String selectedModel;
+
+  _getListofData() async {
+    dir = await AppStorage.getDir();
+    setState(() {
+      dataFile = io.Directory(dir!).listSync();
+      for (var item in dataFile) {
+        modelItems.add(item.path.split('/').last);
+      }
+      selectedModel = modelItems[_selectedIndex];
+    });
+  }
 
   @override
   void initState() {
-    _listofData();
-    dropdownValue = historyList.first;
-    selectedModel = modelItems[0];
-    // modelItems = ['Model 1', 'Model 2', 'Model 3', 'Model 4', 'Model 5'];
     super.initState();
-  }
-
-  String getFirstTwoWordLetter(String word) {
-    String twoLetters = '';
-    List<String> words = word.split(' ').sublist(0, 2);
-    for (var word in words) {
-      twoLetters += word[0];
-    }
-    return twoLetters.toUpperCase();
-  }
-
-  void _listofData() async {
-    String localPath = await AppStorage.localPath();
-    var user = await UserSecureStorage.getUser();
-    setState(() {
-      // dataFile = io.Directory("$localPath/data/${user['username']}/").listSync();
-      dataFile = io.Directory("$localPath/").listSync();
-    });
+    _getListofData();
+    dropdownValue = historyList.first;
   }
 
   void doNothing(BuildContext context) {}
@@ -76,6 +69,7 @@ class _ResultsPageState extends State<ResultsPage> {
       ChartData(10, 0.85),
     ];
     return Scaffold(
+      appBar: AppBar(backgroundColor: Colors.transparent),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -278,7 +272,11 @@ class _ResultsPageState extends State<ResultsPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    IconButton(onPressed: () {}, icon: const Icon(Icons.cancel)),
+                    IconButton(
+                        onPressed: () {
+                          print(dataFile[0].path);
+                        },
+                        icon: const Icon(Icons.cancel)),
                     IconButton(onPressed: () {}, icon: const Icon(Icons.send)),
                   ],
                 ),
@@ -313,10 +311,10 @@ class _ResultsPageState extends State<ResultsPage> {
                         selectedModel = modelItems[index];
                       });
                     },
-                    leading: CircleAvatar(child: Text(getFirstTwoWordLetter(modelItems[index]))),
+                    leading: CircleAvatar(child: Text(modelItems[index][0])),
                     trailing: PopupMenuButton(
                       itemBuilder: (context) => [
-                        // PopupMenuItem 1
+                        // PopupMenuItem 1ss
                         const PopupMenuItem(value: 1, child: Text('View size')),
                         PopupMenuItem(value: 2, onTap: _deleteModel, child: const Text('Delete')),
                       ],
