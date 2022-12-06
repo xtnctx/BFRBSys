@@ -56,13 +56,13 @@ class AppStorage {
   }
 
   static Future<void> writeCsv({required List<List<String>> data, required String filePath}) async {
-    File file = File(filePath);
+    File file = await File(filePath).create(recursive: true);
     String csvData = const ListToCsvConverter().convert(data);
     await file.writeAsString(csvData);
   }
 
   static Future<void> writeJson({required Map<String, dynamic> data, required String filePath}) async {
-    File file = File(filePath);
+    File file = await File(filePath).create(recursive: true);
     await file.writeAsString(json.encode(data));
   }
 
