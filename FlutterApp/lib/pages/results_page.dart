@@ -1,5 +1,18 @@
 part of 'page_handler.dart';
 
+extension ListSwap<T> on List<T> {
+  void swap(int index1, int index2) {
+    var length = this.length;
+    RangeError.checkValidIndex(index1, this, "index1", length);
+    RangeError.checkValidIndex(index2, this, "index2", length);
+    if (index1 != index2) {
+      var tmp1 = this[index1];
+      this[index1] = this[index2];
+      this[index2] = tmp1;
+    }
+  }
+}
+
 class ResultsPage extends StatefulWidget {
   final Icon navBarIcon = const Icon(Icons.fact_check_outlined);
   final Icon navBarIconSelected = const Icon(Icons.fact_check);
@@ -13,7 +26,8 @@ class ResultsPage extends StatefulWidget {
 
 class _ResultsPageState extends State<ResultsPage> {
   String? dir;
-  List<io.FileSystemEntity> dataFile = [];
+  List<Map<String, dynamic>> bundle = [];
+  // List<io.FileSystemEntity> dataFile = [];
   List<String> modelItems = [];
   String selectedModel = '';
 
@@ -26,12 +40,75 @@ class _ResultsPageState extends State<ResultsPage> {
   _getListofData() async {
     dir = await AppStorage.getDir();
     setState(() {
-      dataFile = io.Directory(dir!).listSync();
-      for (var item in dataFile) {
-        modelItems.add(item.path.split('/').last);
+      List<io.FileSystemEntity> dataFile = io.Directory(dir!).listSync();
+
+      List<Map<String, dynamic>> info = [];
+      for (var e in dataFile) {
+        List<io.FileSystemEntity> modelFolder = io.Directory(e.path).listSync();
+        List<io.File> fileContents = [];
+        String modelName = e.path.split('/').last;
+        int id = 0;
+        for (var file in modelFolder) {
+          if (file is io.File) {
+            fileContents.add(file);
+            if (file.path.endsWith('.json')) {
+              String jsonEncoded = file.readAsStringSync();
+              Map<String, dynamic> jsonDecoded = json.decode(jsonEncoded);
+              id = jsonDecoded['id'];
+            }
+          }
+        }
+        info.add({modelName: fileContents, 'id': id});
       }
+
+      info.sort((b, a) => a["id"].compareTo(b["id"]));
+      for (var item in info) {
+        modelItems.add(item.keys.first);
+      }
+
       selectedModel = modelItems[_selectedIndex];
+      bundle = info;
     });
+  }
+
+  // !!! Move to shared lib !!!
+  List quickSort(List list, int low, int high) {
+    if (low < high) {
+      int pi = partition(list, low, high);
+      print("pivot: ${list[pi]} now at index $pi");
+
+      quickSort(list, low, pi - 1);
+      quickSort(list, pi + 1, high);
+    }
+    return list;
+  }
+
+  int partition(List list, low, high) {
+    // Base check
+    if (list.isEmpty) {
+      return 0;
+    }
+    // Take our last element as pivot and counter i one less than low
+    int pivot = list[high];
+
+    int i = low - 1;
+    for (int j = low; j < high; j++) {
+      // When j is < than pivot element we increment i and swap arr[i] and arr[j]
+      if (list[j] < pivot) {
+        i++;
+        swap(list, i, j);
+      }
+    }
+    // Swap the last element and place in front of the i'th element
+    swap(list, i + 1, high);
+    return i + 1;
+  }
+
+// Swapping using a temp variable
+  void swap(List list, int i, int j) {
+    int temp = list[i];
+    list[i] = list[j];
+    list[j] = temp;
   }
 
   @override
@@ -272,11 +349,7 @@ class _ResultsPageState extends State<ResultsPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    IconButton(
-                        onPressed: () {
-                          print(dataFile[0].path);
-                        },
-                        icon: const Icon(Icons.cancel)),
+                    IconButton(onPressed: () {}, icon: const Icon(Icons.cancel)),
                     IconButton(onPressed: () {}, icon: const Icon(Icons.send)),
                   ],
                 ),
