@@ -571,7 +571,9 @@ class _MonitoringPageState extends State<MonitoringPage> {
             child: const Icon(Icons.fact_check),
             onTap: () {
               isDialOpen.value = false;
-              Navigator.of(context).push(MaterialPageRoute(builder: (context) => const ResultsPage()));
+
+              // Navigator.of(context).push(MaterialPageRoute(builder: (context) => const ResultsPage()));
+              viewResults();
             },
           ),
           SpeedDialChild(
@@ -599,6 +601,19 @@ class _MonitoringPageState extends State<MonitoringPage> {
       msg("Building model...       ${m[i]}");
       i += 1;
     });
+  }
+
+  Future<Widget> buildPageAsync() async {
+    return Future.microtask(() {
+      return const ResultsPage();
+    });
+  }
+
+  void viewResults() async {
+    var page = await buildPageAsync();
+    var route = MaterialPageRoute(builder: (_) => page);
+    if (!mounted) return;
+    Navigator.push(context, route);
   }
 
   Future openBuildForm() {
