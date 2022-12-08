@@ -1,18 +1,5 @@
 part of 'page_handler.dart';
 
-extension ListSwap<T> on List<T> {
-  void swap(int index1, int index2) {
-    var length = this.length;
-    RangeError.checkValidIndex(index1, this, "index1", length);
-    RangeError.checkValidIndex(index2, this, "index2", length);
-    if (index1 != index2) {
-      var tmp1 = this[index1];
-      this[index1] = this[index2];
-      this[index2] = tmp1;
-    }
-  }
-}
-
 class ResultsPage extends StatefulWidget {
   final Icon navBarIcon = const Icon(Icons.fact_check_outlined);
   final Icon navBarIconSelected = const Icon(Icons.fact_check);
@@ -26,7 +13,7 @@ class ResultsPage extends StatefulWidget {
 
 class _ResultsPageState extends State<ResultsPage> {
   String? dir;
-  List<Map<String, dynamic>> bundle = [];
+  List<Map<String, dynamic>> fileBundle = [];
   // List<io.FileSystemEntity> dataFile = [];
   List<String> modelItems = [];
   String selectedModel = '';
@@ -36,6 +23,11 @@ class _ResultsPageState extends State<ResultsPage> {
   bool chartVisibility = true;
   bool transferWidgetVisibility = true;
   int _selectedIndex = 0;
+
+  List<ChartData> trainLoss = [];
+  List<ChartData> valLoss = [];
+  List<ChartData> trainAccuracy = [];
+  List<ChartData> valAccuracy = [];
 
   _getListofData() async {
     dir = await AppStorage.getDir();
@@ -67,48 +59,9 @@ class _ResultsPageState extends State<ResultsPage> {
       }
 
       selectedModel = modelItems[_selectedIndex];
-      bundle = info;
+      fileBundle = info;
     });
-  }
-
-  // !!! Move to shared lib !!!
-  List quickSort(List list, int low, int high) {
-    if (low < high) {
-      int pi = partition(list, low, high);
-      print("pivot: ${list[pi]} now at index $pi");
-
-      quickSort(list, low, pi - 1);
-      quickSort(list, pi + 1, high);
-    }
-    return list;
-  }
-
-  int partition(List list, low, high) {
-    // Base check
-    if (list.isEmpty) {
-      return 0;
-    }
-    // Take our last element as pivot and counter i one less than low
-    int pivot = list[high];
-
-    int i = low - 1;
-    for (int j = low; j < high; j++) {
-      // When j is < than pivot element we increment i and swap arr[i] and arr[j]
-      if (list[j] < pivot) {
-        i++;
-        swap(list, i, j);
-      }
-    }
-    // Swap the last element and place in front of the i'th element
-    swap(list, i + 1, high);
-    return i + 1;
-  }
-
-// Swapping using a temp variable
-  void swap(List list, int i, int j) {
-    int temp = list[i];
-    list[i] = list[j];
-    list[j] = temp;
+    _loadCallback(_selectedIndex);
   }
 
   @override
@@ -121,30 +74,6 @@ class _ResultsPageState extends State<ResultsPage> {
   void doNothing(BuildContext context) {}
   @override
   Widget build(BuildContext context) {
-    final List<ChartData> trainingData = [
-      ChartData(1, 0.08),
-      ChartData(2, 0.3),
-      ChartData(3, 0.4),
-      ChartData(4, 0.36),
-      ChartData(5, 0.39),
-      ChartData(6, 0.52),
-      ChartData(7, 0.63),
-      ChartData(8, 0.68),
-      ChartData(9, 0.85),
-      ChartData(10, 0.9),
-    ];
-    final List<ChartData> validationData = [
-      ChartData(1, 0.1),
-      ChartData(2, 0.23),
-      ChartData(3, 0.15),
-      ChartData(4, 0.3),
-      ChartData(5, 0.4),
-      ChartData(6, 0.35),
-      ChartData(7, 0.42),
-      ChartData(8, 0.5),
-      ChartData(9, 0.8),
-      ChartData(10, 0.85),
-    ];
     return Scaffold(
       appBar: AppBar(backgroundColor: Colors.transparent),
       body: Column(
@@ -263,22 +192,23 @@ class _ResultsPageState extends State<ResultsPage> {
                             // plotAreaBorderWidth: 0,
                             primaryXAxis: NumericAxis(
                               title: AxisTitle(text: 'Epoch', textStyle: const TextStyle(fontSize: 12)),
+                              maximum: 100,
                             ),
                             primaryYAxis: NumericAxis(
                               minimum: 0.0,
                               maximum: 1.0,
-                              title: AxisTitle(text: 'Accuracy', textStyle: const TextStyle(fontSize: 12)),
+                              title: AxisTitle(text: dropdownValue, textStyle: const TextStyle(fontSize: 12)),
                             ),
                             backgroundColor: Theme.of(context).colorScheme.primaryContainer,
                             series: <ChartSeries>[
                               // Renders line chart
-                              LineSeries<ChartData, int>(
-                                  dataSource: trainingData,
+                              FastLineSeries<ChartData, int>(
+                                  dataSource: dropdownValue == 'Accuracy' ? trainAccuracy : trainLoss,
                                   color: CustomColor.trainingLineColor,
                                   xValueMapper: (ChartData data, _) => data.x,
                                   yValueMapper: (ChartData data, _) => data.y),
-                              LineSeries<ChartData, int>(
-                                  dataSource: validationData,
+                              FastLineSeries<ChartData, int>(
+                                  dataSource: dropdownValue == 'Accuracy' ? valAccuracy : valLoss,
                                   color: CustomColor.validationLineColor,
                                   xValueMapper: (ChartData data, _) => data.x,
                                   yValueMapper: (ChartData data, _) => data.y),
@@ -383,6 +313,7 @@ class _ResultsPageState extends State<ResultsPage> {
                         _selectedIndex = index;
                         selectedModel = modelItems[index];
                       });
+                      _loadCallback(index);
                     },
                     leading: CircleAvatar(child: Text(modelItems[index][0])),
                     trailing: PopupMenuButton(
@@ -401,6 +332,38 @@ class _ResultsPageState extends State<ResultsPage> {
         ],
       ),
     );
+  }
+
+  _loadCallback(int index) async {
+    List<io.File> files = fileBundle[index][selectedModel];
+    List<List<dynamic>> data = [];
+    for (var file in files) {
+      if (file.path.endsWith('_callback.csv')) {
+        var stream = file.openRead();
+        data = await stream.transform(utf8.decoder).transform(const CsvToListConverter()).toList();
+      }
+    }
+
+    List<ChartData> tLoss = [];
+    List<ChartData> tAccuracy = [];
+    List<ChartData> vLoss = [];
+    List<ChartData> vAccuracy = [];
+    for (int row = 1; row < data.length; row++) {
+      // loss
+      tLoss.add(ChartData(row, data[row][0]));
+      // mae
+      tAccuracy.add(ChartData(row, data[row][1]));
+      // val_loss
+      vLoss.add(ChartData(row, data[row][2]));
+      // val_mae
+      vAccuracy.add(ChartData(row, data[row][3]));
+    }
+    setState(() {
+      trainLoss = tLoss;
+      trainAccuracy = tAccuracy;
+      valLoss = vLoss;
+      valAccuracy = vAccuracy;
+    });
   }
 
   _deleteModel() {
