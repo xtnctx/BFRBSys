@@ -15,7 +15,7 @@
 
 ## Backend config
 
-When setting up on production, the timeout value in app.yaml (for Google App Engine) must be zero otherwise, it will cause a request time out for every post request in the api. This has been tested and proved from previous [project](https://github.com/xtnctx/bfrbsys/tree/main/website).
+When setting up on production, the timeout value in `app.yaml` (for Google App Engine) must be zero otherwise, it will cause a request time out for every post request in the api. This has been tested and proved from previous [project](https://github.com/xtnctx/bfrbsys/tree/main/website).
 
 ## Reference
 TensorFlow RNN conversion to TensorFlow Lite: https://www.tensorflow.org/lite/models/convert/rnn
