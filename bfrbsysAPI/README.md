@@ -1,4 +1,5 @@
-# A RESTful API built with Django 
+# A RESTful API for building minimal neural network for wearables
+
 ## Selecting a neural network
 - Convolutional Neural Network (CNN)
 - Recurrent Neural Network (RNN)
