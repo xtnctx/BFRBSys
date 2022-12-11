@@ -74,6 +74,7 @@ class NeuralNetworkBuilder(APIView):
         inputs = []
         outputs = []
 
+        # Preprocess
         for hotspot_index in range(NUM_HOTSPOT):
 
             target = HOTSPOT[hotspot_index]
@@ -99,53 +100,50 @@ class NeuralNetworkBuilder(APIView):
                         (target['gy'][index]) + 2000 / 4000,
                         (target['gz'][index]) + 2000 / 4000
                     ]
-                inputs.append(tensor)
-                outputs.append(output)
+                inputs.append([tensor])
+                outputs.append([output])
 
-        # convert the list to numpy array
-        inputs = np.array(inputs)
-        outputs = np.array(outputs)
+        # Split
+        data = tf.data.Dataset.from_tensor_slices((inputs, outputs)).shuffle(1000)
+        TRAIN_SPLIT = int(0.8 * len(data))
+        VAL_SPLIT = int(0.2 * len(data))
 
-        # Randomize the order of the inputs, so they can be evenly distributed for training, testing, and validation
-        # https://stackoverflow.com/a/37710486/2020087
-        num_inputs = len(inputs)
-        randomize = np.arange(num_inputs)
-        np.random.shuffle(randomize)
+        assert TRAIN_SPLIT + VAL_SPLIT == len(data)
 
-        # Swap the consecutive indexes (0, 1, 2, etc) with the randomized indexes
-        inputs = inputs[randomize]
-        outputs = outputs[randomize]
+        train = data.take(TRAIN_SPLIT)
+        val = data.skip(TRAIN_SPLIT).take(VAL_SPLIT)
 
-        # Split the recordings (group of samples) into three sets: training, testing and validation
-        TRAIN_SPLIT = int(0.6 * num_inputs)
-        TEST_SPLIT = int(0.2 * num_inputs + TRAIN_SPLIT)
-
-        inputs_train, inputs_test, inputs_validate = np.split(inputs, [TRAIN_SPLIT, TEST_SPLIT])
-        outputs_train, outputs_test, outputs_validate = np.split(outputs, [TRAIN_SPLIT, TEST_SPLIT])
-
-        # build the model and train it
+    
+        # Build and train
         model = tf.keras.Sequential()
-        model.add(tf.keras.layers.Dense(50, activation='relu')) # relu is used for performance
+        model.add(tf.keras.layers.Conv1D(64, kernel_size=1, activation='relu', input_shape=(len(PARAMS)-1, SAMPLES_PER_HOTSPOT)))
+        model.add(tf.keras.layers.MaxPooling1D())
+
+        model.add(tf.keras.layers.Conv1D(32, kernel_size=1, activation='relu'))
+        model.add(tf.keras.layers.MaxPooling1D())
+
+        model.add(tf.keras.layers.Conv1D(40, kernel_size=1, activation='relu'))
+        model.add(tf.keras.layers.Dropout(0.5))
+
+        model.add(tf.keras.layers.Flatten())
+        model.add(tf.keras.layers.Dense(50, activation='relu'))
         model.add(tf.keras.layers.Dense(15, activation='relu'))
+
         model.add(tf.keras.layers.Dense(NUM_HOTSPOT, activation='softmax')) # softmax is used, because we only expect one hotspot to occur per input
-        model.compile(optimizer='rmsprop', loss='mse', metrics=['mae'])
-        history = model.fit(inputs_train, outputs_train, epochs=N_EPOCH, batch_size=1,
-                            validation_data=(inputs_validate, outputs_validate))
 
-        
+        model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
-        
-
+        history = model.fit(train, epochs=N_EPOCH, batch_size=SAMPLES_PER_HOTSPOT, validation_data=val)
 
         # print("Evaluate on test data")
         # results = model.evaluate(inputs_test, outputs_test)
         # print("test loss, test acc:", results)
 
 
-        predictions = model.predict(inputs_test)
-        # print the predictions and the expected ouputs
-        print("predictions =\n", np.round(predictions, decimals=3))
-        print("actual =\n", outputs_test)
+        # predictions = model.predict(inputs_test)
+        # # print the predictions and the expected ouputs
+        # print("predictions =\n", np.round(predictions, decimals=3))
+        # print("actual =\n", outputs_test)
 
         # # use the model to predict the test inputs
         # feed = [[1,1,1,1,1,1]]
