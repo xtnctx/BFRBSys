@@ -25,14 +25,11 @@ from rest_framework.authtoken.serializers import AuthTokenSerializer
 from django.contrib.auth import login
 
 from django.core.files.base import ContentFile
-import pandas as pd
-import numpy as np
-import tensorflow as tf
+from .train import BFRBNeuralNetwork
 
 
 
-PARAMS = ['ax', 'ay', 'az', 'gx', 'gy', 'gz', 'class']
-SAMPLES_PER_HOTSPOT = 1
+
 
 def home(request):
     return render(request, 'apis/home.html', {})
@@ -61,101 +58,10 @@ class NeuralNetworkBuilder(APIView):
         if named_model == '':
             named_model = 'NO_NAME_MODEL'
 
-        df = pd.read_csv(file)
-
-        off_target = pd.DataFrame(df[df['class']==0].values.tolist(), columns=PARAMS)
-        on_target = pd.DataFrame(df[df['class']==1].values.tolist(), columns=PARAMS)
-
-        HOTSPOT = [off_target, on_target] # known location / class
-        NUM_HOTSPOT = len(HOTSPOT)
-        ONE_HOT_ENCODED_HOTSPOT = np.eye(NUM_HOTSPOT)
-        N_EPOCH = 100
-
-        inputs = []
-        outputs = []
-
-        # Preprocess
-        for hotspot_index in range(NUM_HOTSPOT):
-
-            target = HOTSPOT[hotspot_index]
-
-            num_recordings = int(target.shape[0] / SAMPLES_PER_HOTSPOT)
-
-            output = ONE_HOT_ENCODED_HOTSPOT[hotspot_index]
-
-            print(f"\tThere are {num_recordings} recordings.")
-
-            for i in range(num_recordings):
-                tensor = []
-                for j in range(SAMPLES_PER_HOTSPOT):
-                    index = i * SAMPLES_PER_HOTSPOT + j
-                    # normalize the input data, between 0 to 1:
-                    # - acceleration is between: -4 to +4
-                    # - gyroscope is between: -2000 to +2000
-                    tensor += [
-                        (target['ax'][index]) + 4 / 8,
-                        (target['ay'][index]) + 4 / 8,
-                        (target['az'][index]) + 4 / 8,
-                        (target['gx'][index]) + 2000 / 4000,
-                        (target['gy'][index]) + 2000 / 4000,
-                        (target['gz'][index]) + 2000 / 4000
-                    ]
-                inputs.append([tensor])
-                outputs.append([output])
-
-        # Split
-        data = tf.data.Dataset.from_tensor_slices((inputs, outputs)).shuffle(1000)
-        TRAIN_SPLIT = int(0.8 * len(data))
-        VAL_SPLIT = int(0.2 * len(data))
-
-        assert TRAIN_SPLIT + VAL_SPLIT == len(data)
-
-        train = data.take(TRAIN_SPLIT)
-        val = data.skip(TRAIN_SPLIT).take(VAL_SPLIT)
-
-    
-        # Build and train
-        model = tf.keras.Sequential()
-        model.add(tf.keras.layers.Conv1D(64, kernel_size=1, activation='relu', input_shape=(len(PARAMS)-1, SAMPLES_PER_HOTSPOT)))
-        model.add(tf.keras.layers.MaxPooling1D())
-
-        model.add(tf.keras.layers.Conv1D(32, kernel_size=1, activation='relu'))
-        model.add(tf.keras.layers.MaxPooling1D())
-
-        model.add(tf.keras.layers.Conv1D(40, kernel_size=1, activation='relu'))
-        model.add(tf.keras.layers.Dropout(0.5))
-
-        model.add(tf.keras.layers.Flatten())
-        model.add(tf.keras.layers.Dense(50, activation='relu'))
-        model.add(tf.keras.layers.Dense(15, activation='relu'))
-
-        model.add(tf.keras.layers.Dense(NUM_HOTSPOT, activation='softmax')) # softmax is used, because we only expect one hotspot to occur per input
-
-        model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
-
-        history = model.fit(train, epochs=N_EPOCH, batch_size=SAMPLES_PER_HOTSPOT, validation_data=val)
-
-        # print("Evaluate on test data")
-        # results = model.evaluate(inputs_test, outputs_test)
-        # print("test loss, test acc:", results)
-
-
-        # predictions = model.predict(inputs_test)
-        # # print the predictions and the expected ouputs
-        # print("predictions =\n", np.round(predictions, decimals=3))
-        # print("actual =\n", outputs_test)
-
-        # # use the model to predict the test inputs
-        # feed = [[1,1,1,1,1,1]]
-        # predictions = model.predict(feed)
-
-        # # print the predictions and the expected ouputs
-        # print("predictions =\n", np.round(predictions, decimals=3))
-
-        # Convert the model to the TensorFlow Lite format with quantization
-        converter = tf.lite.TFLiteConverter.from_keras_model(model)
-        converter.optimizations = [tf.lite.Optimize.OPTIMIZE_FOR_SIZE]
-        tflite_model = converter.convert()
+        nn = BFRBNeuralNetwork(data=file).build()
+        train, val = nn.preprocessData(train_rate=0.8, val_rate=0.2)
+        history, model = nn.train(trainData=train, valData=val)
+        tflite_model = nn.to_tflite(model)
 
         owner_file = str(named_model).replace(" ", "_") + f'--{request.user.username}'
         data = {
