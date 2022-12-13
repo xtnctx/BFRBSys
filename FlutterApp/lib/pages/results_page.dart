@@ -4,8 +4,9 @@ class ResultsPage extends StatefulWidget {
   final Icon navBarIcon = const Icon(Icons.fact_check_outlined);
   final Icon navBarIconSelected = const Icon(Icons.fact_check);
   final String navBarTitle = 'Results';
+  final BluetoothBuilder? ble;
 
-  const ResultsPage({super.key});
+  const ResultsPage({super.key, this.ble});
 
   @override
   State<ResultsPage> createState() => _ResultsPageState();
@@ -28,6 +29,8 @@ class _ResultsPageState extends State<ResultsPage> {
   List<ChartData> valLoss = [];
   List<ChartData> trainAccuracy = [];
   List<ChartData> valAccuracy = [];
+
+  BluetoothBuilder? ble;
 
   _getListofData() async {
     dir = await AppStorage.getDir();
@@ -69,6 +72,7 @@ class _ResultsPageState extends State<ResultsPage> {
     super.initState();
     _getListofData();
     dropdownValue = historyList.first;
+    ble = widget.ble;
   }
 
   void doNothing(BuildContext context) {}
@@ -279,8 +283,22 @@ class _ResultsPageState extends State<ResultsPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    IconButton(onPressed: () {}, icon: const Icon(Icons.cancel)),
-                    IconButton(onPressed: () {}, icon: const Icon(Icons.send)),
+                    IconButton(
+                        onPressed: () {
+                          ble?.cancelTransfer();
+                        },
+                        icon: const Icon(Icons.cancel)),
+                    IconButton(
+                        onPressed: () {
+                          if (ble != null) {
+                            String dataStr =
+                                "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.!!!!";
+                            var fileContents = utf8.encode(dataStr) as Uint8List;
+                            print("fileContents length is ${fileContents.length}");
+                            ble?.transferFile(fileContents);
+                          }
+                        },
+                        icon: const Icon(Icons.send)),
                   ],
                 ),
               ],
@@ -351,11 +369,11 @@ class _ResultsPageState extends State<ResultsPage> {
     for (int row = 1; row < data.length; row++) {
       // loss
       tLoss.add(ChartData(row, data[row][0]));
-      // mae
+      // accuracy
       tAccuracy.add(ChartData(row, data[row][1]));
       // val_loss
       vLoss.add(ChartData(row, data[row][2]));
-      // val_mae
+      // val_accuracy
       vAccuracy.add(ChartData(row, data[row][3]));
     }
     setState(() {
