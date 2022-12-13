@@ -365,28 +365,27 @@ class _MonitoringPageState extends State<MonitoringPage> {
     int n = 1;
     onCaptureTimer = Timer.periodic(const Duration(seconds: 1), (Timer timer) {
       print('$n seconds');
-      if (connectionValue(context)) {
-        List<double> acc = imuParse(accData!);
-        List<double> gyro = imuParse(gyroData!);
 
-        List<String> captured = [
-          // Accelerometer
-          acc[0].toString(),
-          acc[1].toString(),
-          acc[2].toString(),
-          // Gyroscope
-          gyro[0].toString(),
-          gyro[1].toString(),
-          gyro[2].toString(),
-          // Label
-          sender.toString(),
-        ];
+      List<double> acc = imuParse(accData!);
+      List<double> gyro = imuParse(gyroData!);
 
-        if (sender == 1) {
-          onData.add(captured);
-        } else {
-          offData.add(captured);
-        }
+      List<String> captured = [
+        // Accelerometer
+        acc[0].toString(),
+        acc[1].toString(),
+        acc[2].toString(),
+        // Gyroscope
+        gyro[0].toString(),
+        gyro[1].toString(),
+        gyro[2].toString(),
+        // Label
+        sender.toString(),
+      ];
+
+      if (sender == 1) {
+        onData.add(captured);
+      } else {
+        offData.add(captured);
       }
 
       if (n == 10) {
@@ -467,12 +466,12 @@ class _MonitoringPageState extends State<MonitoringPage> {
                     // Add
                     onAddOnTarget: (!isCapturing && onTargetText == null)
                         ? () {
-                            _captureData(context, 1);
+                            if (connectionValue(context)) _captureData(context, 1);
                           }
                         : () {},
                     onAddOffTarget: (!isCapturing && offTargetText == null)
                         ? () {
-                            _captureData(context, 0);
+                            if (connectionValue(context)) _captureData(context, 0);
                           }
                         : () {},
 
@@ -573,7 +572,7 @@ class _MonitoringPageState extends State<MonitoringPage> {
               isDialOpen.value = false;
 
               // Navigator.of(context).push(MaterialPageRoute(builder: (context) => const ResultsPage()));
-              viewResults();
+              viewResults(ble);
             },
           ),
           SpeedDialChild(
@@ -603,14 +602,14 @@ class _MonitoringPageState extends State<MonitoringPage> {
     });
   }
 
-  Future<Widget> buildPageAsync() async {
+  Future<Widget> buildPageAsync([ble]) async {
     return Future.microtask(() {
-      return const ResultsPage();
+      return ResultsPage(ble: ble);
     });
   }
 
-  void viewResults() async {
-    var page = await buildPageAsync();
+  void viewResults([ble]) async {
+    var page = await buildPageAsync(ble);
     var route = MaterialPageRoute(builder: (_) => page);
     if (!mounted) return;
     Navigator.push(context, route);
