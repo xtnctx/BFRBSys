@@ -91,7 +91,15 @@ class _MonitoringPageState extends State<MonitoringPage> {
     count = 49;
     chartAccData = <_ChartData>[];
     chartGyroData = <_ChartData>[];
+    listenCallback();
     super.initState();
+  }
+
+  void listenCallback() {
+    ble.callbackController.stream.listen((List value) {
+      // value = [String callbackMessage, int statusCode]
+      msg(value.first, value.last);
+    });
   }
 
   /// ### [statusCode]
