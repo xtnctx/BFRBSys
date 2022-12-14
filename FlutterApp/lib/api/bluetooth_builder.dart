@@ -1,13 +1,12 @@
 // ignore_for_file: non_constant_identifier_names
 
 import 'dart:async';
-import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:bfrbsys/shared/shared.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 
-abstract class GATTProtocolAttr {
+abstract class GATTProtocolProfile {
   /// The Generic Attribute Profile (GATT) is the architechture used
   ///       for bluetooth connectivity.
   ///
@@ -68,8 +67,9 @@ abstract class GATTProtocolAttr {
   }
 }
 
-class BluetoothBuilder extends GATTProtocolAttr {
+class BluetoothBuilder extends GATTProtocolProfile {
   StreamController discoverController = StreamController();
+  StreamController<List> callbackController = StreamController<List>();
 
   bool isFileTransferInProgress = false;
   Crc32 crc = Crc32();
@@ -162,7 +162,7 @@ class BluetoothBuilder extends GATTProtocolAttr {
         }
         // timer = Timer.periodic(const Duration(milliseconds: 100), _updateDataSource);
 
-        print('Connected to ${device!.name}');
+        callbackController.add(['Connected to ${device!.name}', 0]);
 
         discoverController.add(true);
 
@@ -177,7 +177,7 @@ class BluetoothBuilder extends GATTProtocolAttr {
 
     await device!.connect();
 
-    print('Getting characteristics ...');
+    callbackController.add(['Getting characteristics ...', 0]);
 
     await _discoverServices();
 
@@ -210,7 +210,7 @@ class BluetoothBuilder extends GATTProtocolAttr {
       String errorMessage = String.fromCharCodes(readData);
 
       if (readData.isNotEmpty && readData != []) {
-        print("Error message = $errorMessage -1");
+        callbackController.add(["Error message = $errorMessage", -1]);
       }
     });
   }
@@ -223,12 +223,12 @@ class BluetoothBuilder extends GATTProtocolAttr {
     isFileTransferInProgress = false;
     var checksumValue = await fileChecksumCharacteristic?.read();
     var checksum = bytesToInteger(checksumValue!) as int;
-    print("File transfer succeeded: Checksum 0x${checksum.toRadixString(16)} 2");
+    callbackController.add(["File transfer succeeded: Checksum 0x${checksum.toRadixString(16)}", 2]);
   }
 
   void _onTransferError() {
     isFileTransferInProgress = false;
-    print("File transfer error -1");
+    callbackController.add(["File transfer error", -1]);
   }
 
   void _sendFileBlock(fileContents, bytesAlreadySent) {
@@ -237,19 +237,16 @@ class BluetoothBuilder extends GATTProtocolAttr {
     const maxBlockLength = 128;
     int blockLength = min(bytesRemaining, maxBlockLength);
     Uint8List blockView = Uint8List.view(fileContents.buffer, bytesAlreadySent, blockLength);
-    print(blockView.toList());
 
     fileBlockCharacteristic?.write(blockView).then((_) {
       bytesRemaining -= blockLength;
-      print(isFileTransferInProgress);
       if ((bytesRemaining > 0) && isFileTransferInProgress) {
-        print("File block written - $bytesRemaining bytes remaining");
+        callbackController.add(["File block written - $bytesRemaining bytes remaining", 0]);
         bytesAlreadySent += blockLength;
         _sendFileBlock(fileContents, bytesAlreadySent);
       }
-    }).catchError((error) {
-      print(error);
-      print("File block write error with $bytesRemaining bytes remaining -1");
+    }).catchError((_) {
+      callbackController.add(["File block write error with $bytesRemaining bytes remaining", -1]);
     });
   }
 
@@ -259,7 +256,7 @@ class BluetoothBuilder extends GATTProtocolAttr {
     flutterBlue = FlutterBlue.instance;
     bool isOn = await flutterBlue!.isOn;
     if (!isOn) {
-      print("Please turn on your bluetooth 3");
+      callbackController.add(["Please turn on your bluetooth", 3]);
       return;
     }
     print('Scanning ... ');
@@ -270,20 +267,20 @@ class BluetoothBuilder extends GATTProtocolAttr {
       for (ScanResult r in results) {
         print('${r.device.name} found! rssi: ${r.rssi}');
         if (r.device.name == TARGET_DEVICE_NAME) {
-          print('Target device found. Getting primary service ...');
+          callbackController.add(['Target device found. Getting primary service ...', 0]);
           device = r.device;
           _connectToDevice();
           subscription.cancel();
         }
       }
-      print("Can't find your device. 1");
+      callbackController.add(["Can't find your device.", 1]);
     });
   }
 
   void disconnect() {
     device!.disconnect();
 
-    print('Device ${device!.name} disconnected');
+    callbackController.add(['Device ${device!.name} disconnected', 0]);
 
     isFileTransferInProgress = false;
     discoverController.add(false);
@@ -291,23 +288,24 @@ class BluetoothBuilder extends GATTProtocolAttr {
     flutterBlue = null;
   }
 
-  Future<void> cancelTransfer() async {
+  void cancelTransfer() async {
     await commandCharacteristic?.write([2]);
   }
 
-  Future<void> transferFile(Uint8List fileContents) async {
+  void transferFile(Uint8List fileContents) async {
     var maximumLengthValue = await fileMaximumLengthCharacteristic?.read();
     num maximumLength = bytesToInteger(maximumLengthValue!);
     // var maximumLengthArray = Uint32List.fromList(maximumLengthValue!);
     // ByteData byteData = maximumLengthArray.buffer.asByteData();
     // int value = byteData.getUint32(0, Endian.little);
     if (fileContents.length > maximumLength) {
-      print("File length is too long: ${fileContents.length} bytes but maximum is $maximumLength 1");
+      callbackController
+          .add(["File length is too long: ${fileContents.length} bytes but maximum is $maximumLength", 1]);
       return;
     }
 
     if (isFileTransferInProgress) {
-      print("Another file transfer is already in progress 1");
+      callbackController.add(["Another file transfer is already in progress", 1]);
       return;
     }
 
