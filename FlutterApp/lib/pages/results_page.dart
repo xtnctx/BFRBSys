@@ -17,6 +17,7 @@ class _ResultsPageState extends State<ResultsPage> {
   List<Map<String, dynamic>> fileBundle = [];
   // List<io.FileSystemEntity> dataFile = [];
   List<String> modelItems = [];
+  String modelContents = ''; // tflite model (C-header file)
   String selectedModel = '';
 
   List<String> historyList = <String>['Accuracy', 'Loss'];
@@ -65,6 +66,11 @@ class _ResultsPageState extends State<ResultsPage> {
       fileBundle = info;
     });
     _loadCallback(_selectedIndex);
+
+    List files = fileBundle[_selectedIndex].values.first;
+    _initModelContents(files);
+
+    print(modelContents);
   }
 
   @override
@@ -73,6 +79,15 @@ class _ResultsPageState extends State<ResultsPage> {
     _getListofData();
     dropdownValue = historyList.first;
     ble = widget.ble;
+  }
+
+  void _initModelContents(List files) {
+    for (io.File file in files) {
+      if (file.path.endsWith('_model.h')) {
+        modelContents = file.readAsStringSync();
+        break;
+      }
+    }
   }
 
   void doNothing(BuildContext context) {}
@@ -291,9 +306,7 @@ class _ResultsPageState extends State<ResultsPage> {
                     IconButton(
                         onPressed: () {
                           if (ble != null) {
-                            String dataStr =
-                                "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.!!!!";
-                            var fileContents = utf8.encode(dataStr) as Uint8List;
+                            var fileContents = utf8.encode(modelContents) as Uint8List;
                             print("fileContents length is ${fileContents.length}");
                             ble?.transferFile(fileContents);
                           }
@@ -332,6 +345,10 @@ class _ResultsPageState extends State<ResultsPage> {
                         selectedModel = modelItems[index];
                       });
                       _loadCallback(index);
+
+                      List files = fileBundle[index].values.first;
+                      _initModelContents(files);
+                      print(modelContents);
                     },
                     leading: CircleAvatar(child: Text(modelItems[index][0])),
                     trailing: PopupMenuButton(
