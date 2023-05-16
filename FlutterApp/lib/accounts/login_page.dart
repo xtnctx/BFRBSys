@@ -21,8 +21,14 @@ class _LoginPageState extends State<LoginPage> {
   // late Map<String, dynamic> user;
   // late String token;
 
-  Future showLoginErrorDialog(Login error, stackTrace) {
-    Map<String, dynamic>? nerror = error.errorMsg;
+  Future showLoginErrorDialog(error, stackTrace) {
+    Text? c;
+    if (error is RegisterModel) {
+      Map<String, dynamic>? nerror = error.errorMsg;
+      c = Text('${nerror!.values.first[0]}');
+    } else {
+      c = Text(error.toString());
+    }
     return showDialog(
       context: context,
       builder: (context) {
@@ -31,7 +37,7 @@ class _LoginPageState extends State<LoginPage> {
             'Error',
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
-          content: Text('${nerror!.values.first[0]}'),
+          content: c,
           actions: [
             TextButton(
               onPressed: () {
@@ -175,7 +181,7 @@ class _LoginPageState extends State<LoginPage> {
                         await UserSecureStorage.setUser(user: value.user);
                         await UserSecureStorage.setToken(token: value.token);
                       }).onError((error, _) {
-                        showLoginErrorDialog(error as Login, _);
+                        showLoginErrorDialog(error, _);
                       });
                     },
                     child: const Text(

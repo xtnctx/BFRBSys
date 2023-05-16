@@ -22,8 +22,14 @@ class _RegisterPageState extends State<RegisterPage> {
   HttpService httpService = HttpService();
   Future<RegisterModel>? _futureRegister;
 
-  Future showRegisterErrorDialog(RegisterModel error, stackTrace) {
-    Map<String, dynamic>? nerror = error.errorMsg;
+  Future showRegisterErrorDialog(error, stackTrace) {
+    Text? c;
+    if (error is RegisterModel) {
+      Map<String, dynamic>? nerror = error.errorMsg;
+      c = Text('${nerror!.values.first[0]}');
+    } else {
+      c = Text(error.toString());
+    }
     return showDialog(
       context: context,
       builder: (context) {
@@ -32,7 +38,7 @@ class _RegisterPageState extends State<RegisterPage> {
             'Error',
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
-          content: Text('${nerror!.values.first[0]}'),
+          content: c,
           actions: [
             TextButton(
               onPressed: () {
@@ -255,7 +261,8 @@ class _RegisterPageState extends State<RegisterPage> {
                                       await UserSecureStorage.setUser(user: value.user);
                                       await UserSecureStorage.setToken(token: value.token);
                                     }).onError((error, _) {
-                                      showRegisterErrorDialog(error as RegisterModel, _);
+                                      print('################# $error');
+                                      showRegisterErrorDialog(error, _);
                                     });
                                   }
                                 },
