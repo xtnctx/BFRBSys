@@ -151,6 +151,7 @@ class HttpService {
 
   Future authenticate() async {
     var token = await UserSecureStorage.getToken();
+    print('################## $token');
 
     // ignore: unnecessary_null_comparison
     if (token == '') {
