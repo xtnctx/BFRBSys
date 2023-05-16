@@ -276,7 +276,7 @@ class _ResultsPageState extends State<ResultsPage> {
                   padding: const EdgeInsets.only(left: 14.0),
                   child: Row(
                     children: const [
-                      Text('Sending... 70%'),
+                      Text('Ready to send'),
                     ],
                   ),
                 ),
@@ -288,7 +288,7 @@ class _ResultsPageState extends State<ResultsPage> {
                     child: ClipRRect(
                       borderRadius: BorderRadius.all(Radius.circular(10)),
                       child: LinearProgressIndicator(
-                        value: 0.7,
+                        value: 0.0,
                       ),
                     ),
                   ),

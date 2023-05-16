@@ -447,14 +447,14 @@ class _MonitoringPageState extends State<MonitoringPage> {
                 ExternalSensorWidget(
                   icon: Icons.thermostat,
                   title: 'Temperature',
-                  valueDisplay: '36.5°C',
+                  valueDisplay: '34.6°C',
                 ),
                 SizedBox(width: 10),
                 // Distance
                 ExternalSensorWidget(
                   icon: Icons.linear_scale_rounded,
                   title: 'Distance',
-                  valueDisplay: '123.45cm',
+                  valueDisplay: '3.45cm',
                 ),
               ],
             ),
