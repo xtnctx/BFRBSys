@@ -2,7 +2,8 @@
 part of 'accounts.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  final String msg;
+  const LoginPage({super.key, required this.msg});
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -21,9 +22,17 @@ class _LoginPageState extends State<LoginPage> {
   // late Map<String, dynamic> user;
   // late String token;
 
+  String? msg;
+
+  @override
+  void initState() {
+    msg = widget.msg;
+    super.initState();
+  }
+
   Future showLoginErrorDialog(error, stackTrace) {
     Text? c;
-    if (error is RegisterModel) {
+    if (error is Login) {
       Map<String, dynamic>? nerror = error.errorMsg;
       c = Text('${nerror!.values.first[0]}');
     } else {
@@ -72,11 +81,11 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
               const SizedBox(height: 10),
-              const Center(
+              Center(
                 child: Text(
-                  'Enter your credentials to proceed',
+                  msg!,
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16),
+                  style: const TextStyle(fontSize: 16),
                 ),
               ),
               const SizedBox(height: 50),
@@ -181,6 +190,7 @@ class _LoginPageState extends State<LoginPage> {
                         await UserSecureStorage.setUser(user: value.user);
                         await UserSecureStorage.setToken(token: value.token);
                       }).onError((error, _) {
+                        print('$error ###');
                         showLoginErrorDialog(error, _);
                       });
                     },
