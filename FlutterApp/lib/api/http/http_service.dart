@@ -166,6 +166,12 @@ class HttpService {
       ).onError((error, _) {
         return http.Response(error.toString(), 408);
       });
+
+      // if (response.statusCode == 401) {
+      //   return http.Response(response.body, response.statusCode);
+      // } else if (response.statusCode == 401) {
+      //   return http.Response(response.body, response.statusCode);
+      // }
       // .timeout(
       //   const Duration(seconds: 10),
       //   onTimeout: () {
