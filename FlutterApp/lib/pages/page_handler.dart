@@ -302,7 +302,9 @@ class _PageHandlerState extends State<PageHandler> {
       // New user or device
       if (apiResponse == false) {
         // return _allowUserWidget();
-        return const LoginPage();
+        return const LoginPage(
+          msg: 'Enter your credentials to proceed',
+        );
       }
       // Successful authentication.
       else if (apiResponse.statusCode == 200) {
@@ -310,7 +312,9 @@ class _PageHandlerState extends State<PageHandler> {
       }
       // Invalid token: user may not be present in database or token might be expired.
       else if (apiResponse.statusCode == 401) {
-        return const LoginPage();
+        return const LoginPage(
+          msg: 'Token expired, sign in again',
+        );
       }
       // Request Timeout | HTTP Class 500
       else {
