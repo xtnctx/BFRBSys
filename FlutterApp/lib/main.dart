@@ -35,7 +35,9 @@ class App extends StatelessWidget {
           theme: themeProvider.getTheme,
           routes: {
             '/': (context) => PageHandler(),
-            '/login': (context) => const LoginPage(),
+            '/login': (context) => const LoginPage(
+                  msg: 'Enter your credentials to proceed',
+                ),
           },
         );
       },
