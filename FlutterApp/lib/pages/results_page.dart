@@ -32,6 +32,7 @@ class _ResultsPageState extends State<ResultsPage> {
   List<ChartData> valAccuracy = [];
 
   BluetoothBuilder? ble;
+  String? callbackMsg;
 
   _getListofData() async {
     dir = await AppStorage.getDir();
@@ -90,7 +91,15 @@ class _ResultsPageState extends State<ResultsPage> {
     }
   }
 
-  void doNothing(BuildContext context) {}
+  void listenCallback() {
+    ble!.callbackController.stream.listen((List value) {
+      // value = [String callbackMessage, int statusCode]
+      setState(() {
+        callbackMsg = value.first;
+      });
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -355,7 +364,31 @@ class _ResultsPageState extends State<ResultsPage> {
                       itemBuilder: (context) => [
                         // PopupMenuItem 1ss
                         const PopupMenuItem(value: 1, child: Text('View size')),
-                        PopupMenuItem(value: 2, onTap: _deleteModel, child: const Text('Delete')),
+                        PopupMenuItem(
+                            value: 2,
+                            onTap: () {
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                showDialog(
+                                    context: context,
+                                    builder: (context) {
+                                      return AlertDialog(
+                                        title: const Text('Delete __?'),
+                                        content: const Text('Are you sure you want to delete?'),
+                                        actions: [
+                                          TextButton(
+                                            child: const Text("Cancel"),
+                                            onPressed: () => Navigator.pop(context),
+                                          ),
+                                          TextButton(
+                                            child: const Text("Delete"),
+                                            onPressed: () => Navigator.pop(context),
+                                          ),
+                                        ],
+                                      );
+                                    });
+                              });
+                            },
+                            child: const Text('Delete')),
                       ],
                       icon: const Icon(Icons.more_vert),
                     ),
@@ -401,8 +434,9 @@ class _ResultsPageState extends State<ResultsPage> {
     });
   }
 
-  _deleteModel() {
-    return showDialog(
+  _deleteModel(BuildContext context) {
+    print('haha');
+    showDialog(
         context: context,
         builder: (context) {
           return AlertDialog(
