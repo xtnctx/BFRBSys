@@ -396,6 +396,14 @@ class _MonitoringPageState extends State<MonitoringPage> {
         offData.add(captured);
       }
 
+      setState(() {
+        if (sender == 1) {
+          onTargetText = n.toString();
+        } else {
+          offTargetText = n.toString();
+        }
+      });
+
       if (n == 10) {
         timer.cancel();
         setState(() {
@@ -472,16 +480,20 @@ class _MonitoringPageState extends State<MonitoringPage> {
                   ),
                   child: DataButton(
                     // Add
-                    onAddOnTarget: (!isCapturing && onTargetText == null)
+                    onAddOnTarget: (!isCapturing && onData.isEmpty)
                         ? () {
                             if (connectionValue(context)) _captureData(context, 1);
                           }
-                        : () {},
-                    onAddOffTarget: (!isCapturing && offTargetText == null)
+                        : () {
+                            print('sdsdsd');
+                          },
+                    onAddOffTarget: (!isCapturing && offData.isEmpty)
                         ? () {
                             if (connectionValue(context)) _captureData(context, 0);
                           }
-                        : () {},
+                        : () {
+                            print(offData);
+                          },
 
                     // Delete
                     onDeleteOnTarget: () {
@@ -493,7 +505,7 @@ class _MonitoringPageState extends State<MonitoringPage> {
                     onDeleteOffTarget: () {
                       setState(() {
                         offTargetText = null;
-                        onData.clear();
+                        offData.clear();
                       });
                     },
 
@@ -657,11 +669,6 @@ class _MonitoringPageState extends State<MonitoringPage> {
                     Navigator.of(context).pop();
                     startSpinningBar();
 
-                    // await AppStorage.generateCSV(
-                    //   data: [header, ...onData, ...offData],
-                    //   fileName: _textController.text,
-                    // );
-
                     String fileName = _textController.text;
                     var token = await UserSecureStorage.getToken();
 
@@ -671,7 +678,10 @@ class _MonitoringPageState extends State<MonitoringPage> {
                     String fileCallbackPath = "$dir/$fileName/${fileName}_callback.csv";
                     String fileInfoPath = "$dir/$fileName/${fileName}_info.json";
 
-                    await AppStorage.writeCsv(data: dummyData, filePath: fileInputPath);
+                    await AppStorage.writeCsv(
+                      data: [header, ...onData, ...offData],
+                      filePath: fileInputPath,
+                    );
 
                     buildClass.sendInput(
                       filePath: fileInputPath,
