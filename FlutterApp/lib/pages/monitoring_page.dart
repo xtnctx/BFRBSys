@@ -96,7 +96,7 @@ class _MonitoringPageState extends State<MonitoringPage> {
   }
 
   void listenCallback() {
-    ble.callbackController.stream.listen((List value) {
+    ble.callbackController.stream.asBroadcastStream().listen((List value) {
       // value = [String callbackMessage, int statusCode]
       msg(value.first, value.last);
     });
@@ -404,7 +404,7 @@ class _MonitoringPageState extends State<MonitoringPage> {
         }
       });
 
-      if (n == 10) {
+      if (n == 5) {
         timer.cancel();
         setState(() {
           isCapturing = false;
