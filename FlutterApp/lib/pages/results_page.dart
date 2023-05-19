@@ -32,7 +32,9 @@ class _ResultsPageState extends State<ResultsPage> {
   List<ChartData> valAccuracy = [];
 
   BluetoothBuilder? ble;
-  String? callbackMsg;
+  String callbackMsg = '>_';
+  int infoCode = 0;
+  double sendingProgress = 0.0;
 
   _getListofData() async {
     dir = await AppStorage.getDir();
@@ -80,6 +82,7 @@ class _ResultsPageState extends State<ResultsPage> {
     _getListofData();
     dropdownValue = historyList.first;
     ble = widget.ble;
+    listenCallback();
   }
 
   void _initModelContents(List files) {
@@ -92,12 +95,42 @@ class _ResultsPageState extends State<ResultsPage> {
   }
 
   void listenCallback() {
-    ble!.callbackController.stream.listen((List value) {
+    ble!.callbackController.stream.asBroadcastStream().listen((List value) {
       // value = [String callbackMessage, int statusCode]
       setState(() {
         callbackMsg = value.first;
       });
     });
+
+    ble!.transferProgress.stream.listen((double value) {
+      setState(() {
+        sendingProgress = double.parse(value.toStringAsFixed(2));
+      });
+    });
+  }
+
+  /// ### [statusCode]
+  /// * -2 = Crash (pink-purple)
+  /// * -1 = Error (red)
+  /// * 1 = Warning (yellow)
+  /// * 2 = Success (green)
+  /// * 3 = Info (blue)
+  void msg(String m, [int statusCode = 0]) {
+    setState(() {
+      callbackMsg = m;
+      infoCode = statusCode;
+    });
+  }
+
+  Text _textInfo(String m, [int statusCode = 0]) {
+    Map<int, Color> statusCodeColor = {
+      -2: const Color(0xFFE91DC7), // Crash
+      -1: const Color(0xFFCA1A1A), // Error
+      1: const Color(0xFFD8CB19), // Warning
+      2: const Color(0xFF15A349), // Success
+      3: const Color(0xFF404BE4), // Info
+    };
+    return Text(m, style: TextStyle(color: statusCodeColor[statusCode]));
   }
 
   @override
@@ -284,8 +317,8 @@ class _ResultsPageState extends State<ResultsPage> {
                 Padding(
                   padding: const EdgeInsets.only(left: 14.0),
                   child: Row(
-                    children: const [
-                      Text('Ready to send'),
+                    children: [
+                      _textInfo(callbackMsg, infoCode),
                     ],
                   ),
                 ),
@@ -432,28 +465,6 @@ class _ResultsPageState extends State<ResultsPage> {
       valLoss = vLoss;
       valAccuracy = vAccuracy;
     });
-  }
-
-  _deleteModel(BuildContext context) {
-    print('haha');
-    showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: const Text('Delete __?'),
-            content: const Text('Are you sure you want to delete?'),
-            actions: [
-              TextButton(
-                child: const Text("Cancel"),
-                onPressed: () => Navigator.pop(context),
-              ),
-              TextButton(
-                child: const Text("Delete"),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ],
-          );
-        });
   }
 }
 
