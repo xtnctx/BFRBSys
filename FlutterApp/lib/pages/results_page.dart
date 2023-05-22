@@ -96,15 +96,10 @@ class _ResultsPageState extends State<ResultsPage> {
 
   void listenCallback() {
     ble!.callbackController.stream.asBroadcastStream().listen((List value) {
-      // value = [String callbackMessage, int statusCode]
+      // value = [String callbackMessage, double sendingProgress, int statusCode]
+      msg(value.first, value.last);
       setState(() {
-        callbackMsg = value.first;
-      });
-    });
-
-    ble!.transferProgress.stream.listen((double value) {
-      setState(() {
-        sendingProgress = double.parse(value.toStringAsFixed(2));
+        sendingProgress = double.parse(value[1].toStringAsFixed(2));
       });
     });
   }
@@ -325,12 +320,12 @@ class _ResultsPageState extends State<ResultsPage> {
                 // Progress bar
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                  child: const SizedBox(
+                  child: SizedBox(
                     height: 10,
                     child: ClipRRect(
-                      borderRadius: BorderRadius.all(Radius.circular(10)),
+                      borderRadius: const BorderRadius.all(Radius.circular(10)),
                       child: LinearProgressIndicator(
-                        value: 0.0,
+                        value: !(ble!.isConnected) ? 0.0 : sendingProgress,
                       ),
                     ),
                   ),
