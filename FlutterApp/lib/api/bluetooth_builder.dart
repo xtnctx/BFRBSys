@@ -70,8 +70,8 @@ abstract class GATTProtocolProfile {
 class BluetoothBuilder extends GATTProtocolProfile {
   StreamController discoverController = StreamController();
   StreamController<List> callbackController = StreamController<List>.broadcast();
-  StreamController<double> transferProgress = StreamController<double>();
 
+  bool isConnected = false;
   bool isFileTransferInProgress = false;
   Crc32 crc = Crc32();
 
@@ -182,6 +182,8 @@ class BluetoothBuilder extends GATTProtocolProfile {
 
     await _discoverServices();
 
+    isConnected = true;
+
     return;
   }
 
@@ -242,8 +244,11 @@ class BluetoothBuilder extends GATTProtocolProfile {
     fileBlockCharacteristic?.write(blockView).then((_) {
       bytesRemaining -= blockLength;
       if ((bytesRemaining > 0) && isFileTransferInProgress) {
-        callbackController.add(["File block written - $bytesRemaining bytes remaining", 0]);
-        transferProgress.add((bytesRemaining / bytesAlreadySent) * 100);
+        callbackController.add([
+          "File block written - $bytesRemaining bytes remaining",
+          bytesAlreadySent / fileContents.length,
+          0,
+        ]);
         bytesAlreadySent += blockLength;
         _sendFileBlock(fileContents, bytesAlreadySent);
       }
@@ -288,6 +293,7 @@ class BluetoothBuilder extends GATTProtocolProfile {
     discoverController.add(false);
     device = null;
     flutterBlue = null;
+    isConnected = false;
   }
 
   void cancelTransfer() async {
