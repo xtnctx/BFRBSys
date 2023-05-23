@@ -55,6 +55,7 @@ const char* HOTSPOT[] = {
   "on_target"
 };
 
+#define NUM_HOTSPOT (sizeof(HOTSPOT) / sizeof(HOTSPOT[0]))
 
 // Comment this macro back in to log received data to the serial UART.
 //#define ENABLE_LOGGING
@@ -201,7 +202,7 @@ void onFileTransferComplete() {
   } else {
     finished_file_buffer_index = 0;
   }
-  finished_file_buffer = &file_buffers[finished_file_buffer_index][0];;
+  finished_file_buffer = &file_buffers[finished_file_buffer_index][0];
   finished_file_buffer_byte_count = in_progress_bytes_expected;
 
   in_progress_file_buffer = nullptr;
@@ -272,6 +273,8 @@ void startFileTransfer() {
 
   int32_t file_length_value; 
   file_length_characteristic.readValue(file_length_value);
+  Serial.print("file_length_value = ");
+  Serial.println(file_length_value);
   if (file_length_value > file_maximum_byte_count) {
     notifyError(
        String("File too large: Maximum is ") + String(file_maximum_byte_count) + 
@@ -434,65 +437,72 @@ char *IMU_read (float x, float y, float z, char *sout) {
   
 }
 
+void initializeTFL(unsigned char model[]){
+  // get the TFL representation of the model byte array
+  tflModel = tflite::GetModel(model);
+  if (tflModel->version() != TFLITE_SCHEMA_VERSION) {
+    Serial.println("Model schema mismatch!");
+    while (1);
+  }
+
+  // Create an interpreter to run the model
+  tflInterpreter = new tflite::MicroInterpreter(tflModel, tflOpsResolver, tensorArena, tensorArenaSize, &tflErrorReporter);
+
+  // Allocate memory for the model's input and output tensors
+  tflInterpreter->AllocateTensors();
+
+  // Get pointers for the model's input and output tensors
+  tflInputTensor = tflInterpreter->input(0);
+  tflOutputTensor = tflInterpreter->output(0);
+}
+
 void onBLEFileReceived(uint8_t* file_data, int file_length) {
   // Do something here with the file data that you've received. The memory itself will
   // remain untouched until after a following onFileReceived call has completed, and
   // the BLE module retains ownership of it, so you don't need to deallocate it.
   
-  String str_data = (char*)file_data;
+//  String str_data = (char*)file_data;
+//  
+//  Serial.println(str_data);
+//  Serial.println(file_length);
   
-  Serial.println(str_data);
-  Serial.println(file_length);
+//  initializeTFL(str_data);
 
-//  // get the TFL representation of the model byte array
-//  tflModel = tflite::GetModel(model);
-//  if (tflModel->version() != TFLITE_SCHEMA_VERSION) {
-//    Serial.println("Model schema mismatch!");
-//    while (1);
-//  }
-//
-//  // Create an interpreter to run the model
-//  tflInterpreter = new tflite::MicroInterpreter(tflModel, tflOpsResolver, tensorArena, tensorArenaSize, &tflErrorReporter);
-//
-//  // Allocate memory for the model's input and output tensors
-//  tflInterpreter->AllocateTensors();
-//
-//  // Get pointers for the model's input and output tensors
-//  tflInputTensor = tflInterpreter->input(0);
-//  tflOutputTensor = tflInterpreter->output(0);
+    for (int i=0; i < file_length; i++){
+      Serial.println(file_data[i]);
+    }
+    
+  
   
 }
 
+void runPrediction(float aX, float aY, float aZ, float gX, float gY, float gZ) {
+  // normalize the IMU data between 0 to 1 and store in the model's
+  // input tensor
+  tflInputTensor->data.f[0] = (aX + 4.0) / 8.0;
+  tflInputTensor->data.f[1] = (aY + 4.0) / 8.0;
+  tflInputTensor->data.f[2] = (aZ + 4.0) / 8.0;
+  tflInputTensor->data.f[3] = (gX + 2000.0) / 4000.0;
+  tflInputTensor->data.f[4] = (gY + 2000.0) / 4000.0;
+  tflInputTensor->data.f[5] = (gZ + 2000.0) / 4000.0;
 
-//void runPrediction() {
-//  // normalize the IMU data between 0 to 1 and store in the model's
-//  // input tensor
-//  tflInputTensor->data.f[0] = (aX + 4.0) / 8.0;
-//  tflInputTensor->data.f[1] = (aY + 4.0) / 8.0;
-//  tflInputTensor->data.f[2] = (aZ + 4.0) / 8.0;
-//  tflInputTensor->data.f[3] = (gX + 2000.0) / 4000.0;
-//  tflInputTensor->data.f[4] = (gY + 2000.0) / 4000.0;
-//  tflInputTensor->data.f[5] = (gZ + 2000.0) / 4000.0;
-//
-//
-//  // Run inferencing
-//  TfLiteStatus invokeStatus = tflInterpreter->Invoke();
-//  if (invokeStatus != kTfLiteOk) {
-//    Serial.println("Invoke failed!");
-//    while (1);
-//    return;
-//  }
-//
-//
-//
-//  // Loop through the output tensor values from the model
-//  for (int i = 0; i < 2; i++) {
-//    Serial.print(HOTSPOT[i]);
-//    Serial.print(": ");
-//    Serial.println(tflOutputTensor->data.f[i], 6);
-//  }
-//  Serial.println();
-//}
+
+  // Run inferencing
+  TfLiteStatus invokeStatus = tflInterpreter->Invoke();
+  if (invokeStatus != kTfLiteOk) {
+    Serial.println("Invoke failed!");
+    while (1);
+    return;
+  }
+
+  // Loop through the output tensor values from the model
+  for (int i = 0; i < NUM_HOTSPOT; i++) {
+    Serial.print(HOTSPOT[i]);
+    Serial.print(": ");
+    Serial.println(tflOutputTensor->data.f[i], 6);
+  }
+  Serial.println();
+}
 
 void loop() {
   updateBLEFileTransfer();
@@ -528,6 +538,8 @@ void loop() {
 
 //    Serial.println(proximity);
   }
+
+
 
 //  Serial.print("Temperature = ");
 //  Serial.print(temperature);
