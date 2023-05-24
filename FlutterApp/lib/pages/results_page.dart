@@ -85,6 +85,13 @@ class _ResultsPageState extends State<ResultsPage> {
     listenCallback();
   }
 
+  @override
+  void setState(fn) {
+    if (mounted) {
+      super.setState(fn);
+    }
+  }
+
   void _initModelContents(List files) {
     for (io.File file in files) {
       if (file.path.endsWith('_model.h')) {
