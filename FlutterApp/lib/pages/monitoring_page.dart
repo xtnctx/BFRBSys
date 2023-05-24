@@ -83,21 +83,22 @@ class _MonitoringPageState extends State<MonitoringPage> {
     return Provider.of<ConnectionProvider>(fromContext, listen: false).isConnected;
   }
 
+  // StreamSubscription? subscription;
   StreamSubscription? subscription;
   StreamSubscription? deviceState;
 
   @override
   void initState() {
+    super.initState();
     count = 49;
     chartAccData = <_ChartData>[];
     chartGyroData = <_ChartData>[];
     listenCallback();
-    super.initState();
   }
 
   void listenCallback() {
     ble.callbackController.stream.asBroadcastStream().listen((List value) {
-      // value = [String callbackMessage, int statusCode]
+      // value = [String callbackMessage, double sendingProgress ,int statusCode]
       msg(value.first, value.last);
     });
   }
@@ -274,17 +275,11 @@ class _MonitoringPageState extends State<MonitoringPage> {
     );
   }
 
-  _connectFromDevice() {
+  void _connectFromDevice() {
     ble.connect();
-    subscription = ble.discoverController.stream.listen(null);
+    subscription = ble.discoverController.stream.asBroadcastStream().listen(null);
 
     subscription!.onData((value) {
-      print('DAAAAATAAAAA $value');
-      // if (value) {
-      //   setState(() {
-      //     setConnected(context, true);
-      //   });
-      // }
       if (value) {
         _readData(ble.accDataCharacteristic);
         _readData(ble.gyroDataCharacteristic);
@@ -300,12 +295,13 @@ class _MonitoringPageState extends State<MonitoringPage> {
             _disconnectFromDevice();
           }
         });
-        // subscription!.cancel();
       }
     });
+
+    // subscription!.cancel();
   }
 
-  _disconnectFromDevice() {
+  void _disconnectFromDevice() {
     ble.disconnect();
     deviceState!.cancel();
     timer!.cancel();
@@ -332,7 +328,6 @@ class _MonitoringPageState extends State<MonitoringPage> {
 
   // Continously updating the data source based on timer
   void _updateDataSource(Timer timer) {
-    print(accData!);
     List<double> acc = imuParse(accData!);
     List<double> gyro = imuParse(gyroData!);
     chartAccData!.add(_ChartData(count, acc[0], acc[1], acc[2]));
@@ -372,8 +367,6 @@ class _MonitoringPageState extends State<MonitoringPage> {
     //
     int n = 1;
     onCaptureTimer = Timer.periodic(const Duration(seconds: 1), (Timer timer) {
-      print('$n seconds');
-
       List<double> acc = imuParse(accData!);
       List<double> gyro = imuParse(gyroData!);
 
@@ -423,6 +416,19 @@ class _MonitoringPageState extends State<MonitoringPage> {
   @override
   Widget build(BuildContext context) {
     ValueNotifier<bool> isDialOpen = ValueNotifier(false);
+    bool isNotified = Provider.of<ConnectionProvider>(context, listen: true).isNotified;
+
+    if (isNotified && !connectionValue(context)) {
+      print('toggle true');
+      Provider.of<ConnectionProvider>(context, listen: false).toggle(false);
+      _connectFromDevice();
+    }
+
+    if (isNotified && connectionValue(context)) {
+      print('toggle false ######################################');
+      Provider.of<ConnectionProvider>(context, listen: false).toggle(false);
+    }
+
     return Scaffold(
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -484,16 +490,12 @@ class _MonitoringPageState extends State<MonitoringPage> {
                         ? () {
                             if (connectionValue(context)) _captureData(context, 1);
                           }
-                        : () {
-                            print('sdsdsd');
-                          },
+                        : () {},
                     onAddOffTarget: (!isCapturing && offData.isEmpty)
                         ? () {
                             if (connectionValue(context)) _captureData(context, 0);
                           }
-                        : () {
-                            print(offData);
-                          },
+                        : () {},
 
                     // Delete
                     onDeleteOnTarget: () {
@@ -721,8 +723,6 @@ class _MonitoringPageState extends State<MonitoringPage> {
                       } else {
                         msg('Error building the model', -1);
                       }
-
-                      print(response);
                     }).onError((error, _) {
                       msg(error.toString(), -1);
                     }).whenComplete(() {
