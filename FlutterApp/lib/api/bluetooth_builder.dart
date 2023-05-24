@@ -68,7 +68,7 @@ abstract class GATTProtocolProfile {
 }
 
 class BluetoothBuilder extends GATTProtocolProfile {
-  StreamController discoverController = StreamController();
+  StreamController discoverController = StreamController.broadcast();
   StreamController<List> callbackController = StreamController<List>.broadcast();
 
   bool isConnected = false;
