@@ -16,9 +16,34 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-        child: ElevatedButton(
-          onPressed: () {},
-          child: const Text('Home'),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(
+                  'BFRBSys',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.bebasNeue(fontSize: 50),
+                ),
+                subtitle: Text(
+                  'A wrist-worn device and monitoring system for a person with Body-focused Repetitive Behavior',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.bebasNeue(fontSize: 20),
+                ),
+              ),
+            ),
+            const SizedBox(height: 40),
+            ElevatedButton(
+                onPressed: () {
+                  Provider.of<ConnectionProvider>(context, listen: false).toggle(true);
+                },
+                child: const Text('Connect')),
+            const SizedBox(height: 40),
+          ],
         ),
       ),
     );
