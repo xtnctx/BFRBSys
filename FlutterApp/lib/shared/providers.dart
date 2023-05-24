@@ -52,13 +52,20 @@ class ThemeProvider extends ChangeNotifier {
 
 class ConnectionProvider extends ChangeNotifier {
   bool _value = false;
+  bool _notifyValue = false;
 
   set setConnected(bool value) {
     _value = value;
     notifyListeners();
   }
 
+  void toggle(bool value) {
+    _notifyValue = value;
+    if (value) notifyListeners();
+  }
+
   bool get isConnected => _value;
+  bool get isNotified => _notifyValue;
 }
 
 class BluetoothValueProvider extends ChangeNotifier {
