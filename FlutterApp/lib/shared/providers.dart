@@ -92,3 +92,16 @@ class BluetoothValueProvider extends ChangeNotifier {
   String get gyroValue => _gyroValue;
   String get distValue => _distValue;
 }
+
+class CallbackProvider extends ChangeNotifier {
+  String _message = '';
+  int _statusCode = 0;
+
+  void inform(String message, [int statusCode = 0]) {
+    _message = message;
+    _statusCode = statusCode;
+    notifyListeners();
+  }
+
+  List get infoMsg => [_message, _statusCode];
+}
