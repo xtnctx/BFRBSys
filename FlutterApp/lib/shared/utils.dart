@@ -61,3 +61,14 @@ class Crc32 {
     return crc;
   }
 }
+
+Text textInfo(String m, [int statusCode = 0]) {
+  Map<int, Color> statusCodeColor = {
+    -2: const Color(0xFFE91DC7), // Crash
+    -1: const Color(0xFFCA1A1A), // Error
+    1: const Color(0xFFD8CB19), // Warning
+    2: const Color(0xFF15A349), // Success
+    3: const Color(0xFF404BE4), // Info
+  };
+  return Text(m, style: TextStyle(color: statusCodeColor[statusCode]));
+}
