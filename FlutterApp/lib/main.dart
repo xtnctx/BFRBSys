@@ -15,6 +15,7 @@ void main() {
         providers: [
           ChangeNotifierProvider<ThemeProvider>(create: (context) => ThemeProvider(isDarkTheme)),
           ChangeNotifierProvider<ConnectionProvider>(create: (context) => ConnectionProvider()),
+          ChangeNotifierProvider<CallbackProvider>(create: (context) => CallbackProvider()),
         ],
         child: const App(),
       ),
