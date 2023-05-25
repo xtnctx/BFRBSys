@@ -100,6 +100,7 @@ class _MonitoringPageState extends State<MonitoringPage> {
     ble.callbackController.stream.asBroadcastStream().listen((List value) {
       // value = [String callbackMessage, double sendingProgress ,int statusCode]
       msg(value.first, value.last);
+      Provider.of<CallbackProvider>(context, listen: false).inform(value.first, value.last);
     });
   }
 
@@ -114,17 +115,6 @@ class _MonitoringPageState extends State<MonitoringPage> {
       info = m;
       infoCode = statusCode;
     });
-  }
-
-  Text _textInfo(String m, [int statusCode = 0]) {
-    Map<int, Color> statusCodeColor = {
-      -2: const Color(0xFFE91DC7), // Crash
-      -1: const Color(0xFFCA1A1A), // Error
-      1: const Color(0xFFD8CB19), // Warning
-      2: const Color(0xFF15A349), // Success
-      3: const Color(0xFF404BE4), // Info
-    };
-    return Text(m, style: TextStyle(color: statusCodeColor[statusCode]));
   }
 
   /* ------------------------------------------------- */
@@ -533,7 +523,7 @@ class _MonitoringPageState extends State<MonitoringPage> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  Flexible(child: _textInfo(info, infoCode)),
+                  Flexible(child: textInfo(info, infoCode)),
                 ],
               ),
             ),
