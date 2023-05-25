@@ -12,8 +12,34 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  String info = '>_';
+  int infoCode = 0;
+
+  @override
+  void setState(fn) {
+    if (mounted) {
+      super.setState(fn);
+    }
+  }
+
+  /// ### [statusCode]
+  /// * -2 = Crash (pink-purple)
+  /// * -1 = Error (red)
+  /// * 1 = Warning (yellow)
+  /// * 2 = Success (green)
+  /// * 3 = Info (blue)
+  void msg(String m, [int statusCode = 0]) {
+    setState(() {
+      info = m;
+      infoCode = statusCode;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    List infoMsg = Provider.of<CallbackProvider>(context, listen: true).infoMsg;
+    msg(infoMsg.first, infoMsg.last);
+
     return Scaffold(
       body: Center(
         child: Column(
@@ -43,6 +69,7 @@ class _HomePageState extends State<HomePage> {
                 },
                 child: const Text('Connect')),
             const SizedBox(height: 40),
+            Flexible(child: textInfo(info, infoCode)),
           ],
         ),
       ),
