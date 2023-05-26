@@ -163,7 +163,7 @@ class BluetoothBuilder extends GATTProtocolProfile {
         }
         // timer = Timer.periodic(const Duration(milliseconds: 100), _updateDataSource);
 
-        callbackController.add(['Connected to ${device!.name}', 0]);
+        callbackController.add(['Connected to ${device!.name}', 2]);
 
         discoverController.add(true);
 
@@ -262,26 +262,28 @@ class BluetoothBuilder extends GATTProtocolProfile {
   void connect() async {
     flutterBlue = FlutterBlue.instance;
     bool isOn = await flutterBlue!.isOn;
+    bool found = false;
+
     if (!isOn) {
-      callbackController.add(["Please turn on your bluetooth", 3]);
+      callbackController.add(["Please turn on your bluetooth", 1]);
       return;
     }
-    print('Scanning ... ');
 
-    flutterBlue!.startScan(timeout: const Duration(seconds: 5));
-    StreamSubscription subscription = flutterBlue!.scanResults.listen(null);
-    subscription.onData((results) {
-      for (ScanResult r in results) {
-        print('${r.device.name} found! rssi: ${r.rssi}');
-        if (r.device.name == TARGET_DEVICE_NAME) {
-          callbackController.add(['Target device found. Getting primary service ...', 0]);
-          device = r.device;
-          _connectToDevice();
-          subscription.cancel();
-        }
-      }
-      callbackController.add(["Can't find your device.", 1]);
-    });
+    flutterBlue!
+        .scan(timeout: const Duration(seconds: 10))
+        .listen((results) {
+          if (!found) callbackController.add(["Scanning...", 0]);
+          if (results.device.name == TARGET_DEVICE_NAME) {
+            callbackController.add(['Target device found. Getting primary service ...', 0]);
+            device = results.device;
+            found = true;
+            _connectToDevice();
+          }
+        })
+        .asFuture()
+        .whenComplete(() {
+          if (!found) callbackController.add(["Can't find your device.", 1]);
+        });
   }
 
   void disconnect() {
