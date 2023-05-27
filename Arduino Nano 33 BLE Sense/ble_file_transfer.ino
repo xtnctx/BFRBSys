@@ -55,6 +55,8 @@ const char* HOTSPOT[] = {
   "on_target"
 };
 
+bool isModelInitialized = false;
+
 #define NUM_HOTSPOT (sizeof(HOTSPOT) / sizeof(HOTSPOT[0]))
 
 // Comment this macro back in to log received data to the serial UART.
@@ -539,6 +541,7 @@ void loop() {
 //    Serial.println(proximity);
   }
 
+  if (isModelInitialized) runPrediction(aX, aY, aZ, gX, gY, gZ);
 
 
 //  Serial.print("Temperature = ");
