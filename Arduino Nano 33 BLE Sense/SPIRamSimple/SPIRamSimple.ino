@@ -33,7 +33,7 @@ void WriteArray(uint32_t address, byte *data, uint16_t big);
 void ReadArray(uint32_t address, byte *data, uint16_t big);
 
 /*******************  Create Global Variables *********************/
-byte x[20] = {"abcdefghijklmnopqrs"};         // array data to write
+byte x[] = {"abcdefghijklmnopqrst"};         // array data to write
 byte read_data[20];                           // arrary to hold data read from memory
 byte i = 0;                                   // loop counter variable
 
