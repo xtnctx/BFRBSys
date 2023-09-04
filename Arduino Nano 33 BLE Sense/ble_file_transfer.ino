@@ -1,3 +1,5 @@
+#include <TensorFlowLite.h>
+
 /* Copyright 2021 The TensorFlow Authors. All Rights Reserved.
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,15 +27,11 @@ limitations under the License.
 
 #include <TensorFlowLite.h>
 #include <tensorflow/lite/micro/all_ops_resolver.h>
-#include <tensorflow/lite/micro/micro_error_reporter.h>
 #include <tensorflow/lite/micro/micro_interpreter.h>
 #include <tensorflow/lite/schema/schema_generated.h>
-#include <tensorflow/lite/version.h>
 
 
 // global variables used for TensorFlow Lite (Micro)
-tflite::MicroErrorReporter tflErrorReporter;
-
 // pull in all the TFLM ops, you can remove this line and
 // only pull in the TFLM ops you need, if would like to reduce
 // the compiled size of the sketch.
@@ -242,6 +240,9 @@ void onFileBlockWritten(BLEDevice central, BLECharacteristic characteristic) {
   uint8_t* file_block_buffer = in_progress_file_buffer + in_progress_bytes_received;
   characteristic.readValue(file_block_buffer, file_block_length);
 
+  String str_data = (char*)file_block_buffer;
+  Serial.println(str_data);
+
 // Enable this macro to show the data in the serial log.
 #ifdef ENABLE_LOGGING
   Serial.print("Data received: length = ");
@@ -265,6 +266,8 @@ void onFileBlockWritten(BLEDevice central, BLECharacteristic characteristic) {
   } else {
     in_progress_bytes_received = bytes_received_after_block;    
   }
+
+  
 }
 
 void startFileTransfer() {
@@ -448,7 +451,7 @@ void initializeTFL(unsigned char model[]){
   }
 
   // Create an interpreter to run the model
-  tflInterpreter = new tflite::MicroInterpreter(tflModel, tflOpsResolver, tensorArena, tensorArenaSize, &tflErrorReporter);
+  tflInterpreter = new tflite::MicroInterpreter(tflModel, tflOpsResolver, tensorArena, tensorArenaSize);
 
   // Allocate memory for the model's input and output tensors
   tflInterpreter->AllocateTensors();
