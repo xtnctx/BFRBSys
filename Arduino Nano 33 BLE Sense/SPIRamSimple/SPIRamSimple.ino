@@ -33,42 +33,24 @@ void WriteArray(uint32_t address, byte *data, uint16_t big);
 void ReadArray(uint32_t address, byte *data, uint16_t big);
 
 /*******************  Create Global Variables *********************/
-byte x[] = {"abcdefghijklmnopqrst"};         // array data to write
+byte x[] = {"abcdefghij"};         // array data to write
+byte y[] = {"klmnopqrst"};
 byte read_data[20];                           // arrary to hold data read from memory
 byte i = 0;                                   // loop counter variable
+constexpr int32_t file_block_byte_count = 2;
 
 /*******  Set up code to define variables and start the SCI and SPI serial interfaces  *****/
 void setup(void) {
-  uint32_t address = 0;                       // create a 32 bit variable to hold the address
-  byte value;                                 // create variable to hold the data value read
-  byte data;                                  // create variable to hold the data value sent
   pinMode(CS, OUTPUT);                        // Make pin 10 of the Arduino an output
   Serial.begin(9600);                         // set communication speed for the serial monitor
   SPI.begin();                                // start communicating with the memory chip    
 
-/**********Write a Single Byte Each Time to Memory *******************/
-  Serial.println("Writing data bytes individually: ");
-  SetMode(ByteMode);                          // set to send/receive single byte of data
-  data = 0;                                   // initialize the data
-  for(i = 0; i <=5; i++){                     // Let's write 5 individual bytes to memory 
-    address = i;                              // use the loop counter as the address                     
-    WriteByte(address, data);                 // now write the data to that address
-    data+=2;                                  // increment the data by 2 
-  }
-  
-/********* Read a single Byte Each Time to Memory *********************/
-  Serial.println("Reading each data byte individually: ");
-  SetMode(ByteMode);                          // set to send/receive single byte of data
-  for(i = 0; i <=5; i++){                     // start at memory location 0 and end at 5
-    address = i;                              // use the loop counter as the memory address
-    value = ReadByte(address);                // reads a byte of data at that memory location
-    Serial.println(value);                    // Let's see what we got
-  }
-
 /************  Write a Sequence of Bytes from an Array *******************/
   Serial.println("\nWriting array using Sequential: ");
-  SetMode(Sequential);                          // set to send/receive multiple bytes of data
-  WriteArray(0, x, sizeof(x));                  // Use the array of characters defined in x above
+  SetMode(Sequential);
+                                                // set to send/receive multiple bytes of data
+  WriteArray(0, x, sizeof(x));    
+  WriteArray(10, y, sizeof(y));                  // Use the array of characters defined in x above
                                                 // write to memory starting at address 0
 
 /************ Read a Sequence of Bytes from Memory into an Array **********/
@@ -87,11 +69,13 @@ void loop() {                                   // we have nothing to do in the 
   SetMode(Sequential);                          // set to send/receive multiple bytes of data
   ReadArray(0, read_data, sizeof(read_data));   // Read from memory into empty array read_data
                                                 // starting at memory address 0
-  for(i=0; i<sizeof(read_data); i++)  {         // print the array just read using a for loop
+  for(uint16_t i=0; i<sizeof(read_data); i++)  {         // print the array just read using a for loop
+    Serial.print("Printing ");
+    Serial.println(i+1);
     Serial.println((char)read_data[i]);         // We need to cast it as a char
   }                                             // to make it print as a character
 
-  delay(5000);
+  delay(3000);
                                                 
 }
 
@@ -142,13 +126,12 @@ void WriteArray(uint32_t address, byte *data, uint16_t big){
 }
 
 void ReadArray(uint32_t address, byte *data, uint16_t big){
-  uint16_t i = 0;                                 // loop counter
   digitalWrite(CS, LOW);                          // start new command sequence
   SPI.transfer(READ);                             // send READ command
   SPI.transfer((byte)(address >> 16));            // send high byte of address
   SPI.transfer((byte)(address >> 8));             // send middle byte of address
   SPI.transfer((byte)address);                    // send low byte of address
-  for(i=0; i<big; i++){
+  for(uint16_t i=0; i<big; i++){
     data[i] = SPI.transfer(0x00);                 // read the data byte
   }
   digitalWrite(CS, HIGH);                         // set SPI slave select HIGH
