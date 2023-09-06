@@ -30,6 +30,24 @@ limitations under the License.
 #include <tensorflow/lite/micro/micro_interpreter.h>
 #include <tensorflow/lite/schema/schema_generated.h>
 
+#include <SPI.h>
+
+/************SRAM opcodes: commands to the 23LC1024 memory chip ******************/
+#define RDMR        5       // Read the Mode Register
+#define WRMR        1       // Write to the Mode Register
+#define READ        3       // Read command
+#define WRITE       2       // Write command
+#define RSTIO       0xFF    // Reset memory to SPI mode
+#define ByteMode    0x00    // Byte mode (read/write one byte at a time)
+#define Sequential  0x40    // Sequential mode (read/write blocks of memory)
+#define CS          10      // Chip Select Line for Uno
+
+/******************* Function Prototypes **************************/
+void SetMode(char Mode);
+byte ReadByte(uint32_t address);
+void WriteByte(uint32_t address, byte data_byte);
+void WriteArray(uint32_t address, byte *data, uint16_t big);
+void ReadArray(uint32_t address, byte *data, uint16_t big);
 
 // global variables used for TensorFlow Lite (Micro)
 // pull in all the TFLM ops, you can remove this line and
@@ -220,6 +238,7 @@ void onFileBlockWritten(BLEDevice central, BLECharacteristic characteristic) {
     return;
   }
   
+
   const int32_t file_block_length = characteristic.valueLength();
   if (file_block_length > file_block_byte_count) {
     notifyError(String("Too many bytes in block: Expected ") + String(file_block_byte_count) + 
@@ -242,6 +261,8 @@ void onFileBlockWritten(BLEDevice central, BLECharacteristic characteristic) {
 
   String str_data = (char*)file_block_buffer;
   Serial.println(str_data);
+  Serial.println(bytes_received_after_block);
+  Serial.println();
 
 // Enable this macro to show the data in the serial log.
 #ifdef ENABLE_LOGGING
@@ -507,6 +528,63 @@ void runPrediction(float aX, float aY, float aZ, float gX, float gY, float gZ) {
     Serial.println(tflOutputTensor->data.f[i], 6);
   }
   Serial.println();
+}
+
+/*  Functions to Set the Mode, and Read and Write Data to the Memory Chip ***********/
+
+/*  Set up the memory chip to either single byte or sequence of bytes mode **********/
+void SetMode(char Mode){                        // Select for single or multiple byte transfer
+  digitalWrite(CS, LOW);                        // set SPI slave select LOW;
+  SPI.transfer(WRMR);                           // command to write to mode register
+  SPI.transfer(Mode);                           // set for sequential mode
+  digitalWrite(CS, HIGH);                       // release chip select to finish command
+}
+
+/************ Byte transfer functions ***************************/
+byte ReadByte(uint32_t address) {
+  char read_byte;
+  digitalWrite(CS, LOW);                         // set SPI slave select LOW;
+  SPI.transfer(READ);                            // send READ command to memory chip
+  SPI.transfer((byte)(address >> 16));           // send high byte of address
+  SPI.transfer((byte)(address >> 8));            // send middle byte of address
+  SPI.transfer((byte)address);                   // send low byte of address
+  read_byte = SPI.transfer(0x00);                // read the byte at that address
+  digitalWrite(CS, HIGH);                        // set SPI slave select HIGH;
+  return read_byte;                              // send data back to the calling function
+}
+  
+void WriteByte(uint32_t address, byte data_byte) {
+  digitalWrite(CS, LOW);                         // set SPI slave select LOW;
+  SPI.transfer(WRITE);                           // send WRITE command to the memory chip
+  SPI.transfer((byte)(address >> 16));           // send high byte of address
+  SPI.transfer((byte)(address >> 8));            // send middle byte of address
+  SPI.transfer((byte)address);                   // send low byte of address
+  SPI.transfer(data_byte);                       // write the data to the memory location
+  digitalWrite(CS, HIGH);                        //set SPI slave select HIGH
+}
+
+/*********** Sequential data transfer functions using Arrays ************************/
+void WriteArray(uint32_t address, byte *data, uint16_t big){
+  uint16_t i = 0;                                 // loop counter
+  digitalWrite(CS, LOW);                          // start new command sequence
+  SPI.transfer(WRITE);                            // send WRITE command
+  SPI.transfer((byte)(address >> 16));            // send high byte of address
+  SPI.transfer((byte)(address >> 8));             // send middle byte of address
+  SPI.transfer((byte)address);                    // send low byte of address
+  SPI.transfer(data, big);                        // transfer an array of data => needs array name & size
+  digitalWrite(CS, HIGH);                         // set SPI slave select HIGH
+}
+
+void ReadArray(uint32_t address, byte *data, uint16_t big){
+  digitalWrite(CS, LOW);                          // start new command sequence
+  SPI.transfer(READ);                             // send READ command
+  SPI.transfer((byte)(address >> 16));            // send high byte of address
+  SPI.transfer((byte)(address >> 8));             // send middle byte of address
+  SPI.transfer((byte)address);                    // send low byte of address
+  for(uint16_t i=0; i<big; i++){
+    data[i] = SPI.transfer(0x00);                 // read the data byte
+  }
+  digitalWrite(CS, HIGH);                         // set SPI slave select HIGH
 }
 
 void loop() {
