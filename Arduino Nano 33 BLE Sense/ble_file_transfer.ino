@@ -207,6 +207,22 @@ uint32_t crc32(const uint8_t* data, size_t data_length) {
 }
 
 void onFileTransferComplete() {
+  //
+  if (finished_file_buffer_index == 0) {
+    finished_file_buffer_index = 1;
+  } else {
+    finished_file_buffer_index = 0;
+  }
+  finished_file_buffer = &file_buffers[finished_file_buffer_index][0];
+  finished_file_buffer_byte_count = in_progress_bytes_expected;
+
+  for (int i=0; i < finished_file_buffer_byte_count; i++){
+    Serial.println(finished_file_buffer[i]);
+  }
+
+  // onBLEFileReceived(finished_file_buffer, finished_file_buffer_byte_count);
+  //
+
   uint32_t computed_checksum = crc32(in_progress_file_buffer, in_progress_bytes_expected);;
   if (in_progress_checksum != computed_checksum) {
     notifyError(String("File transfer failed: Expected checksum 0x") + String(in_progress_checksum, 16) + 
@@ -261,8 +277,12 @@ void onFileBlockWritten(BLEDevice central, BLECharacteristic characteristic) {
 
   String str_data = (char*)file_block_buffer;
   Serial.println(str_data);
-  Serial.println(bytes_received_after_block);
+  Serial.println(in_progress_bytes_received);
   Serial.println();
+
+  // Write to external memory (SRAM)
+  WriteArray(in_progress_bytes_received, file_block_buffer, file_block_length);
+  delay(10);
 
 // Enable this macro to show the data in the serial log.
 #ifdef ENABLE_LOGGING
@@ -415,8 +435,12 @@ void updateBLEFileTransfer() {
 
 void setup() {
   // Start serial
-  Serial.begin(9600);
+  pinMode(CS, OUTPUT);  
   Serial.println("Started");
+
+  Serial.begin(9600);
+  SPI.begin();
+  SetMode(Sequential);
   
   setupBLEFileTransfer();
 
@@ -487,16 +511,25 @@ void onBLEFileReceived(uint8_t* file_data, int file_length) {
   // remain untouched until after a following onFileReceived call has completed, and
   // the BLE module retains ownership of it, so you don't need to deallocate it.
   
-//  String str_data = (char*)file_data;
-//  
-//  Serial.println(str_data);
-//  Serial.println(file_length);
+ String str_data = (char*)file_data;
+ 
+ Serial.println(str_data);
+ Serial.println(file_length);
   
 //  initializeTFL(str_data);
 
-    for (int i=0; i < file_length; i++){
-      Serial.println(file_data[i]);
-    }
+    // for (int i=0; i < file_length; i++){
+    //   Serial.println(file_data[i]);
+    // }
+  // SetMode(Sequential);
+  // byte read_data[128];
+
+  // for (int i=0; i<file_length; sizeof(read_data)) {
+  //   ReadArray(i, read_data, sizeof(read_data));
+  //   Serial.println((char*)read_data);
+
+  //   delay(3000);
+  // }
     
   
   
