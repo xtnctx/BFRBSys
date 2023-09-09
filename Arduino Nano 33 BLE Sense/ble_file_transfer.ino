@@ -207,22 +207,6 @@ uint32_t crc32(const uint8_t* data, size_t data_length) {
 }
 
 void onFileTransferComplete() {
-  //
-  if (finished_file_buffer_index == 0) {
-    finished_file_buffer_index = 1;
-  } else {
-    finished_file_buffer_index = 0;
-  }
-  finished_file_buffer = &file_buffers[finished_file_buffer_index][0];
-  finished_file_buffer_byte_count = in_progress_bytes_expected;
-
-  for (int i=0; i < finished_file_buffer_byte_count; i++){
-    Serial.println(finished_file_buffer[i]);
-  }
-
-  // onBLEFileReceived(finished_file_buffer, finished_file_buffer_byte_count);
-  //
-
   uint32_t computed_checksum = crc32(in_progress_file_buffer, in_progress_bytes_expected);;
   if (in_progress_checksum != computed_checksum) {
     notifyError(String("File transfer failed: Expected checksum 0x") + String(in_progress_checksum, 16) + 
@@ -280,9 +264,27 @@ void onFileBlockWritten(BLEDevice central, BLECharacteristic characteristic) {
   Serial.println(in_progress_bytes_received);
   Serial.println();
 
+  // Convert to char array
+  byte string_buffer[file_block_length + 1];
+  for (int i = 0; i < file_block_length; ++i) {
+    byte value = file_block_buffer[i];
+    if (i < file_block_length) {
+      string_buffer[i] = value;
+    } else {
+      string_buffer[i] = 0;
+    }
+  }
+  string_buffer[file_block_length] = 0;
+  Serial.println((char*)string_buffer);
+  for(int i=0; i<sizeof(string_buffer); i++) Serial.print((char)string_buffer[i]);
+  Serial.println();
   // Write to external memory (SRAM)
-  WriteArray(in_progress_bytes_received, file_block_buffer, file_block_length);
-  delay(10);
+  WriteArray(in_progress_bytes_received, string_buffer, file_block_length);
+
+  Serial.println("data after sram write: ");
+  Serial.println((char*)file_block_buffer);
+  Serial.println((char*)in_progress_file_buffer);
+  Serial.println(in_progress_bytes_received);
 
 // Enable this macro to show the data in the serial log.
 #ifdef ENABLE_LOGGING
@@ -440,7 +442,6 @@ void setup() {
 
   Serial.begin(9600);
   SPI.begin();
-  SetMode(Sequential);
   
   setupBLEFileTransfer();
 
@@ -513,8 +514,8 @@ void onBLEFileReceived(uint8_t* file_data, int file_length) {
   
  String str_data = (char*)file_data;
  
- Serial.println(str_data);
- Serial.println(file_length);
+//  Serial.println(str_data);
+//  Serial.println(file_length);
   
 //  initializeTFL(str_data);
 
@@ -522,14 +523,14 @@ void onBLEFileReceived(uint8_t* file_data, int file_length) {
     //   Serial.println(file_data[i]);
     // }
   // SetMode(Sequential);
-  // byte read_data[128];
+  // Serial.println("Reading SRAM contents");
+  byte read_data[file_length];
+  ReadArray(0, read_data, sizeof(read_data));
 
-  // for (int i=0; i<file_length; sizeof(read_data)) {
-  //   ReadArray(i, read_data, sizeof(read_data));
-  //   Serial.println((char*)read_data);
-
-  //   delay(3000);
-  // }
+  for (int i=0; i<file_length; i++) {
+    Serial.println((char)read_data[i]);
+    delay(3000);
+  }
     
   
   
@@ -597,8 +598,26 @@ void WriteByte(uint32_t address, byte data_byte) {
 }
 
 /*********** Sequential data transfer functions using Arrays ************************/
-void WriteArray(uint32_t address, byte *data, uint16_t big){
-  uint16_t i = 0;                                 // loop counter
+// void WriteArray(uint32_t address, byte *data, uint16_t big) {
+//   digitalWrite(CS, LOW);
+
+//   // Send the WRITE command
+//   SPI.transfer(WRITE);
+
+//   SPI.transfer((byte)(address >> 16));
+//   SPI.transfer((byte)(address >> 8));
+//   SPI.transfer((byte)address);
+
+//   // Send the data bytes
+//   for (uint16_t i = 0; i < big; i++) {
+//     SPI.transfer(data[i]);
+//   }
+
+//   digitalWrite(CS, HIGH);
+// }
+
+void WriteArray(uint32_t address, byte *data, uint16_t big) {
+  SetMode(Sequential);                // set to send/receive multiple bytes of data
   digitalWrite(CS, LOW);                          // start new command sequence
   SPI.transfer(WRITE);                            // send WRITE command
   SPI.transfer((byte)(address >> 16));            // send high byte of address
@@ -608,7 +627,9 @@ void WriteArray(uint32_t address, byte *data, uint16_t big){
   digitalWrite(CS, HIGH);                         // set SPI slave select HIGH
 }
 
+
 void ReadArray(uint32_t address, byte *data, uint16_t big){
+  SetMode(Sequential);                         // set to send/receive multiple bytes of data
   digitalWrite(CS, LOW);                          // start new command sequence
   SPI.transfer(READ);                             // send READ command
   SPI.transfer((byte)(address >> 16));            // send high byte of address
