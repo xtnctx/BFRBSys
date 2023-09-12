@@ -75,8 +75,8 @@ bool isModelInitialized = false;
 
 #define NUM_HOTSPOT (sizeof(HOTSPOT) / sizeof(HOTSPOT[0]))
 
-// Comment this macro back in to log received data to the serial UART.
-//#define ENABLE_LOGGING
+// Uncomment this macro to log received data to the serial UART.
+#define ENABLE_LOGGING
 
 // Forward declare the function that will be called when data has been delivered to us.
 void onBLEFileReceived(uint8_t* file_data, int file_length);
@@ -259,11 +259,6 @@ void onFileBlockWritten(BLEDevice central, BLECharacteristic characteristic) {
   uint8_t* file_block_buffer = in_progress_file_buffer + in_progress_bytes_received;
   characteristic.readValue(file_block_buffer, file_block_length);
 
-  String str_data = (char*)file_block_buffer;
-  Serial.println(str_data);
-  Serial.println(in_progress_bytes_received);
-  Serial.println();
-
   // Convert to char array
   byte string_buffer[file_block_length + 1];
   for (int i = 0; i < file_block_length; ++i) {
@@ -275,34 +270,18 @@ void onFileBlockWritten(BLEDevice central, BLECharacteristic characteristic) {
     }
   }
   string_buffer[file_block_length] = 0;
-  Serial.println((char*)string_buffer);
-  for(int i=0; i<sizeof(string_buffer); i++) Serial.print((char)string_buffer[i]);
-  Serial.println();
-  // Write to external memory (SRAM)
-  WriteArray(in_progress_bytes_received, string_buffer, file_block_length);
-
-  Serial.println("data after sram write: ");
-  Serial.println((char*)file_block_buffer);
-  Serial.println((char*)in_progress_file_buffer);
-  Serial.println(in_progress_bytes_received);
-
+  
 // Enable this macro to show the data in the serial log.
 #ifdef ENABLE_LOGGING
   Serial.print("Data received: length = ");
   Serial.println(file_block_length);
-
-  char string_buffer[file_block_byte_count + 1];
-  for (int i = 0; i < file_block_byte_count; ++i) {
-    unsigned char value = file_block_buffer[i];
-    if (i < file_block_length) {
-      string_buffer[i] = value;
-    } else {
-      string_buffer[i] = 0;
-    }
-  }
-  string_buffer[file_block_byte_count] = 0;
   Serial.println(String(string_buffer));
 #endif  // ENABLE_LOGGING
+
+  // Serial.println("string_buffer");
+  // Serial.println((char*)string_buffer);
+  // Write to external memory (SRAM)
+  WriteArray(in_progress_bytes_received, string_buffer, file_block_length);
 
   if (bytes_received_after_block == in_progress_bytes_expected) {
     onFileTransferComplete();
@@ -528,8 +507,7 @@ void onBLEFileReceived(uint8_t* file_data, int file_length) {
   ReadArray(0, read_data, sizeof(read_data));
 
   for (int i=0; i<file_length; i++) {
-    Serial.println((char)read_data[i]);
-    delay(3000);
+    Serial.print((char)read_data[i]);
   }
     
   
