@@ -23,8 +23,8 @@
 #define RSTIO     0xFF      // Reset memory to SPI mode
 #define ByteMode    0x00    // Byte mode (read/write one byte at a time)
 #define Sequential  0x40    // Sequential mode (read/write blocks of memory)
-#define CS          10      // Chip Select Line for Uno
-
+// #define CS          10      // Chip Select Line for Uno
+uint8_t CS[2] = {10, 9};
 /******************* Function Prototypes **************************/
 void SetMode(char Mode);
 byte ReadByte(uint32_t address);
@@ -35,39 +35,32 @@ void ReadArray(uint32_t address, byte *data, uint16_t big);
 /*******************  Create Global Variables *********************/
 byte x[] = {"abcdefghij"};         // array data to write
 byte y[] = {"klmnopqrst"};
-byte read_data[20];                           // arrary to hold data read from memory
+byte read_data[10];                           // arrary to hold data read from memory
 byte i = 0;                                   // loop counter variable
 constexpr int32_t file_block_byte_count = 2;
 
 /*******  Set up code to define variables and start the SCI and SPI serial interfaces  *****/
 void setup(void) {
-  pinMode(CS, OUTPUT);                        // Make pin 10 of the Arduino an output
+  pinMode(CS[0], OUTPUT);                        // Make pin 10 of the Arduino an output
+  pinMode(CS[1], OUTPUT);                        // Make pin 10 of the Arduino an output
   Serial.begin(9600);                         // set communication speed for the serial monitor
   SPI.begin();                                // start communicating with the memory chip    
 
 /************  Write a Sequence of Bytes from an Array *******************/
   Serial.println("\nWriting array using Sequential: ");
-  SetMode(Sequential);
+  SetMode(Sequential, CS[0]);
+  SetMode(Sequential, CS[1]);
                                                 // set to send/receive multiple bytes of data
-  WriteArray(0, x, sizeof(x));    
-  WriteArray(10, y, sizeof(y));                  // Use the array of characters defined in x above
+  WriteArray10(0, x, sizeof(x));    
+  WriteArray9(0, y, sizeof(y));                  // Use the array of characters defined in x above
                                                 // write to memory starting at address 0
-
-/************ Read a Sequence of Bytes from Memory into an Array **********/
-  Serial.println("Reading array using sequential: ");
-  SetMode(Sequential);                          // set to send/receive multiple bytes of data
-  ReadArray(0, read_data, sizeof(read_data));   // Read from memory into empty array read_data
-                                                // starting at memory address 0
-  for(i=0; i<sizeof(read_data); i++)            // print the array just read using a for loop
-    Serial.println((char)read_data[i]);         // We need to cast it as a char
-                                                // to make it print as a character
 }
  
 void loop() {                                   // we have nothing to do in the loop
   /************ Read a Sequence of Bytes from Memory into an Array **********/
   Serial.println("Reading array using sequential: ");
-  SetMode(Sequential);                          // set to send/receive multiple bytes of data
-  ReadArray(0, read_data, sizeof(read_data));   // Read from memory into empty array read_data
+  SetMode(Sequential, CS[0]);                          // set to send/receive multiple bytes of data
+  ReadArray10(0, read_data, sizeof(read_data));   // Read from memory into empty array read_data
                                                 // starting at memory address 0
   for(uint16_t i=0; i<sizeof(read_data); i++)  {         // print the array just read using a for loop
     Serial.print("Printing ");
@@ -75,7 +68,18 @@ void loop() {                                   // we have nothing to do in the 
     Serial.println((char)read_data[i]);         // We need to cast it as a char
   }                                             // to make it print as a character
 
-  delay(3000);
+  Serial.println();
+
+  SetMode(Sequential, CS[1]);                          // set to send/receive multiple bytes of data
+  ReadArray9(0, read_data, sizeof(read_data));   // Read from memory into empty array read_data
+                                                // starting at memory address 0
+  for(uint16_t i=0; i<sizeof(read_data); i++)  {         // print the array just read using a for loop
+    Serial.print("Printing ");
+    Serial.println(i+1);
+    Serial.println((char)read_data[i]);         // We need to cast it as a char
+  }                                             // to make it print as a character
+
+  // delay(3000);
                                                 
 }
 
@@ -83,50 +87,38 @@ void loop() {                                   // we have nothing to do in the 
 /*  Functions to Set the Mode, and Read and Write Data to the Memory Chip ***********/
 
 /*  Set up the memory chip to either single byte or sequence of bytes mode **********/
-void SetMode(char Mode){                        // Select for single or multiple byte transfer
+void SetMode(char Mode, uint8_t CS){                        // Select for single or multiple byte transfer
   digitalWrite(CS, LOW);                        // set SPI slave select LOW;
   SPI.transfer(WRMR);                           // command to write to mode register
   SPI.transfer(Mode);                           // set for sequential mode
   digitalWrite(CS, HIGH);                       // release chip select to finish command
 }
 
-/************ Byte transfer functions ***************************/
-byte ReadByte(uint32_t address) {
-  char read_byte;
-  digitalWrite(CS, LOW);                         // set SPI slave select LOW;
-  SPI.transfer(READ);                            // send READ command to memory chip
-  SPI.transfer((byte)(address >> 16));           // send high byte of address
-  SPI.transfer((byte)(address >> 8));            // send middle byte of address
-  SPI.transfer((byte)address);                   // send low byte of address
-  read_byte = SPI.transfer(0x00);                // read the byte at that address
-  digitalWrite(CS, HIGH);                        // set SPI slave select HIGH;
-  return read_byte;                              // send data back to the calling function
-}
-  
-void WriteByte(uint32_t address, byte data_byte) {
-  digitalWrite(CS, LOW);                         // set SPI slave select LOW;
-  SPI.transfer(WRITE);                           // send WRITE command to the memory chip
-  SPI.transfer((byte)(address >> 16));           // send high byte of address
-  SPI.transfer((byte)(address >> 8));            // send middle byte of address
-  SPI.transfer((byte)address);                   // send low byte of address
-  SPI.transfer(data_byte);                       // write the data to the memory location
-  digitalWrite(CS, HIGH);                        //set SPI slave select HIGH
-}
-
 /*********** Sequential data transfer functions using Arrays ************************/
-void WriteArray(uint32_t address, byte *data, uint16_t big){
+void WriteArray10(uint32_t address, byte *data, uint16_t big){
   uint16_t i = 0;                                 // loop counter
-  digitalWrite(CS, LOW);                          // start new command sequence
+  digitalWrite(CS[0], LOW);                          // start new command sequence
   SPI.transfer(WRITE);                            // send WRITE command
   SPI.transfer((byte)(address >> 16));            // send high byte of address
   SPI.transfer((byte)(address >> 8));             // send middle byte of address
   SPI.transfer((byte)address);                    // send low byte of address
   SPI.transfer(data, big);                        // transfer an array of data => needs array name & size
-  digitalWrite(CS, HIGH);                         // set SPI slave select HIGH
+  digitalWrite(CS[0], HIGH);                         // set SPI slave select HIGH
 }
 
-void ReadArray(uint32_t address, byte *data, uint16_t big){
-  digitalWrite(CS, LOW);                          // start new command sequence
+void WriteArray9(uint32_t address, byte *data, uint16_t big){
+  uint16_t i = 0;                                 // loop counter
+  digitalWrite(CS[1], LOW);                          // start new command sequence
+  SPI.transfer(WRITE);                            // send WRITE command
+  SPI.transfer((byte)(address >> 16));            // send high byte of address
+  SPI.transfer((byte)(address >> 8));             // send middle byte of address
+  SPI.transfer((byte)address);                    // send low byte of address
+  SPI.transfer(data, big);                        // transfer an array of data => needs array name & size
+  digitalWrite(CS[1], HIGH);                         // set SPI slave select HIGH
+}
+
+void ReadArray10(uint32_t address, byte *data, uint16_t big){
+  digitalWrite(CS[0], LOW);                          // start new command sequence
   SPI.transfer(READ);                             // send READ command
   SPI.transfer((byte)(address >> 16));            // send high byte of address
   SPI.transfer((byte)(address >> 8));             // send middle byte of address
@@ -134,5 +126,17 @@ void ReadArray(uint32_t address, byte *data, uint16_t big){
   for(uint16_t i=0; i<big; i++){
     data[i] = SPI.transfer(0x00);                 // read the data byte
   }
-  digitalWrite(CS, HIGH);                         // set SPI slave select HIGH
+  digitalWrite(CS[0], HIGH);                         // set SPI slave select HIGH
+}
+
+void ReadArray9(uint32_t address, byte *data, uint16_t big){
+  digitalWrite(CS[1], LOW);                          // start new command sequence
+  SPI.transfer(READ);                             // send READ command
+  SPI.transfer((byte)(address >> 16));            // send high byte of address
+  SPI.transfer((byte)(address >> 8));             // send middle byte of address
+  SPI.transfer((byte)address);                    // send low byte of address
+  for(uint16_t i=0; i<big; i++){
+    data[i] = SPI.transfer(0x00);                 // read the data byte
+  }
+  digitalWrite(CS[1], HIGH);                         // set SPI slave select HIGH
 }
