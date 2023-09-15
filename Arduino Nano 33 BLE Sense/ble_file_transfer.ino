@@ -95,7 +95,7 @@ BLEService service(FILE_TRANSFER_UUID("0000"));
 
 // How big each transfer block can be. In theory this could be up to 512 bytes, but
 // in practice I've found that going over 128 affects reliability of the connection.
-constexpr int32_t file_block_byte_count = 128;
+constexpr int32_t file_block_byte_count = 20;
 
 // Where each data block is written to during the transfer.
 BLECharacteristic file_block_characteristic(FILE_TRANSFER_UUID("3000"), BLEWrite, file_block_byte_count);
@@ -227,9 +227,9 @@ void onFileTransferComplete() {
   in_progress_bytes_received = 0;
   in_progress_bytes_expected = 0;
 
-  notifySuccess();
-
   onBLEFileReceived(finished_file_buffer, finished_file_buffer_byte_count);
+
+  notifySuccess();
 }
 
 void onFileBlockWritten(BLEDevice central, BLECharacteristic characteristic) {  
@@ -275,7 +275,7 @@ void onFileBlockWritten(BLEDevice central, BLECharacteristic characteristic) {
 #ifdef ENABLE_LOGGING
   Serial.print("Data received: length = ");
   Serial.println(file_block_length);
-  Serial.println(String(string_buffer));
+  Serial.println(String((char*)string_buffer));
 #endif  // ENABLE_LOGGING
 
   // Serial.println("string_buffer");
