@@ -237,7 +237,7 @@ class BluetoothBuilder extends GATTProtocolProfile {
   void _sendFileBlock(fileContents, bytesAlreadySent) {
     var bytesRemaining = fileContents.length - bytesAlreadySent;
 
-    const maxBlockLength = 128;
+    const maxBlockLength = 20;
     int blockLength = min(bytesRemaining, maxBlockLength);
     Uint8List blockView = Uint8List.view(fileContents.buffer, bytesAlreadySent, blockLength);
 
@@ -249,6 +249,7 @@ class BluetoothBuilder extends GATTProtocolProfile {
           bytesAlreadySent / fileContents.length,
           0,
         ]);
+
         bytesAlreadySent += blockLength;
         _sendFileBlock(fileContents, bytesAlreadySent);
       }
