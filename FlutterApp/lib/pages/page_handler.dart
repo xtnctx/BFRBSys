@@ -15,8 +15,8 @@ import 'package:bfrbsys/api/models.dart';
 import 'package:bfrbsys/custom_widgets/extra_widget.dart';
 import 'package:bfrbsys/custom_widgets/tooltip.dart';
 
-import 'package:flutter_blue/flutter_blue.dart';
 import 'package:csv/csv.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:provider/provider.dart';
@@ -52,6 +52,7 @@ class _PageHandlerState extends State<PageHandler> {
 
   @override
   void initState() {
+    super.initState();
     scaffoldKey = widget.scaffoldKey;
 
     pages = const [
@@ -67,7 +68,6 @@ class _PageHandlerState extends State<PageHandler> {
         apiResponse = value;
       });
     });
-    super.initState();
   }
 
   Widget _createHeader() {
