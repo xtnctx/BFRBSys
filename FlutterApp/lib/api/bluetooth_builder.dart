@@ -4,7 +4,7 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:bfrbsys/shared/shared.dart';
-import 'package:flutter_blue/flutter_blue.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
 abstract class GATTProtocolProfile {
   /// The Generic Attribute Profile (GATT) is the architechture used
@@ -32,7 +32,6 @@ abstract class GATTProtocolProfile {
   final String DIST_DATA_UUID = 'bf88b656-3009-4a61-86e0-769c741026c0';
   /* =========================================================================== */
 
-  FlutterBlue? flutterBlue;
   BluetoothDevice? device;
 
   // The characteritics here must match in the peripheral
@@ -184,13 +183,20 @@ class BluetoothBuilder extends GATTProtocolProfile {
 
     isConnected = true;
 
+    final mtu = await device!.mtu.first;
+
+    print(mtu);
+
+    // (Android Only) On iOS, MTU is negotiated automatically
+    await device!.requestMtu(512);
+
     return;
   }
 
   ///////////////////////////////////
 
   void _onTransferStatusChanged(BluetoothCharacteristic? characteristic) {
-    characteristic!.value.listen((List<int> value) {
+    characteristic!.onValueReceived.listen((List<int> value) {
       num statusCode = bytesToInteger(value);
 
       if (value.isEmpty) return;
@@ -208,7 +214,7 @@ class BluetoothBuilder extends GATTProtocolProfile {
   /// Called when an error message is received from the device. This describes what
   /// went wrong with the transfer in a user-readable form.
   void _onErrorMessageChanged(BluetoothCharacteristic? characteristic) {
-    characteristic!.value.listen((List<int> value) {
+    characteristic!.onValueReceived.listen((List<int> value) {
       List<int> readData = List.from(value);
       String errorMessage = String.fromCharCodes(readData);
 
@@ -235,6 +241,7 @@ class BluetoothBuilder extends GATTProtocolProfile {
   }
 
   void _sendFileBlock(fileContents, bytesAlreadySent) {
+    // TODO: Convert to iteration
     var bytesRemaining = fileContents.length - bytesAlreadySent;
 
     const maxBlockLength = 20;
@@ -261,8 +268,7 @@ class BluetoothBuilder extends GATTProtocolProfile {
   ///////////////////////////////////
 
   void connect() async {
-    flutterBlue = FlutterBlue.instance;
-    bool isOn = await flutterBlue!.isOn;
+    bool isOn = await FlutterBluePlus.adapterState.first == BluetoothAdapterState.on;
     bool found = false;
 
     if (!isOn) {
@@ -270,32 +276,45 @@ class BluetoothBuilder extends GATTProtocolProfile {
       return;
     }
 
-    flutterBlue!
-        .scan(timeout: const Duration(seconds: 10))
-        .listen((results) {
-          if (!found) callbackController.add(["Scanning...", 0]);
-          if (results.device.name == TARGET_DEVICE_NAME) {
+    Set<DeviceIdentifier> seen = {};
+
+    FlutterBluePlus.isScanning.listen((scanning) {
+      if (!scanning && !found) callbackController.add(["Can't find your device.", 1]);
+    });
+
+    // Setup Listener for scan results.
+    var subscription = FlutterBluePlus.scanResults.listen((results) {
+      if (!found) callbackController.add(["Scanning...", 0]);
+      for (ScanResult r in results) {
+        if (seen.contains(r.device.remoteId) == false) {
+          print('${r.device.remoteId}: "${r.device.localName}" found! rssi: ${r.rssi}');
+          seen.add(r.device.remoteId);
+
+          if (r.device.localName == TARGET_DEVICE_NAME) {
             callbackController.add(['Target device found. Getting primary service ...', 0]);
-            device = results.device;
+            device = r.device;
             found = true;
             _connectToDevice();
           }
-        })
-        .asFuture()
-        .whenComplete(() {
-          if (!found) callbackController.add(["Can't find your device.", 1]);
-        });
+        }
+      }
+    });
+
+    // Start scanning
+    // Note: You should always call `scanResults.listen` before you call startScan!
+    await FlutterBluePlus.startScan(timeout: const Duration(seconds: 10));
+
+    // Stop scanning
+    // await FlutterBluePlus.stopScan();
   }
 
-  void disconnect() {
-    device!.disconnect();
-
-    callbackController.add(['Device ${device!.name} disconnected', 0]);
+  void disconnect() async {
+    callbackController.add(['Device ${device!.localName} disconnected', 0]);
+    await device!.disconnect();
 
     isFileTransferInProgress = false;
     discoverController.add(false);
     device = null;
-    flutterBlue = null;
     isConnected = false;
   }
 
