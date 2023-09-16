@@ -120,7 +120,7 @@ class _MonitoringPageState extends State<MonitoringPage> {
   /* ------------------------------------------------- */
   // EVENT LISTENERS
   void _readData(BluetoothCharacteristic? characteristic) {
-    characteristic!.value.listen((value) {
+    characteristic!.onValueReceived.listen((value) {
       List<int> readData = List.from(value);
       String parsedData = String.fromCharCodes(readData);
 
@@ -280,9 +280,10 @@ class _MonitoringPageState extends State<MonitoringPage> {
         });
 
         // Listen from sudden disconnection
-        deviceState = ble.device!.state.listen((event) {
-          if (event == BluetoothDeviceState.disconnected) {
+        deviceState = ble.device!.connectionState.listen((state) async {
+          if (state == BluetoothConnectionState.disconnected) {
             _disconnectFromDevice();
+            print('ASSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS');
           }
         });
       }
