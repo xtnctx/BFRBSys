@@ -1,6 +1,7 @@
 // ignore_for_file: non_constant_identifier_names
 
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:bfrbsys/shared/shared.dart';
@@ -30,6 +31,9 @@ abstract class GATTProtocolProfile {
   final String ACC_DATA_UUID = 'bf88b656-3007-4a61-86e0-769c741026c0';
   final String GYRO_DATA_UUID = 'bf88b656-3008-4a61-86e0-769c741026c0';
   final String DIST_DATA_UUID = 'bf88b656-3009-4a61-86e0-769c741026c0';
+  // final String TEMP_DATA_UUID = 'bf88b656-3010-4a61-86e0-769c741026c0';
+
+  final String MTU_UUID = 'bf88b656-3011-4a61-86e0-769c741026c0';
   /* =========================================================================== */
 
   BluetoothDevice? device;
@@ -45,6 +49,8 @@ abstract class GATTProtocolProfile {
   BluetoothCharacteristic? accDataCharacteristic;
   BluetoothCharacteristic? gyroDataCharacteristic;
   BluetoothCharacteristic? distDataCharacteristic;
+  // BluetoothCharacteristic? tempDataCharacteristic;
+  BluetoothCharacteristic? mtuCharacteristic;
 
   BluetoothDevice? get serviceDevice {
     return device;
@@ -61,7 +67,9 @@ abstract class GATTProtocolProfile {
       errorMessageCharacteristic,
       accDataCharacteristic,
       gyroDataCharacteristic,
-      distDataCharacteristic
+      distDataCharacteristic,
+      // tempDataCharacteristic,
+      mtuCharacteristic
     ];
   }
 }
@@ -73,6 +81,9 @@ class BluetoothBuilder extends GATTProtocolProfile {
   bool isConnected = false;
   bool isFileTransferInProgress = false;
   Crc32 crc = Crc32();
+  int deviceMTU = 0;
+  int default_file_block_byte_count = 128;
+  int? maxBlockLength;
 
   Future<void> _discoverServices() async {
     List<BluetoothService> services = await device!.discoverServices();
@@ -137,7 +148,6 @@ class BluetoothBuilder extends GATTProtocolProfile {
             accDataCharacteristic = characteristic;
             await Future.delayed(const Duration(milliseconds: 500));
             await accDataCharacteristic?.setNotifyValue(true);
-            // _readData(accDataCharacteristic);
             print('Connected to $ACC_DATA_UUID');
           }
 
@@ -146,7 +156,6 @@ class BluetoothBuilder extends GATTProtocolProfile {
             gyroDataCharacteristic = characteristic;
             await Future.delayed(const Duration(milliseconds: 500));
             await gyroDataCharacteristic?.setNotifyValue(true);
-            // _readData(gyroDataCharacteristic);
             print('Connected to $GYRO_DATA_UUID');
           }
 
@@ -155,14 +164,28 @@ class BluetoothBuilder extends GATTProtocolProfile {
             distDataCharacteristic = characteristic;
             await Future.delayed(const Duration(milliseconds: 500));
             await distDataCharacteristic?.setNotifyValue(true);
-            // _readData(distDataCharacteristic);
             print('Connected to $DIST_DATA_UUID');
           }
+
+          // // TEMP_DATA_UUID : tempDataCharacteristic
+          // else if (characteristicUUID == TEMP_DATA_UUID) {
+          //   tempDataCharacteristic = characteristic;
+          //   await Future.delayed(const Duration(milliseconds: 500));
+          //   await tempDataCharacteristic?.setNotifyValue(true);
+          //   print('Connected to $TEMP_DATA_UUID');
+          // }
+
+          // MTU_UUID : mtuCharacteristic
+          else if (characteristicUUID == MTU_UUID) {
+            mtuCharacteristic = characteristic;
+            print('Connected to $MTU_UUID');
+          }
+
           await Future.delayed(const Duration(milliseconds: 500));
         }
         // timer = Timer.periodic(const Duration(milliseconds: 100), _updateDataSource);
 
-        callbackController.add(['Connected to ${device!.name}', 2]);
+        callbackController.add(['Connected to ${device!.localName}', 2]);
 
         discoverController.add(true);
 
@@ -177,18 +200,21 @@ class BluetoothBuilder extends GATTProtocolProfile {
 
     await device!.connect();
 
+    // (Android Only) On iOS, MTU is negotiated automatically
+    if (Platform.isAndroid) await device!.requestMtu(512);
+    deviceMTU = await device!.mtu.first;
+
     callbackController.add(['Getting characteristics ...', 0]);
 
     await _discoverServices();
 
+    if (deviceMTU <= default_file_block_byte_count) {
+      set_file_block_byte_count(default_file_block_byte_count);
+    } else {
+      set_file_block_byte_count(deviceMTU);
+    }
+
     isConnected = true;
-
-    final mtu = await device!.mtu.first;
-
-    print(mtu);
-
-    // (Android Only) On iOS, MTU is negotiated automatically
-    await device!.requestMtu(512);
 
     return;
   }
@@ -244,8 +270,7 @@ class BluetoothBuilder extends GATTProtocolProfile {
     // TODO: Convert to iteration
     var bytesRemaining = fileContents.length - bytesAlreadySent;
 
-    const maxBlockLength = 20;
-    int blockLength = min(bytesRemaining, maxBlockLength);
+    int blockLength = min(bytesRemaining, maxBlockLength!);
     Uint8List blockView = Uint8List.view(fileContents.buffer, bytesAlreadySent, blockLength);
 
     fileBlockCharacteristic?.write(blockView).then((_) {
@@ -276,14 +301,14 @@ class BluetoothBuilder extends GATTProtocolProfile {
       return;
     }
 
-    Set<DeviceIdentifier> seen = {};
-
     FlutterBluePlus.isScanning.listen((scanning) {
       if (!scanning && !found) callbackController.add(["Can't find your device.", 1]);
     });
 
     // Setup Listener for scan results.
-    var subscription = FlutterBluePlus.scanResults.listen((results) {
+    Set<DeviceIdentifier> seen = {};
+
+    FlutterBluePlus.scanResults.listen((results) {
       if (!found) callbackController.add(["Scanning...", 0]);
       for (ScanResult r in results) {
         if (seen.contains(r.device.remoteId) == false) {
@@ -301,11 +326,7 @@ class BluetoothBuilder extends GATTProtocolProfile {
     });
 
     // Start scanning
-    // Note: You should always call `scanResults.listen` before you call startScan!
     await FlutterBluePlus.startScan(timeout: const Duration(seconds: 10));
-
-    // Stop scanning
-    // await FlutterBluePlus.stopScan();
   }
 
   void disconnect() async {
@@ -320,6 +341,11 @@ class BluetoothBuilder extends GATTProtocolProfile {
 
   void cancelTransfer() async {
     await commandCharacteristic?.write([2]);
+  }
+
+  void set_file_block_byte_count(int mtu) async {
+    await mtuCharacteristic?.write([mtu]);
+    maxBlockLength = mtu;
   }
 
   void transferFile(Uint8List fileContents) async {
