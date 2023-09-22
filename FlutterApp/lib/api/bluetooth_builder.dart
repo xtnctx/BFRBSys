@@ -33,7 +33,6 @@ abstract class GATTProtocolProfile {
   final String DIST_DATA_UUID = 'bf88b656-3009-4a61-86e0-769c741026c0';
   // final String TEMP_DATA_UUID = 'bf88b656-3010-4a61-86e0-769c741026c0';
 
-  final String MTU_UUID = 'bf88b656-3011-4a61-86e0-769c741026c0';
   /* =========================================================================== */
 
   BluetoothDevice? device;
@@ -50,7 +49,6 @@ abstract class GATTProtocolProfile {
   BluetoothCharacteristic? gyroDataCharacteristic;
   BluetoothCharacteristic? distDataCharacteristic;
   // BluetoothCharacteristic? tempDataCharacteristic;
-  BluetoothCharacteristic? mtuCharacteristic;
 
   BluetoothDevice? get serviceDevice {
     return device;
@@ -69,7 +67,6 @@ abstract class GATTProtocolProfile {
       gyroDataCharacteristic,
       distDataCharacteristic,
       // tempDataCharacteristic,
-      mtuCharacteristic
     ];
   }
 }
@@ -81,9 +78,7 @@ class BluetoothBuilder extends GATTProtocolProfile {
   bool isConnected = false;
   bool isFileTransferInProgress = false;
   Crc32 crc = Crc32();
-  int deviceMTU = 0;
-  int default_file_block_byte_count = 128;
-  int? maxBlockLength;
+  int deviceMTU = 23;
 
   Future<void> _discoverServices() async {
     List<BluetoothService> services = await device!.discoverServices();
@@ -143,29 +138,29 @@ class BluetoothBuilder extends GATTProtocolProfile {
             print('Connected to $ERROR_MESSAGE_UUID');
           }
 
-          // ACC_DATA_UUID : accDataCharacteristic
-          else if (characteristicUUID == ACC_DATA_UUID) {
-            accDataCharacteristic = characteristic;
-            await Future.delayed(const Duration(milliseconds: 500));
-            await accDataCharacteristic?.setNotifyValue(true);
-            print('Connected to $ACC_DATA_UUID');
-          }
+          // // ACC_DATA_UUID : accDataCharacteristic
+          // else if (characteristicUUID == ACC_DATA_UUID) {
+          //   accDataCharacteristic = characteristic;
+          //   await Future.delayed(const Duration(milliseconds: 500));
+          //   await accDataCharacteristic?.setNotifyValue(true);
+          //   print('Connected to $ACC_DATA_UUID');
+          // }
 
-          // GYRO_DATA_UUID : gyroDataCharacteristic
-          else if (characteristicUUID == GYRO_DATA_UUID) {
-            gyroDataCharacteristic = characteristic;
-            await Future.delayed(const Duration(milliseconds: 500));
-            await gyroDataCharacteristic?.setNotifyValue(true);
-            print('Connected to $GYRO_DATA_UUID');
-          }
+          // // GYRO_DATA_UUID : gyroDataCharacteristic
+          // else if (characteristicUUID == GYRO_DATA_UUID) {
+          //   gyroDataCharacteristic = characteristic;
+          //   await Future.delayed(const Duration(milliseconds: 500));
+          //   await gyroDataCharacteristic?.setNotifyValue(true);
+          //   print('Connected to $GYRO_DATA_UUID');
+          // }
 
-          // DIST_DATA_UUID : distDataCharacteristic
-          else if (characteristicUUID == DIST_DATA_UUID) {
-            distDataCharacteristic = characteristic;
-            await Future.delayed(const Duration(milliseconds: 500));
-            await distDataCharacteristic?.setNotifyValue(true);
-            print('Connected to $DIST_DATA_UUID');
-          }
+          // // DIST_DATA_UUID : distDataCharacteristic
+          // else if (characteristicUUID == DIST_DATA_UUID) {
+          //   distDataCharacteristic = characteristic;
+          //   await Future.delayed(const Duration(milliseconds: 500));
+          //   await distDataCharacteristic?.setNotifyValue(true);
+          //   print('Connected to $DIST_DATA_UUID');
+          // }
 
           // // TEMP_DATA_UUID : tempDataCharacteristic
           // else if (characteristicUUID == TEMP_DATA_UUID) {
@@ -174,12 +169,6 @@ class BluetoothBuilder extends GATTProtocolProfile {
           //   await tempDataCharacteristic?.setNotifyValue(true);
           //   print('Connected to $TEMP_DATA_UUID');
           // }
-
-          // MTU_UUID : mtuCharacteristic
-          else if (characteristicUUID == MTU_UUID) {
-            mtuCharacteristic = characteristic;
-            print('Connected to $MTU_UUID');
-          }
 
           await Future.delayed(const Duration(milliseconds: 500));
         }
@@ -205,14 +194,7 @@ class BluetoothBuilder extends GATTProtocolProfile {
     deviceMTU = await device!.mtu.first;
 
     callbackController.add(['Getting characteristics ...', 0]);
-
     await _discoverServices();
-
-    if (deviceMTU <= default_file_block_byte_count) {
-      set_file_block_byte_count(default_file_block_byte_count);
-    } else {
-      set_file_block_byte_count(deviceMTU);
-    }
 
     isConnected = true;
 
@@ -266,28 +248,30 @@ class BluetoothBuilder extends GATTProtocolProfile {
     callbackController.add(["File transfer error", -1]);
   }
 
-  void _sendFileBlock(fileContents, bytesAlreadySent) {
-    // TODO: Convert to iteration
-    var bytesRemaining = fileContents.length - bytesAlreadySent;
+  void _sendFileBlock(Uint8List fileContents) async {
+    if (fileContents.isEmpty) return;
 
-    int blockLength = min(bytesRemaining, maxBlockLength!);
-    Uint8List blockView = Uint8List.view(fileContents.buffer, bytesAlreadySent, blockLength);
+    int bytesAlreadySent = 0;
+    int bytesRemaining = fileContents.length - bytesAlreadySent;
+    int maxBlockLength = 128;
 
-    fileBlockCharacteristic?.write(blockView).then((_) {
-      bytesRemaining -= blockLength;
-      if ((bytesRemaining > 0) && isFileTransferInProgress) {
+    while (bytesRemaining > 0 && isFileTransferInProgress) {
+      int blockLength = min(bytesRemaining, maxBlockLength);
+      Uint8List blockView = Uint8List.view(fileContents.buffer, bytesAlreadySent, blockLength);
+
+      await fileBlockCharacteristic?.write(blockView).then((_) {
+        bytesRemaining -= blockLength;
         callbackController.add([
           "File block written - $bytesRemaining bytes remaining",
           bytesAlreadySent / fileContents.length,
           0,
         ]);
-
         bytesAlreadySent += blockLength;
-        _sendFileBlock(fileContents, bytesAlreadySent);
-      }
-    }).catchError((_) {
-      callbackController.add(["File block write error with $bytesRemaining bytes remaining", -1]);
-    });
+      }).catchError((e) {
+        callbackController.add(["File block write error with $bytesRemaining bytes remaining", -1]);
+        isFileTransferInProgress = false;
+      });
+    }
   }
 
   ///////////////////////////////////
@@ -343,11 +327,6 @@ class BluetoothBuilder extends GATTProtocolProfile {
     await commandCharacteristic?.write([2]);
   }
 
-  void set_file_block_byte_count(int mtu) async {
-    await mtuCharacteristic?.write([mtu]);
-    maxBlockLength = mtu;
-  }
-
   void transferFile(Uint8List fileContents) async {
     var maximumLengthValue = await fileMaximumLengthCharacteristic?.read();
     num maximumLength = bytesToInteger(maximumLengthValue!);
@@ -374,6 +353,6 @@ class BluetoothBuilder extends GATTProtocolProfile {
 
     await commandCharacteristic?.write([1]);
 
-    _sendFileBlock(fileContents, 0);
+    _sendFileBlock(fileContents);
   }
 }
