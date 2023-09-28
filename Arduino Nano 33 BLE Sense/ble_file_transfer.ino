@@ -1,5 +1,3 @@
-#include <TensorFlowLite.h>
-
 /* Copyright 2021 The TensorFlow Authors. All Rights Reserved.
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -83,10 +81,8 @@ void onBLEFileReceived(uint8_t* file_data, int file_length);
 
 namespace {
 
-// Controls how large a file the board can receive. We double-buffer the files
-// as they come in, so you'll need twice this amount of RAM. The default is set
-// to 50KB.
-constexpr int32_t file_maximum_byte_count = (50 * 1024);
+// Controls how large a file the board can receive.
+constexpr int32_t file_maximum_byte_count = (120 * 1024);
 
 // Macro based on a master UUID that can be modified for each characteristic.
 #define FILE_TRANSFER_UUID(val) ("bf88b656-" val "-4a61-86e0-769c741026c0")
@@ -95,7 +91,7 @@ BLEService service(FILE_TRANSFER_UUID("0000"));
 
 // How big each transfer block can be. In theory this could be up to 512 bytes, but
 // in practice I've found that going over 128 affects reliability of the connection.
-constexpr int32_t file_block_byte_count = 20;
+constexpr int32_t file_block_byte_count = 128;
 
 // Where each data block is written to during the transfer.
 BLECharacteristic file_block_characteristic(FILE_TRANSFER_UUID("3000"), BLEWrite, file_block_byte_count);
@@ -129,7 +125,7 @@ BLECharacteristic gyroscope_characteristic(FILE_TRANSFER_UUID("3008"), BLERead |
 BLECharacteristic distance_characteristic(FILE_TRANSFER_UUID("3009"), BLERead | BLENotify, data_size_count);
 
 // Internal globals used for transferring the file.
-uint8_t file_buffers[2][file_maximum_byte_count];
+uint8_t file_buffers[file_maximum_byte_count];
 int finished_file_buffer_index = -1;
 uint8_t* finished_file_buffer = nullptr;
 int32_t finished_file_buffer_byte_count = 0;
@@ -220,7 +216,7 @@ void onFileTransferComplete() {
   } else {
     finished_file_buffer_index = 0;
   }
-  finished_file_buffer = &file_buffers[finished_file_buffer_index][0];
+  finished_file_buffer = &file_buffers[0];
   finished_file_buffer_byte_count = in_progress_bytes_expected;
 
   in_progress_file_buffer = nullptr;
@@ -238,7 +234,6 @@ void onFileBlockWritten(BLEDevice central, BLECharacteristic characteristic) {
     return;
   }
   
-
   const int32_t file_block_length = characteristic.valueLength();
   if (file_block_length > file_block_byte_count) {
     notifyError(String("Too many bytes in block: Expected ") + String(file_block_byte_count) + 
@@ -256,32 +251,44 @@ void onFileBlockWritten(BLEDevice central, BLECharacteristic characteristic) {
     return;
   }
 
+  // TODO: Convert received buffer string-to-int then store in file_block_buffer using toInt()
   uint8_t* file_block_buffer = in_progress_file_buffer + in_progress_bytes_received;
   characteristic.readValue(file_block_buffer, file_block_length);
 
-  // Convert to char array
-  byte string_buffer[file_block_length + 1];
-  for (int i = 0; i < file_block_length; ++i) {
-    byte value = file_block_buffer[i];
+  // // Convert to char array
+  // byte string_buffer[file_block_length + 1];
+  // for (int i = 0; i < file_block_length; ++i) {
+  //   byte value = file_block_buffer[i];
+  //   if (i < file_block_length) {
+  //     string_buffer[i] = value;
+  //   } else {
+  //     string_buffer[i] = 0;
+  //   }
+  // }
+  // string_buffer[file_block_length] = 0;
+  
+// Enable this macro to show the data in the serial log.
+#ifdef ENABLE_LOGGING
+  Serial.print("Data received: length = ");
+  Serial.println(file_block_length);
+
+  char string_buffer[file_block_byte_count + 1];
+  for (int i = 0; i < file_block_byte_count; ++i) {
+    unsigned char value = file_block_buffer[i];
     if (i < file_block_length) {
       string_buffer[i] = value;
     } else {
       string_buffer[i] = 0;
     }
   }
-  string_buffer[file_block_length] = 0;
-  
-// Enable this macro to show the data in the serial log.
-#ifdef ENABLE_LOGGING
-  Serial.print("Data received: length = ");
-  Serial.println(file_block_length);
-  Serial.println(String((char*)string_buffer));
+  string_buffer[file_block_byte_count] = 0;
+  Serial.println(String(string_buffer));
 #endif  // ENABLE_LOGGING
 
   // Serial.println("string_buffer");
   // Serial.println((char*)string_buffer);
   // Write to external memory (SRAM)
-  WriteArray(in_progress_bytes_received, string_buffer, file_block_length);
+  // WriteArray(in_progress_bytes_received, string_buffer, file_block_length);
 
   if (bytes_received_after_block == in_progress_bytes_expected) {
     onFileTransferComplete();
@@ -318,7 +325,7 @@ void startFileTransfer() {
     in_progress_file_buffer_index = 0;
   }
   
-  in_progress_file_buffer = &file_buffers[in_progress_file_buffer_index][0];
+  in_progress_file_buffer = &file_buffers[0];
   in_progress_bytes_received = 0;
   in_progress_bytes_expected = file_length_value;
 
@@ -467,6 +474,7 @@ char *IMU_read (float x, float y, float z, char *sout) {
   
 }
 
+
 void initializeTFL(unsigned char model[]){
   // get the TFL representation of the model byte array
   tflModel = tflite::GetModel(model);
@@ -474,10 +482,10 @@ void initializeTFL(unsigned char model[]){
     Serial.println("Model schema mismatch!");
     while (1);
   }
-
+  
   // Create an interpreter to run the model
   tflInterpreter = new tflite::MicroInterpreter(tflModel, tflOpsResolver, tensorArena, tensorArenaSize);
-
+  
   // Allocate memory for the model's input and output tensors
   tflInterpreter->AllocateTensors();
 
@@ -493,8 +501,8 @@ void onBLEFileReceived(uint8_t* file_data, int file_length) {
   
  String str_data = (char*)file_data;
  
-//  Serial.println(str_data);
-//  Serial.println(file_length);
+ Serial.println(str_data);
+ Serial.println(file_length);
   
 //  initializeTFL(str_data);
 
@@ -503,12 +511,12 @@ void onBLEFileReceived(uint8_t* file_data, int file_length) {
     // }
   // SetMode(Sequential);
   // Serial.println("Reading SRAM contents");
-  byte read_data[file_length];
-  ReadArray(0, read_data, sizeof(read_data));
+  // byte read_data[file_length];
+  // ReadArray(0, read_data, sizeof(read_data));
 
-  for (int i=0; i<file_length; i++) {
-    Serial.print((char)read_data[i]);
-  }
+  // for (int i=0; i<file_length; i++) {
+  //   Serial.print((char)read_data[i]);
+  // }
     
   
   
