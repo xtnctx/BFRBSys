@@ -47,18 +47,11 @@ void loop() {
 
       for (uint32_t i=0; i<file_length; i++) {
         code += file[i];
-        if(file[i] == ' ') {
+        if(file[i] == ' ' || i == file_length-1) {
           file_buffers[new_size] = code.toInt();
           new_size++;
           code = "";
         }
-        // get last code
-        if(i == file_length-1) {
-          file_buffers[new_size] = code.toInt();
-          new_size++;
-          code = "";
-        }
-
       }
 
       for (size_t i=new_size; i<file_buffer_length; i++) {
