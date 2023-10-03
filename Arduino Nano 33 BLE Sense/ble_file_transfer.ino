@@ -30,22 +30,7 @@ limitations under the License.
 
 #include <SPI.h>
 
-/************SRAM opcodes: commands to the 23LC1024 memory chip ******************/
-#define RDMR        5       // Read the Mode Register
-#define WRMR        1       // Write to the Mode Register
-#define READ        3       // Read command
-#define WRITE       2       // Write command
-#define RSTIO       0xFF    // Reset memory to SPI mode
-#define ByteMode    0x00    // Byte mode (read/write one byte at a time)
-#define Sequential  0x40    // Sequential mode (read/write blocks of memory)
-#define CS          10      // Chip Select Line for Uno
-
-/******************* Function Prototypes **************************/
-void SetMode(char Mode);
-byte ReadByte(uint32_t address);
-void WriteByte(uint32_t address, byte data_byte);
-void WriteArray(uint32_t address, byte *data, uint16_t big);
-void ReadArray(uint32_t address, byte *data, uint16_t big);
+File modelFile;
 
 // global variables used for TensorFlow Lite (Micro)
 // pull in all the TFLM ops, you can remove this line and
@@ -254,18 +239,6 @@ void onFileBlockWritten(BLEDevice central, BLECharacteristic characteristic) {
   // TODO: Convert received buffer string-to-int then store in file_block_buffer using toInt()
   uint8_t* file_block_buffer = in_progress_file_buffer + in_progress_bytes_received;
   characteristic.readValue(file_block_buffer, file_block_length);
-
-  // // Convert to char array
-  // byte string_buffer[file_block_length + 1];
-  // for (int i = 0; i < file_block_length; ++i) {
-  //   byte value = file_block_buffer[i];
-  //   if (i < file_block_length) {
-  //     string_buffer[i] = value;
-  //   } else {
-  //     string_buffer[i] = 0;
-  //   }
-  // }
-  // string_buffer[file_block_length] = 0;
   
 // Enable this macro to show the data in the serial log.
 #ifdef ENABLE_LOGGING
@@ -284,11 +257,6 @@ void onFileBlockWritten(BLEDevice central, BLECharacteristic characteristic) {
   string_buffer[file_block_byte_count] = 0;
   Serial.println(String(string_buffer));
 #endif  // ENABLE_LOGGING
-
-  // Serial.println("string_buffer");
-  // Serial.println((char*)string_buffer);
-  // Write to external memory (SRAM)
-  // WriteArray(in_progress_bytes_received, string_buffer, file_block_length);
 
   if (bytes_received_after_block == in_progress_bytes_expected) {
     onFileTransferComplete();
@@ -446,8 +414,6 @@ void setup() {
     while (1);
   }
 
-  
-
 }
 
 char *dtostrf (double val, signed char width, unsigned char prec, char *sout) {
@@ -475,7 +441,7 @@ char *IMU_read (float x, float y, float z, char *sout) {
 }
 
 
-void initializeTFL(unsigned char model[]){
+void initializeTFL(uint8_t model[]){
   // get the TFL representation of the model byte array
   tflModel = tflite::GetModel(model);
   if (tflModel->version() != TFLITE_SCHEMA_VERSION) {
@@ -499,27 +465,27 @@ void onBLEFileReceived(uint8_t* file_data, int file_length) {
   // remain untouched until after a following onFileReceived call has completed, and
   // the BLE module retains ownership of it, so you don't need to deallocate it.
   
- String str_data = (char*)file_data;
- 
- Serial.println(str_data);
- Serial.println(file_length);
-  
-//  initializeTFL(str_data);
+  String code = "";
+  uint32_t new_size = 0;
 
-    // for (int i=0; i < file_length; i++){
-    //   Serial.println(file_data[i]);
-    // }
-  // SetMode(Sequential);
-  // Serial.println("Reading SRAM contents");
-  // byte read_data[file_length];
-  // ReadArray(0, read_data, sizeof(read_data));
+  for (uint32_t i=0; i<file_length; i++) {
+    uint8_t dataByte = file_data[i];
+    code += (char)dataByte;
+    // 32 = space in ASCII code
+    if(dataByte == 32 || i == file_length-1) {
+      file_buffers[new_size] = code.toInt();
+      new_size++;
+      code = "";
+    }
+  }
 
-  // for (int i=0; i<file_length; i++) {
-  //   Serial.print((char)read_data[i]);
-  // }
-    
-  
-  
+  // Assign 0 to remaining indexes (considered as padding, does not affect the model)
+  for (size_t i=new_size; i<file_buffer_length; i++) {
+    file_buffers[i] = 0;
+  }
+
+  // initializeTFL(file_buffers);
+
 }
 
 void runPrediction(float aX, float aY, float aZ, float gX, float gY, float gZ) {
@@ -550,81 +516,42 @@ void runPrediction(float aX, float aY, float aZ, float gX, float gY, float gZ) {
   Serial.println();
 }
 
-/*  Functions to Set the Mode, and Read and Write Data to the Memory Chip ***********/
-
-/*  Set up the memory chip to either single byte or sequence of bytes mode **********/
-void SetMode(char Mode){                        // Select for single or multiple byte transfer
-  digitalWrite(CS, LOW);                        // set SPI slave select LOW;
-  SPI.transfer(WRMR);                           // command to write to mode register
-  SPI.transfer(Mode);                           // set for sequential mode
-  digitalWrite(CS, HIGH);                       // release chip select to finish command
-}
-
-/************ Byte transfer functions ***************************/
-byte ReadByte(uint32_t address) {
-  char read_byte;
-  digitalWrite(CS, LOW);                         // set SPI slave select LOW;
-  SPI.transfer(READ);                            // send READ command to memory chip
-  SPI.transfer((byte)(address >> 16));           // send high byte of address
-  SPI.transfer((byte)(address >> 8));            // send middle byte of address
-  SPI.transfer((byte)address);                   // send low byte of address
-  read_byte = SPI.transfer(0x00);                // read the byte at that address
-  digitalWrite(CS, HIGH);                        // set SPI slave select HIGH;
-  return read_byte;                              // send data back to the calling function
-}
-  
-void WriteByte(uint32_t address, byte data_byte) {
-  digitalWrite(CS, LOW);                         // set SPI slave select LOW;
-  SPI.transfer(WRITE);                           // send WRITE command to the memory chip
-  SPI.transfer((byte)(address >> 16));           // send high byte of address
-  SPI.transfer((byte)(address >> 8));            // send middle byte of address
-  SPI.transfer((byte)address);                   // send low byte of address
-  SPI.transfer(data_byte);                       // write the data to the memory location
-  digitalWrite(CS, HIGH);                        //set SPI slave select HIGH
-}
-
-/*********** Sequential data transfer functions using Arrays ************************/
-// void WriteArray(uint32_t address, byte *data, uint16_t big) {
-//   digitalWrite(CS, LOW);
-
-//   // Send the WRITE command
-//   SPI.transfer(WRITE);
-
-//   SPI.transfer((byte)(address >> 16));
-//   SPI.transfer((byte)(address >> 8));
-//   SPI.transfer((byte)address);
-
-//   // Send the data bytes
-//   for (uint16_t i = 0; i < big; i++) {
-//     SPI.transfer(data[i]);
-//   }
-
-//   digitalWrite(CS, HIGH);
-// }
-
-void WriteArray(uint32_t address, byte *data, uint16_t big) {
-  SetMode(Sequential);                // set to send/receive multiple bytes of data
-  digitalWrite(CS, LOW);                          // start new command sequence
-  SPI.transfer(WRITE);                            // send WRITE command
-  SPI.transfer((byte)(address >> 16));            // send high byte of address
-  SPI.transfer((byte)(address >> 8));             // send middle byte of address
-  SPI.transfer((byte)address);                    // send low byte of address
-  SPI.transfer(data, big);                        // transfer an array of data => needs array name & size
-  digitalWrite(CS, HIGH);                         // set SPI slave select HIGH
-}
-
-
-void ReadArray(uint32_t address, byte *data, uint16_t big){
-  SetMode(Sequential);                         // set to send/receive multiple bytes of data
-  digitalWrite(CS, LOW);                          // start new command sequence
-  SPI.transfer(READ);                             // send READ command
-  SPI.transfer((byte)(address >> 16));            // send high byte of address
-  SPI.transfer((byte)(address >> 8));             // send middle byte of address
-  SPI.transfer((byte)address);                    // send low byte of address
-  for(uint16_t i=0; i<big; i++){
-    data[i] = SPI.transfer(0x00);                 // read the data byte
+void initOldModel(String fileName) {
+  if (SD.exists(fileName)) {
+    modelFile = SD.open(fileName);
+  } else {
+    return;
   }
-  digitalWrite(CS, HIGH);                         // set SPI slave select HIGH
+
+  if (file) {
+    // Convert each value separated with spaces to int using the String.toInt()
+    // then assign it to the file_buffers index
+    String code = "";
+    uint32_t file_length = modelFile.size();
+    uint32_t new_size = 0;
+
+    for (uint32_t i=0; i<file_length; i++) {
+      uint8_t readByte = modelFile.read();
+      code += (char)readByte;
+      // 32 = space in ASCII code
+      if(readByte == 32 || i == file_length-1) {
+        file_buffers[new_size] = code.toInt();
+        new_size++;
+        code = "";
+      }
+    }
+    modelFile.close();
+
+    // Assign 0 to remaining indexes (considered as padding, does not affect the model)
+    for (size_t i=new_size; i<file_buffer_length; i++) {
+      file_buffers[i] = 0;
+    }
+    Serial.println("Done!");
+
+  } else {
+    // if the file didn't open, print an error:
+    Serial.println("error opening xtnctx.h");
+  }
 }
 
 void loop() {
