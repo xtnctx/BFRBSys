@@ -28,7 +28,7 @@ limitations under the License.
 #include <tensorflow/lite/micro/micro_interpreter.h>
 #include <tensorflow/lite/schema/schema_generated.h>
 
-#include <SPI.h>
+#include <SD.h>
 
 File modelFile;
 
@@ -391,14 +391,21 @@ void updateBLEFileTransfer() {
 
 void setup() {
   // Start serial
-  pinMode(CS, OUTPUT);  
-  Serial.println("Started");
-
   Serial.begin(9600);
-  SPI.begin();
-  
+
+  // BLE setup
   setupBLEFileTransfer();
 
+  // SD card setup
+  bool sdBegin = SD.begin(10);
+  while (!sdBegin) {
+    Serial.println("Trying to initialize...");
+    sdBegin = SD.begin(10);
+    delay(500);
+  }
+  Serial.println("SD Card Initialized.");
+
+  // LSM9DS1 setup
   if (!IMU.begin()) {
     Serial.println("Failed to initialize IMU!");
     while (1);
@@ -413,6 +420,9 @@ void setup() {
     Serial.println("Failed to initialize humidity temperature sensor!");
     while (1);
   }
+
+  String previous_file = getPreviousFile();
+  initOldModel(previous_file);
 
 }
 
@@ -480,7 +490,7 @@ void onBLEFileReceived(uint8_t* file_data, int file_length) {
   }
 
   // Assign 0 to remaining indexes (considered as padding, does not affect the model)
-  for (size_t i=new_size; i<file_buffer_length; i++) {
+  for (size_t i=new_size; i<file_maximum_byte_count; i++) {
     file_buffers[i] = 0;
   }
 
@@ -516,6 +526,28 @@ void runPrediction(float aX, float aY, float aZ, float gX, float gY, float gZ) {
   Serial.println();
 }
 
+String getPreviousFile() {
+  modelFile = SD.open("info.h");
+  String file = "";
+    if (modelFile) {
+      while (modelFile.available()) {
+        uint8_t readByte = modelFile.read();
+        // Skip carriage return (CR) and line feed (LF) characters
+        if (readByte != 13 && readByte != 10) {
+          file += (char) readByte;
+        }
+      } 
+    }
+    modelFile.close();
+    return file;
+}
+
+void setPreviousFile(String file_name) {
+  modelFile = SD.open("info.h", FILE_WRITE | O_TRUNC);
+  if (modelFile) modelFile.println(file_name); 
+  modelFile.close();
+}
+
 void initOldModel(String fileName) {
   if (SD.exists(fileName)) {
     modelFile = SD.open(fileName);
@@ -523,12 +555,12 @@ void initOldModel(String fileName) {
     return;
   }
 
-  if (file) {
+  if (modelFile) {
     // Convert each value separated with spaces to int using the String.toInt()
     // then assign it to the file_buffers index
     String code = "";
     uint32_t file_length = modelFile.size();
-    uint32_t new_size = 0;
+    uint32_t new_size = 0; 
 
     for (uint32_t i=0; i<file_length; i++) {
       uint8_t readByte = modelFile.read();
@@ -543,7 +575,7 @@ void initOldModel(String fileName) {
     modelFile.close();
 
     // Assign 0 to remaining indexes (considered as padding, does not affect the model)
-    for (size_t i=new_size; i<file_buffer_length; i++) {
+    for (size_t i=new_size; i<file_maximum_byte_count; i++) {
       file_buffers[i] = 0;
     }
     Serial.println("Done!");
