@@ -3,8 +3,8 @@ uint8_t *loadedModel;
 bool x = true;
 File myFile;
 
-uint8_t file_buffers[120 * 1024];
-size_t file_buffer_length = sizeof(file_buffers) / sizeof(file_buffers[0]);
+constexpr int32_t file_maximum_byte_count = (120 * 1024);
+uint8_t file_buffers[file_maximum_byte_count];
 
 void setup() {
   Serial.begin(9600);
@@ -19,42 +19,56 @@ void setup() {
 
 }
 
+String getPreviousFile() {
+  myFile = SD.open("info.h");
+  String file = "";
+    if (myFile) {
+      while (myFile.available()) {
+        uint8_t readByte = myFile.read();
+        // Skip carriage return (CR) and line feed (LF) characters
+        if (readByte != 13 && readByte != 10) {
+          file += (char) readByte;
+        }
+      } 
+    }
+    myFile.close();
+    return file;
+}
+
+void setCurrentFile(String file_name) {
+  myFile = SD.open("info.h", FILE_WRITE | O_TRUNC);
+  if (myFile) myFile.println(file_name); 
+  myFile.close();
+}
+
 void loop() {
   // put your main code here, to run repeatedly:
   // re-open the file for reading:
   delay(5000);
-  if (x){
-    myFile = SD.open("xtnctx.h");
+  if (x) {
+    String previous_file = getPreviousFile();
+    myFile = SD.open(previous_file);
     if (myFile) {
-      Serial.println("xtnctx.h:");
-      String file = "";
-      String code = "";
-      uint32_t file_length = myFile.size();
-      
-      // read all values
-      while (myFile.available()) {
-        file = myFile.readString();
-      }
-      // close the file:
-      myFile.close();
-      
-      
       // Convert each value separated with spaces to int using the String.toInt()
       // then assign it to the file_buffers index
-
-      
+      String code = "";
+      uint32_t file_length = myFile.size();
       uint32_t new_size = 0; 
 
       for (uint32_t i=0; i<file_length; i++) {
-        code += file[i];
-        if(file[i] == ' ' || i == file_length-1) {
+        uint8_t readByte = myFile.read();
+        code += (char)readByte;
+        // 32 = space in ASCII code
+        if(readByte == 32 || i == file_length-1) {
           file_buffers[new_size] = code.toInt();
           new_size++;
           code = "";
         }
       }
+      myFile.close();
 
-      for (size_t i=new_size; i<file_buffer_length; i++) {
+      // Assign 0 to remaining indexes (considered as padding, does not affect the model)
+      for (size_t i=new_size; i<file_maximum_byte_count; i++) {
         file_buffers[i] = 0;
       }
       Serial.println("Done!");
