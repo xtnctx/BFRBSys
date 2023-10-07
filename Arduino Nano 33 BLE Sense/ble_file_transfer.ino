@@ -421,9 +421,9 @@ void setup() {
     while (1);
   }
 
-  String previous_file = getPreviousFile();
-  initOldModel(previous_file);
-
+  // String previous_file = getPreviousFile();
+  // initOldModel(previous_file);
+  // initializeTFL(file_buffers);
 }
 
 char *dtostrf (double val, signed char width, unsigned char prec, char *sout) {
@@ -468,6 +468,7 @@ void initializeTFL(uint8_t model[]){
   // Get pointers for the model's input and output tensors
   tflInputTensor = tflInterpreter->input(0);
   tflOutputTensor = tflInterpreter->output(0);
+  isModelInitialized = true;
 }
 
 void onBLEFileReceived(uint8_t* file_data, int file_length) {
@@ -494,7 +495,7 @@ void onBLEFileReceived(uint8_t* file_data, int file_length) {
     file_buffers[i] = 0;
   }
 
-  // initializeTFL(file_buffers);
+  initializeTFL(file_buffers);
 
 }
 
@@ -620,7 +621,7 @@ void loop() {
 
 //    Serial.println(proximity);
   }
-
+  // runPrediction(aX, aY, aZ, gX, gY, gZ);
   if (isModelInitialized) runPrediction(aX, aY, aZ, gX, gY, gZ);
 
 
