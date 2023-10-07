@@ -53,6 +53,7 @@ class ThemeProvider extends ChangeNotifier {
 class ConnectionProvider extends ChangeNotifier {
   bool _value = false;
   bool _notifyValue = false;
+  int _mtu = 0;
 
   set setConnected(bool value) {
     _value = value;
@@ -64,8 +65,14 @@ class ConnectionProvider extends ChangeNotifier {
     if (value) notifyListeners();
   }
 
+  void setMTU(int value) {
+    _mtu = value;
+    notifyListeners();
+  }
+
   bool get isConnected => _value;
   bool get isNotified => _notifyValue;
+  int get mtu => _mtu;
 }
 
 class BluetoothValueProvider extends ChangeNotifier {
