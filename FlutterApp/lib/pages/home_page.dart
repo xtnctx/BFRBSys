@@ -38,6 +38,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     List infoMsg = Provider.of<CallbackProvider>(context, listen: true).infoMsg;
+    bool isBLEConnected = Provider.of<ConnectionProvider>(context, listen: true).isConnected;
     msg(infoMsg.first, infoMsg.last);
 
     return Scaffold(
@@ -67,7 +68,7 @@ class _HomePageState extends State<HomePage> {
                 onPressed: () {
                   Provider.of<ConnectionProvider>(context, listen: false).toggle(true);
                 },
-                child: const Text('Connect')),
+                child: Text(isBLEConnected ? 'Connected' : 'Connect')),
             const SizedBox(height: 40),
             Flexible(child: textInfo(info, infoCode)),
           ],
