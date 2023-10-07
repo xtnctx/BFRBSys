@@ -24,13 +24,20 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     isDark = Provider.of<ThemeProvider>(context, listen: true).isDark;
+    int bleMTU = Provider.of<ConnectionProvider>(context, listen: true).mtu;
+
     return Scaffold(
       body: Center(
-        child: Switch(
-          value: isDark,
-          onChanged: (bool newBool) {
-            lightsOff(newBool, withContext: context);
-          },
+        child: Column(
+          children: [
+            Switch(
+              value: isDark,
+              onChanged: (bool newBool) {
+                lightsOff(newBool, withContext: context);
+              },
+            ),
+            Text('$bleMTU'),
+          ],
         ),
       ),
     );
