@@ -103,11 +103,13 @@ BLECharacteristic transfer_status_characteristic(FILE_TRANSFER_UUID("3005"), BLE
 constexpr int32_t error_message_byte_count = 128;
 BLECharacteristic error_message_characteristic(FILE_TRANSFER_UUID("3006"), BLERead | BLENotify, error_message_byte_count);
 
-// Writing serial data to Web BLE
+// Data parameters
 constexpr int32_t data_size_count = 32;
 BLECharacteristic accelerometer_characteristic(FILE_TRANSFER_UUID("3007"), BLERead | BLENotify, data_size_count);
 BLECharacteristic gyroscope_characteristic(FILE_TRANSFER_UUID("3008"), BLERead | BLENotify, data_size_count);
 BLECharacteristic distance_characteristic(FILE_TRANSFER_UUID("3009"), BLERead | BLENotify, data_size_count);
+// BLECharacteristic temperature_characteristic(FILE_TRANSFER_UUID("3010"), BLERead | BLENotify, data_size_count);
+
 
 // Internal globals used for transferring the file.
 uint8_t file_buffers[file_maximum_byte_count];
@@ -119,6 +121,8 @@ uint8_t* in_progress_file_buffer = nullptr;
 int32_t in_progress_bytes_received = 0;
 int32_t in_progress_bytes_expected = 0;
 uint32_t in_progress_checksum = 0;
+
+String file_name = "";
 
 // Training notification
 uint32_t on_training = 0;
@@ -236,7 +240,6 @@ void onFileBlockWritten(BLEDevice central, BLECharacteristic characteristic) {
     return;
   }
 
-  // TODO: Convert received buffer string-to-int then store in file_block_buffer using toInt()
   uint8_t* file_block_buffer = in_progress_file_buffer + in_progress_bytes_received;
   characteristic.readValue(file_block_buffer, file_block_length);
   
@@ -263,8 +266,6 @@ void onFileBlockWritten(BLEDevice central, BLECharacteristic characteristic) {
   } else {
     in_progress_bytes_received = bytes_received_after_block;    
   }
-
-  
 }
 
 void startFileTransfer() {
@@ -421,9 +422,9 @@ void setup() {
     while (1);
   }
 
-  // String previous_file = getPreviousFile();
-  // initOldModel(previous_file);
-  // initializeTFL(file_buffers);
+  String previous_file = getPreviousFile();
+  initOldModel(previous_file);
+  initializeTFL(file_buffers);
 }
 
 char *dtostrf (double val, signed char width, unsigned char prec, char *sout) {
@@ -471,34 +472,6 @@ void initializeTFL(uint8_t model[]){
   isModelInitialized = true;
 }
 
-void onBLEFileReceived(uint8_t* file_data, int file_length) {
-  // Do something here with the file data that you've received. The memory itself will
-  // remain untouched until after a following onFileReceived call has completed, and
-  // the BLE module retains ownership of it, so you don't need to deallocate it.
-  
-  String code = "";
-  uint32_t new_size = 0;
-
-  for (uint32_t i=0; i<file_length; i++) {
-    uint8_t dataByte = file_data[i];
-    code += (char)dataByte;
-    // 32 = space in ASCII code
-    if(dataByte == 32 || i == file_length-1) {
-      file_buffers[new_size] = code.toInt();
-      new_size++;
-      code = "";
-    }
-  }
-
-  // Assign 0 to remaining indexes (considered as padding, does not affect the model)
-  for (size_t i=new_size; i<file_maximum_byte_count; i++) {
-    file_buffers[i] = 0;
-  }
-
-  initializeTFL(file_buffers);
-
-}
-
 void runPrediction(float aX, float aY, float aZ, float gX, float gY, float gZ) {
   // normalize the IMU data between 0 to 1 and store in the model's
   // input tensor
@@ -533,10 +506,7 @@ String getPreviousFile() {
     if (modelFile) {
       while (modelFile.available()) {
         uint8_t readByte = modelFile.read();
-        // Skip carriage return (CR) and line feed (LF) characters
-        if (readByte != 13 && readByte != 10) {
-          file += (char) readByte;
-        }
+        file += (char) readByte;
       } 
     }
     modelFile.close();
@@ -545,7 +515,13 @@ String getPreviousFile() {
 
 void setPreviousFile(String file_name) {
   modelFile = SD.open("info.h", FILE_WRITE | O_TRUNC);
-  if (modelFile) modelFile.println(file_name); 
+  if (modelFile) modelFile.print(file_name); 
+  modelFile.close();
+}
+
+void saveModel(String file_name, uint8_t* model) {
+  modelFile = SD.open(file_name + ".h", FILE_WRITE);
+  if (modelFile) modelFile.print((char*)model;); 
   modelFile.close();
 }
 
@@ -567,9 +543,14 @@ void initOldModel(String fileName) {
       uint8_t readByte = modelFile.read();
       code += (char)readByte;
       // 32 = space in ASCII code
-      if(readByte == 32 || i == file_length-1) {
-        file_buffers[new_size] = code.toInt();
-        new_size++;
+      if (readByte == 32 || i == file_length-1) {
+        code.trim();
+        if (isDigit(code)) {
+          file_buffers[new_size] = code.toInt();
+          new_size++;
+        } else {
+          file_name = code;
+        }
         code = "";
       }
     }
@@ -586,6 +567,44 @@ void initOldModel(String fileName) {
     Serial.println("error opening xtnctx.h");
   }
 }
+
+void onBLEFileReceived(uint8_t* file_data, int file_length) {
+  // Do something here with the file data that you've received. The memory itself will
+  // remain untouched until after a following onFileReceived call has completed, and
+  // the BLE module retains ownership of it, so you don't need to deallocate it.
+  
+  String code = "";
+  uint32_t new_size = 0;
+
+  for (uint32_t i=0; i<file_length; i++) {
+    uint8_t dataByte = file_data[i];
+    code += (char)dataByte;
+    // 32 = space in ASCII code
+    if (dataByte == 32 || i == file_length-1) {
+      code.trim();
+      if (isDigit(code)) {
+        file_buffers[new_size] = code.toInt();
+        new_size++;
+      } else {
+        file_name = code;
+      }
+      code = "";
+    }
+  }
+
+  // Assign 0 to remaining indexes (considered as padding, does not affect the model)
+  for (size_t i=new_size; i<file_maximum_byte_count; i++) {
+    file_buffers[i] = 0;
+  }
+
+  saveModel(file_name, file_buffers)
+  initializeTFL(file_buffers);
+
+}
+
+
+
+
 
 void loop() {
   updateBLEFileTransfer();
@@ -604,9 +623,6 @@ void loop() {
     IMU_read(gX, gY, gZ, gyroReadings);
     gyroscope_characteristic.writeValue(gyroReadings);
 
-
-    
-        
     delay(100); // adds 0.1s for the webBLE to keep up - ( for smooth plotting )
   }
 
