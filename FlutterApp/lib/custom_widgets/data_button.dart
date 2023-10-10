@@ -35,7 +35,7 @@ class DataButton extends StatelessWidget {
                   child: Row(
                     children: [
                       Expanded(
-                        flex: 3,
+                        flex: 1,
                         child: TextButton(
                           style: TextButton.styleFrom(
                               foregroundColor: Colors.white,
@@ -43,30 +43,28 @@ class DataButton extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(20),
                               )),
                           onPressed: onAddOnTarget,
-                          child: Text(
-                            onTargetText ?? 'ADD ON TARGET',
-                            style: const TextStyle(fontSize: 12),
+                          child: const Icon(
+                            Icons.add_outlined,
+                            color: Colors.white,
                           ),
                         ),
                       ),
+                      Text(onTargetText ?? 'ON TARGET'),
                       Expanded(
-                          flex: 1,
-                          child: TextButton(
-                            style: TextButton.styleFrom(
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20),
-                                )),
-                            onPressed: onDeleteOnTarget,
-                            child: Wrap(
-                              children: const [
-                                Icon(
-                                  Icons.delete_outline,
-                                  color: Colors.red,
-                                ),
-                              ],
-                            ),
-                          )),
+                        flex: 1,
+                        child: TextButton(
+                          style: TextButton.styleFrom(
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              )),
+                          onPressed: onDeleteOnTarget,
+                          child: const Icon(
+                            Icons.delete_outline,
+                            color: Colors.red,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -81,7 +79,7 @@ class DataButton extends StatelessWidget {
                   child: Row(
                     children: [
                       Expanded(
-                        flex: 3,
+                        flex: 1,
                         child: TextButton(
                           style: TextButton.styleFrom(
                               foregroundColor: Colors.white,
@@ -89,30 +87,28 @@ class DataButton extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(20),
                               )),
                           onPressed: onAddOffTarget,
-                          child: Text(
-                            offTargetText ?? 'ADD OFF TARGET',
-                            style: const TextStyle(fontSize: 12),
+                          child: const Icon(
+                            Icons.add_outlined,
+                            color: Colors.white,
                           ),
                         ),
                       ),
+                      Text(offTargetText ?? 'OFF TARGET'),
                       Expanded(
-                          flex: 1,
-                          child: TextButton(
-                            style: TextButton.styleFrom(
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20),
-                                )),
-                            onPressed: onDeleteOffTarget,
-                            child: Wrap(
-                              children: const [
-                                Icon(
-                                  Icons.delete_outline,
-                                  color: Colors.red,
-                                ),
-                              ],
-                            ),
-                          )),
+                        flex: 1,
+                        child: TextButton(
+                          style: TextButton.styleFrom(
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              )),
+                          onPressed: onDeleteOffTarget,
+                          child: const Icon(
+                            Icons.delete_outline,
+                            color: Colors.red,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
