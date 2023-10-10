@@ -150,7 +150,7 @@ class _MonitoringPageState extends State<MonitoringPage> {
           title: ChartTitle(
             text: 'Accelerometer',
             textStyle: TextStyle(
-              fontSize: 12,
+              fontSize: 10,
               color: Theme.of(context).colorScheme.inverseSurface.withAlpha(125),
             ),
           ),
@@ -214,7 +214,7 @@ class _MonitoringPageState extends State<MonitoringPage> {
           title: ChartTitle(
             text: 'Gyroscope',
             textStyle: TextStyle(
-              fontSize: 12,
+              fontSize: 10,
               color: Theme.of(context).colorScheme.inverseSurface.withAlpha(125),
             ),
           ),
