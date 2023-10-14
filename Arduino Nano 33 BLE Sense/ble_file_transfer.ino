@@ -451,6 +451,29 @@ char *IMU_read (float x, float y, float z, char *sout) {
   
 }
 
+bool isNumeric(String str) {
+    unsigned int stringLength = str.length();
+    if (stringLength == 0) {
+        return false;
+    }
+ 
+    bool seenDecimal = false;
+    for(unsigned int i=0; i<stringLength; ++i) {
+        if (isDigit(str.charAt(i))) {
+            continue;
+        }
+ 
+        if (str.charAt(i) == '.') {
+            if (seenDecimal) {
+                return false;
+            }
+            seenDecimal = true;
+            continue;
+        }
+        return false;
+    }
+    return true;
+}
 
 void initializeTFL(uint8_t model[]){
   // get the TFL representation of the model byte array
@@ -521,7 +544,7 @@ void setPreviousFile(String file_name) {
 
 void saveModel(String file_name, uint8_t* model) {
   modelFile = SD.open(file_name + ".h", FILE_WRITE);
-  if (modelFile) modelFile.print((char*)model;); 
+  if (modelFile) modelFile.print((char*)model); 
   modelFile.close();
 }
 
@@ -545,7 +568,7 @@ void initOldModel(String fileName) {
       // 32 = space in ASCII code
       if (readByte == 32 || i == file_length-1) {
         code.trim();
-        if (isDigit(code)) {
+        if (isNumeric(code)) {
           file_buffers[new_size] = code.toInt();
           new_size++;
         } else {
@@ -582,7 +605,7 @@ void onBLEFileReceived(uint8_t* file_data, int file_length) {
     // 32 = space in ASCII code
     if (dataByte == 32 || i == file_length-1) {
       code.trim();
-      if (isDigit(code)) {
+      if (isNumeric(code)) {
         file_buffers[new_size] = code.toInt();
         new_size++;
       } else {
@@ -597,7 +620,7 @@ void onBLEFileReceived(uint8_t* file_data, int file_length) {
     file_buffers[i] = 0;
   }
 
-  saveModel(file_name, file_buffers)
+  saveModel(file_name, file_buffers);
   initializeTFL(file_buffers);
 
 }
