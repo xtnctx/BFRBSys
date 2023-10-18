@@ -27,6 +27,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late Animation<double> thirdRippleWidthAnimation;
   late Animation<double> centerCircleRadiusAnimation;
 
+  bool isConnecting = false;
+
   @override
   void initState() {
     firstRippleController = AnimationController(
@@ -238,11 +240,35 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     });
   }
 
+  CircularProgressIndicator progressAnimation = const CircularProgressIndicator();
+
   @override
   Widget build(BuildContext context) {
     List infoMsg = Provider.of<CallbackProvider>(context, listen: true).infoMsg;
     bool isBLEConnected = Provider.of<ConnectionProvider>(context, listen: true).isConnected;
     msg(infoMsg.first, infoMsg.last);
+
+    if (isBLEConnected) {
+      setState(() {
+        isConnecting = false;
+      });
+    }
+
+    CustomPaint connectAnimation = CustomPaint(
+      painter: MyPainter(
+        firstRippleRadiusAnimation.value,
+        firstRippleOpacityAnimation.value,
+        firstRippleWidthAnimation.value,
+        secondRippleRadiusAnimation.value,
+        secondRippleOpacityAnimation.value,
+        secondRippleWidthAnimation.value,
+        thirdRippleRadiusAnimation.value,
+        thirdRippleOpacityAnimation.value,
+        thirdRippleWidthAnimation.value,
+        centerCircleRadiusAnimation.value,
+      ),
+      child: Container(),
+    );
 
     return Scaffold(
       body: Center(
@@ -250,55 +276,44 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           splashColor: Colors.transparent,
           highlightColor: Colors.transparent,
           onTap: () {
-            print('clicked123');
+            // Provider.of<ConnectionProvider>(context, listen: false).toggle(true);
+            setState(() {
+              isConnecting = true;
+            });
           },
-          child: CustomPaint(
-            painter: MyPainter(
-              firstRippleRadiusAnimation.value,
-              firstRippleOpacityAnimation.value,
-              firstRippleWidthAnimation.value,
-              secondRippleRadiusAnimation.value,
-              secondRippleOpacityAnimation.value,
-              secondRippleWidthAnimation.value,
-              thirdRippleRadiusAnimation.value,
-              thirdRippleOpacityAnimation.value,
-              thirdRippleWidthAnimation.value,
-              centerCircleRadiusAnimation.value,
-            ),
-            child: Container(),
-          ),
+          child: isConnecting ? progressAnimation : connectAnimation,
         ),
-        // child: Column(
-        //   crossAxisAlignment: CrossAxisAlignment.center,
-        //   mainAxisAlignment: MainAxisAlignment.center,
-        //   children: [
-        //     Padding(
-        //       padding: const EdgeInsets.symmetric(horizontal: 20.0),
-        //       child: ListTile(
-        //         contentPadding: EdgeInsets.zero,
-        //         title: Text(
-        //           'BFRBSys',
-        //           textAlign: TextAlign.center,
-        //           style: GoogleFonts.bebasNeue(fontSize: 50),
-        //         ),
-        //         subtitle: Text(
-        //           'A wrist-worn device and monitoring system for a person with Body-focused Repetitive Behavior',
-        //           textAlign: TextAlign.center,
-        //           style: GoogleFonts.bebasNeue(fontSize: 20),
-        //         ),
-        //       ),
-        //     ),
-        //     const SizedBox(height: 40),
-        //     ElevatedButton(
-        //         onPressed: () {
-        //           Provider.of<ConnectionProvider>(context, listen: false).toggle(true);
-        //         },
-        //         child: Text(isBLEConnected ? 'Connected' : 'Connect')),
-        //     const SizedBox(height: 40),
-        //     Flexible(child: textInfo(info, infoCode)),
-        //   ],
-        // ),
       ),
+      // child: Column(
+      //   crossAxisAlignment: CrossAxisAlignment.center,
+      //   mainAxisAlignment: MainAxisAlignment.center,
+      //   children: [
+      //     Padding(
+      //       padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      //       child: ListTile(
+      //         contentPadding: EdgeInsets.zero,
+      //         title: Text(
+      //           'BFRBSys',
+      //           textAlign: TextAlign.center,
+      //           style: GoogleFonts.bebasNeue(fontSize: 50),
+      //         ),
+      //         subtitle: Text(
+      //           'A wrist-worn device and monitoring system for a person with Body-focused Repetitive Behavior',
+      //           textAlign: TextAlign.center,
+      //           style: GoogleFonts.bebasNeue(fontSize: 20),
+      //         ),
+      //       ),
+      //     ),
+      //     const SizedBox(height: 40),
+      //     ElevatedButton(
+      //         onPressed: () {
+      //           Provider.of<ConnectionProvider>(context, listen: false).toggle(true);
+      //         },
+      //         child: Text(isBLEConnected ? 'Connected' : 'Connect')),
+      //     const SizedBox(height: 40),
+      //     Flexible(child: textInfo(info, infoCode)),
+      //   ],
+      // ),
     );
   }
 }
@@ -316,20 +331,21 @@ class MyPainter extends CustomPainter {
   final double centerCircleRadius;
 
   MyPainter(
-      this.firstRippleRadius,
-      this.firstRippleOpacity,
-      this.firstRippleStrokeWidth,
-      this.secondRippleRadius,
-      this.secondRippleOpacity,
-      this.secondRippleStrokeWidth,
-      this.thirdRippleRadius,
-      this.thirdRippleOpacity,
-      this.thirdRippleStrokeWidth,
-      this.centerCircleRadius);
+    this.firstRippleRadius,
+    this.firstRippleOpacity,
+    this.firstRippleStrokeWidth,
+    this.secondRippleRadius,
+    this.secondRippleOpacity,
+    this.secondRippleStrokeWidth,
+    this.thirdRippleRadius,
+    this.thirdRippleOpacity,
+    this.thirdRippleStrokeWidth,
+    this.centerCircleRadius,
+  );
 
   @override
   void paint(Canvas canvas, Size size) {
-    Color myColor = Color(0xff653ff4);
+    Color myColor = const Color(0xff653ff4);
 
     Paint firstPaint = Paint();
     firstPaint.color = myColor.withOpacity(firstRippleOpacity);
