@@ -1,5 +1,6 @@
+import 'dart:math';
+
 import 'package:bfrbsys/custom_widgets/data_button.dart';
-import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:convert' show json, utf8;
@@ -45,11 +46,12 @@ class _PageHandlerState extends State<PageHandler> {
   GlobalKey<ScaffoldState>? scaffoldKey;
 
   int currentPage = 0;
+  int _selectedIndex = 0;
 
   late Future auth;
 
   late dynamic apiResponse;
-
+  int x = min(1, 2);
   @override
   void initState() {
     super.initState();
@@ -75,7 +77,10 @@ class _PageHandlerState extends State<PageHandler> {
         margin: EdgeInsets.zero,
         padding: EdgeInsets.zero,
         decoration: const BoxDecoration(
-          image: DecorationImage(fit: BoxFit.cover, image: AssetImage('images/Sakura_Nene_CPP.jpg')),
+          image: DecorationImage(
+            fit: BoxFit.cover,
+            image: AssetImage('images/ekusuuuu-calibaaaaaaaaaaaaa.png'),
+          ),
         ),
         child: Stack(children: const [
           Positioned(
@@ -164,6 +169,12 @@ class _PageHandlerState extends State<PageHandler> {
     );
   }
 
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
   Widget _allowUserWidget() {
     bool isConnected = Provider.of<ConnectionProvider>(context, listen: true).isConnected;
 
@@ -248,6 +259,24 @@ class _PageHandlerState extends State<PageHandler> {
         index: currentPage,
         children: pages!,
       ),
+      bottomNavigationBar: BottomNavigationBar(
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.bluetooth),
+            label: 'Connect',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.watch),
+            label: 'Device',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.analytics),
+            label: 'My Data',
+          ),
+        ],
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+      ),
       drawerEdgeDragWidth: MediaQuery.of(context).size.width / 40,
       drawerScrimColor: Theme.of(context).colorScheme.background.withAlpha(125),
       drawer: Drawer(
@@ -297,7 +326,7 @@ class _PageHandlerState extends State<PageHandler> {
 
   @override
   Widget build(BuildContext context) {
-    // return _allowUserWidget();
+    return _allowUserWidget();
     try {
       // New user or device
       if (apiResponse == false) {
