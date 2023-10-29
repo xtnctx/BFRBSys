@@ -46,7 +46,6 @@ class _PageHandlerState extends State<PageHandler> {
   GlobalKey<ScaffoldState>? scaffoldKey;
 
   int currentPage = 0;
-  int _selectedIndex = 0;
 
   late Future auth;
 
@@ -171,7 +170,7 @@ class _PageHandlerState extends State<PageHandler> {
 
   void _onItemTapped(int index) {
     setState(() {
-      _selectedIndex = index;
+      currentPage = index;
     });
   }
 
@@ -274,7 +273,7 @@ class _PageHandlerState extends State<PageHandler> {
             label: 'My Data',
           ),
         ],
-        currentIndex: _selectedIndex,
+        currentIndex: currentPage,
         onTap: _onItemTapped,
       ),
       drawerEdgeDragWidth: MediaQuery.of(context).size.width / 40,
