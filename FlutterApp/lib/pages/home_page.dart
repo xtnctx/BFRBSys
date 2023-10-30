@@ -4,8 +4,9 @@ class HomePage extends StatefulWidget {
   final Icon navBarIcon = const Icon(Icons.home_outlined);
   final Icon navBarIconSelected = const Icon(Icons.home);
   final String navBarTitle = 'Home';
+  final BluetoothBuilder? ble;
 
-  const HomePage({super.key});
+  const HomePage({super.key, this.ble});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -27,6 +28,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late Animation<double> thirdRippleWidthAnimation;
   late Animation<double> centerCircleRadiusAnimation;
 
+  BluetoothBuilder? ble;
   bool isConnecting = false;
 
   @override
@@ -281,7 +283,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               isConnecting = true;
             });
           },
-          child: isConnecting ? progressAnimation : connectAnimation,
+          // child: isConnecting ? progressAnimation : connectAnimation,
+          child: const Text('Hello World'),
         ),
       ),
       // child: Column(
