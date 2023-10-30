@@ -6,15 +6,16 @@ class MonitoringPage extends StatefulWidget {
   final Icon navBarIcon = const Icon(Icons.monitor_heart_outlined);
   final Icon navBarIconSelected = const Icon(Icons.monitor_heart);
   final String navBarTitle = 'Monitoring App';
+  final BluetoothBuilder? ble;
 
-  const MonitoringPage({super.key});
+  const MonitoringPage({super.key, this.ble});
 
   @override
   State<MonitoringPage> createState() => _MonitoringPageState();
 }
 
 class _MonitoringPageState extends State<MonitoringPage> {
-  BluetoothBuilder ble = BluetoothBuilder();
+  BluetoothBuilder? ble;
   bool isBuildingModel = false;
   String info = '>_';
   int infoCode = 0;
@@ -93,6 +94,7 @@ class _MonitoringPageState extends State<MonitoringPage> {
   @override
   void initState() {
     super.initState();
+    ble = widget.ble;
     count = 49;
     chartAccData = <_ChartData>[];
     chartGyroData = <_ChartData>[];
@@ -100,7 +102,7 @@ class _MonitoringPageState extends State<MonitoringPage> {
   }
 
   void listenCallback() {
-    ble.callbackController.stream.asBroadcastStream().listen((List value) {
+    ble!.callbackController.stream.asBroadcastStream().listen((List value) {
       // value = [String callbackMessage, double sendingProgress ,int statusCode]
       msg(value.first, value.last);
       Provider.of<CallbackProvider>(context, listen: false).inform(value.first, value.last);
@@ -128,11 +130,11 @@ class _MonitoringPageState extends State<MonitoringPage> {
       String parsedData = String.fromCharCodes(readData);
 
       if (readData.isNotEmpty && readData != []) {
-        if (characteristic.uuid.toString() == ble.ACC_DATA_UUID) {
+        if (characteristic.uuid.toString() == ble!.ACC_DATA_UUID) {
           accData = parsedData;
-        } else if (characteristic.uuid.toString() == ble.GYRO_DATA_UUID) {
+        } else if (characteristic.uuid.toString() == ble!.GYRO_DATA_UUID) {
           gyroData = parsedData;
-        } else if (characteristic.uuid.toString() == ble.DIST_DATA_UUID) {
+        } else if (characteristic.uuid.toString() == ble!.DIST_DATA_UUID) {
           distData = parsedData;
         }
       }
@@ -269,27 +271,27 @@ class _MonitoringPageState extends State<MonitoringPage> {
   }
 
   void _connectFromDevice() {
-    ble.connect();
+    ble!.connect();
 
-    subscription = ble.discoverController.stream.asBroadcastStream().listen(null);
+    subscription = ble!.discoverController.stream.asBroadcastStream().listen(null);
     subscription!.onData((value) {
       if (value) {
-        _readData(ble.accDataCharacteristic);
-        _readData(ble.gyroDataCharacteristic);
-        _readData(ble.distDataCharacteristic);
+        _readData(ble!.accDataCharacteristic);
+        _readData(ble!.gyroDataCharacteristic);
+        _readData(ble!.distDataCharacteristic);
         timer = Timer.periodic(const Duration(milliseconds: 100), _updateDataSource);
         setState(() {
           setConnected(context, true);
         });
 
         // Listen from sudden disconnection
-        deviceState = ble.device!.connectionState.listen((state) async {
+        deviceState = ble!.device!.connectionState.listen((state) async {
           if (state == BluetoothConnectionState.disconnected) {
             _disconnectFromDevice();
           }
         });
 
-        final mtuSubscription = ble.device!.mtu.listen((int mtu) {
+        final mtuSubscription = ble!.device!.mtu.listen((int mtu) {
           // iOS: initial value is always 23, but iOS will quickly negotiate a higher value
           // android: you must request higher mtu yourself
           Provider.of<ConnectionProvider>(context, listen: false).setMTU(mtu);
@@ -301,7 +303,7 @@ class _MonitoringPageState extends State<MonitoringPage> {
   }
 
   void _disconnectFromDevice() {
-    ble.disconnect();
+    ble!.disconnect();
     deviceState!.cancel();
     timer!.cancel();
     setState(() {
