@@ -42,6 +42,7 @@ class PageHandler extends StatefulWidget {
 }
 
 class _PageHandlerState extends State<PageHandler> {
+  BluetoothBuilder ble = BluetoothBuilder();
   List<Widget>? pages;
   GlobalKey<ScaffoldState>? scaffoldKey;
 
@@ -56,12 +57,12 @@ class _PageHandlerState extends State<PageHandler> {
     super.initState();
     scaffoldKey = widget.scaffoldKey;
 
-    pages = const [
-      HomePage(),
-      MonitoringPage(),
-      // ResultsPage(),
-      ProfilePage(),
-      SettingsPage(),
+    pages = [
+      HomePage(ble: ble),
+      MonitoringPage(ble: ble),
+      ResultsPage(ble: ble),
+      const ProfilePage(),
+      const SettingsPage(),
     ];
     auth = HttpService().authenticate();
     auth.then((value) {
