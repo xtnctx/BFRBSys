@@ -36,6 +36,21 @@ class _ResultsPageState extends State<ResultsPage> {
   int infoCode = 0;
   double sendingProgress = 0.0;
 
+  final ScrollController _controller = ScrollController();
+
+  void refreshModels() {
+    setState(() {
+      dir = '';
+      fileBundle = [];
+      modelItems = [];
+      modelContents = '';
+      selectedModel = '';
+      _selectedIndex = 0;
+      _getListofData();
+    });
+    _controller.jumpTo(_controller.position.minScrollExtent);
+  }
+
   _getListofData() async {
     dir = await AppStorage.getDir();
     setState(() {
@@ -127,7 +142,6 @@ class _ResultsPageState extends State<ResultsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(backgroundColor: Colors.transparent),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -362,17 +376,28 @@ class _ResultsPageState extends State<ResultsPage> {
             padding: EdgeInsets.symmetric(horizontal: 10.0),
             child: Divider(),
           ),
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 10.0),
-            child: Text(
-              'Models',
-              textAlign: TextAlign.left,
-              style: GoogleFonts.bebasNeue(fontSize: 20),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10.0),
+            child: ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(
+                'Models',
+                textAlign: TextAlign.left,
+                style: GoogleFonts.bebasNeue(fontSize: 20),
+              ),
+              trailing: IconButton(
+                iconSize: 30,
+                onPressed: () {
+                  refreshModels();
+                },
+                icon: const Icon(Icons.refresh),
+              ),
             ),
           ),
           const SizedBox(height: 5),
           Expanded(
             child: ListView.builder(
+              controller: _controller,
               itemCount: modelItems.length,
               itemBuilder: (BuildContext context, int index) {
                 return Card(
