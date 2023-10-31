@@ -527,6 +527,42 @@ class _MonitoringPageState extends State<MonitoringPage> {
               ],
             ),
           ),
+          Center(
+            child: Container(
+              width: 150,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.tertiaryContainer,
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: TextButton(
+                style: TextButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    )),
+                onPressed: !isBuildingModel
+                    ? () {
+                        // openBuildForm();
+
+                        final snackBar = SnackBar(
+                          content: const Text('Build success, ready to send!'),
+                          action: SnackBarAction(
+                            label: 'Okay',
+                            onPressed: () {
+                              // Some code to undo the change.
+                            },
+                          ),
+                        );
+
+                        // Find the ScaffoldMessenger in the widget tree
+                        // and use it to show a SnackBar.
+                        ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                      }
+                    : () {},
+                child: const Text('BUILD'),
+              ),
+            ),
+          )
         ],
       ),
       bottomNavigationBar: ClipRRect(
