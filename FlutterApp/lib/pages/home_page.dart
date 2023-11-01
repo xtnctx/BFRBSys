@@ -278,13 +278,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           splashColor: Colors.transparent,
           highlightColor: Colors.transparent,
           onTap: () {
-            // Provider.of<ConnectionProvider>(context, listen: false).toggle(true);
+            Provider.of<ConnectionProvider>(context, listen: false).toggle(true);
             setState(() {
               isConnecting = true;
             });
           },
-          // child: isConnecting ? progressAnimation : connectAnimation,
-          child: const Text('Hello World'),
+          child: isConnecting ? progressAnimation : connectAnimation,
+          // child: const Text('Hello World'),
         ),
       ),
       // child: Column(
