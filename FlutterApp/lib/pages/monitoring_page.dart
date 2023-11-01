@@ -530,6 +530,7 @@ class _MonitoringPageState extends State<MonitoringPage> {
           Center(
             child: Container(
               width: 150,
+              margin: const EdgeInsets.only(bottom: 25),
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.tertiaryContainer,
                 borderRadius: BorderRadius.circular(15),
@@ -544,117 +545,34 @@ class _MonitoringPageState extends State<MonitoringPage> {
                     ? () {
                         // openBuildForm();
 
-                        final snackBar = SnackBar(
-                          content: const Text('Build success, ready to send!'),
-                          action: SnackBarAction(
-                            label: 'Okay',
-                            onPressed: () {
-                              // Some code to undo the change.
-                            },
-                          ),
-                        );
+                        // final snackBar = SnackBar(
+                        //   content: const Text('Build success, ready to send!'),
+                        //   action: SnackBarAction(
+                        //     label: 'Okay',
+                        //     onPressed: () {
+                        //       // Some code to undo the change.
+                        //     },
+                        //   ),
+                        // );
 
-                        // Find the ScaffoldMessenger in the widget tree
-                        // and use it to show a SnackBar.
-                        ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                        // // Find the ScaffoldMessenger in the widget tree
+                        // // and use it to show a SnackBar.
+                        // ScaffoldMessenger.of(context).showSnackBar(snackBar);
                       }
                     : () {},
                 child: const Text('BUILD'),
               ),
             ),
+          ),
+          Container(
+            margin: const EdgeInsets.only(left: 10, right: 10),
+            child: Align(
+              alignment: Alignment.bottomLeft,
+              child: textInfo(info, infoCode),
+            ),
           )
         ],
       ),
-      bottomNavigationBar: ClipRRect(
-        borderRadius: const BorderRadius.only(topLeft: Radius.circular(20)),
-        child: BottomAppBar(
-          color: Theme.of(context).colorScheme.primaryContainer,
-          shape: const CircularNotchedRectangle(),
-          notchMargin: 6,
-          child: Padding(
-            padding: const EdgeInsets.all(14.0),
-            child: ClipRRect(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  Flexible(child: textInfo(info, infoCode)),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-      floatingActionButton: SpeedDial(
-        closeManually: true,
-        openCloseDial: isDialOpen,
-        direction: SpeedDialDirection.left,
-        spaceBetweenChildren: 10,
-        icon: Icons.handyman,
-        activeIcon: Icons.close,
-        animationDuration: const Duration(milliseconds: 150),
-        children: [
-          SpeedDialChild(
-            child: !connectionValue(context)
-                ? const Icon(Icons.bluetooth_connected)
-                : const Icon(Icons.bluetooth_disabled),
-            onTap: !connectionValue(context)
-                ? () {
-                    isDialOpen.value = false;
-                    _connectFromDevice();
-                  }
-                : () {
-                    msg('Hold to disconnect', 1);
-                  },
-            onLongPress: () {
-              if (connectionValue(context)) {
-                isDialOpen.value = false;
-                _disconnectFromDevice();
-              }
-            },
-          ),
-          // SpeedDialChild(
-          //   child: const Icon(Icons.send),
-          //   onTap: () {
-          //     isDialOpen.value = false;
-          //     String dataStr =
-          //         "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.!!!!";
-          //     var fileContents = utf8.encode(dataStr) as Uint8List;
-          //     print("fileContents length is ${fileContents.length}");
-          //     ble.transferFile(fileContents);
-          //   },
-          // ),
-          // SpeedDialChild(
-          //   child: const Icon(Icons.cancel),
-          //   onTap: () {
-          //     isDialOpen.value = false;
-          //     // msg('Trying to cancel transfer ...');
-          //     // ble.cancelTransfer();
-          //     // print(ble.transferStatusCharacteristic!.isNotifying);
-          //   },
-          // ),
-          SpeedDialChild(
-            child: const Icon(Icons.fact_check),
-            onTap: () {
-              isDialOpen.value = false;
-
-              // Navigator.of(context).push(MaterialPageRoute(builder: (context) => const ResultsPage()));
-              viewResults(ble);
-            },
-          ),
-          SpeedDialChild(
-            child: const Icon(Icons.build),
-            onTap: !isBuildingModel
-                ? () {
-                    isDialOpen.value = false;
-                    openBuildForm();
-                  }
-                : () {
-                    isDialOpen.value = false;
-                  },
-          ),
-        ],
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
     );
   }
 
