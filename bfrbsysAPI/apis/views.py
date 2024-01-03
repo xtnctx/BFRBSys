@@ -16,6 +16,7 @@ from rest_framework.authtoken.models import Token
 from .utils import *
 from django.conf import settings
 import os
+import json
 
 from knox.models import AuthToken
 from knox.views import LoginView as KnoxLoginView
@@ -23,6 +24,7 @@ from knox.views import LoginView as KnoxLoginView
 from rest_framework.permissions import AllowAny
 from rest_framework.authtoken.serializers import AuthTokenSerializer
 from django.contrib.auth import login
+from django.forms.models import model_to_dict
 
 from django.core.files.base import ContentFile
 from .train import BFRBNeuralNetwork
@@ -162,10 +164,10 @@ class NeuralNetworkBuilder(APIView):
             'owner': request.user.id,
             'model_name': named_model,
             'file': ContentFile(bytes(model_to_databytes(tflite_model), 'utf-8'), 
-                                name=owner_file + '.h'
+                                name=owner_file + '_model.h'
                                 ),
             'callback_file': ContentFile(bytes(callback_string(history), 'utf-8'), 
-                                name=owner_file + '.csv'),
+                                name=owner_file + '_callback.csv'),
         }
 
         serializer = TrainedModelSerializer(data=data)
@@ -253,7 +255,6 @@ def get_all_user_models(request):
     # Files (local path) to put in the .zip
     # FIXME: Change this (get paths from DB etc)
     userTrainedModels = TrainedModel.objects.filter(owner=request.user)
-    filenames =  [f'./media/{model.file.name}' for model in userTrainedModels]
 
     # Folder name in ZIP archive which contains the above files
     # E.g [thearchive.zip]/somefiles/file2.txt
@@ -267,13 +268,29 @@ def get_all_user_models(request):
     # The zip compressor
     zf = zipfile.ZipFile(s, "w")
 
-    for fpath in filenames:
+    for model in userTrainedModels:
+        # for fpath in filenames:
         # Calculate path for file in zip
+        fpath = f'./media/{model.file.name}'
         fdir, fname = os.path.split(fpath)
-        zip_path = os.path.join(zip_subdir, fname)
-
-        # Add file, at correct path
+        # TrainedModels
+        zip_path = os.path.join(zip_subdir, f'{model.model_name}/{fname}')
         zf.write(fpath, zip_path)
+
+        # Callbacks
+        fpath = f'./media/{model.callback_file.name}'
+        fdir, fname = os.path.split(fpath)
+        zip_path = os.path.join(zip_subdir, f'{model.model_name}/{fname}')
+        zf.write(fpath, zip_path)
+
+        # Info
+        data = model_to_dict(model)
+        data['file'] = str(data['file'])
+        data['callback_file'] = str(data['callback_file'])
+        json_data = json.dumps(data, indent=4)
+        zip_path = os.path.join(zip_subdir, f'{model.model_name}/{model.model_name}_info.json')
+        zf.writestr(zip_path, json_data)
+        s.seek(0)
 
     # Must close zip for all contents to be written
     zf.close()
