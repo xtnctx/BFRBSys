@@ -1,4 +1,4 @@
-import 'dart:math';
+// ignore_for_file: dead_code
 
 import 'package:bfrbsys/custom_widgets/data_button.dart';
 import 'package:flutter/material.dart';
@@ -14,18 +14,17 @@ import 'package:bfrbsys/api/http/http_service.dart';
 import 'package:bfrbsys/api/models.dart';
 
 import 'package:bfrbsys/custom_widgets/extra_widget.dart';
-import 'package:bfrbsys/custom_widgets/tooltip.dart';
 
 import 'package:csv/csv.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
-import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:bfrbsys/api/bluetooth_builder.dart';
 import 'dart:io' as io;
 
+part 'dashboard.dart';
 part 'home_page.dart';
 part 'monitoring_page.dart';
 part 'profile_page.dart';
@@ -57,6 +56,7 @@ class _PageHandlerState extends State<PageHandler> {
     scaffoldKey = widget.scaffoldKey;
 
     pages = [
+      const Dashboard(),
       HomePage(ble: ble),
       MonitoringPage(ble: ble),
       ResultsPage(ble: ble),
