@@ -32,6 +32,11 @@ limitations under the License.
 
 File modelFile;
 
+int buzzerPin = 8;
+int buzzTime = 200;
+
+int vibrationPin = 6;
+
 // global variables used for TensorFlow Lite (Micro)
 // pull in all the TFLM ops, you can remove this line and
 // only pull in the TFLM ops you need, if would like to reduce
@@ -53,6 +58,7 @@ const char* HOTSPOT[] = {
   "off_target",
   "on_target"
 };
+double on_target_threshold = 0.8;
 
 bool isModelInitialized = false;
 
@@ -109,6 +115,7 @@ BLECharacteristic accelerometer_characteristic(FILE_TRANSFER_UUID("3007"), BLERe
 BLECharacteristic gyroscope_characteristic(FILE_TRANSFER_UUID("3008"), BLERead | BLENotify, data_size_count);
 BLECharacteristic distance_characteristic(FILE_TRANSFER_UUID("3009"), BLERead | BLENotify, data_size_count);
 // BLECharacteristic temperature_characteristic(FILE_TRANSFER_UUID("3010"), BLERead | BLENotify, data_size_count);
+
 
 
 // Internal globals used for transferring the file.
@@ -389,6 +396,25 @@ void updateBLEFileTransfer() {
 
 }  // namespace
 
+void buzz(bool enable) {
+  if (enable) {
+    digitalWrite(buzzerPin, HIGH);
+    delayMicroseconds(buzzTime);
+    digitalWrite(buzzerPin, LOW);
+    delayMicroseconds(buzzTime);
+  } else {
+    digitalWrite(buzzerPin, LOW);
+  }
+  
+}
+
+void vibrate(bool enable) {
+  if (enable) {
+    digitalWrite(vibrationPin, HIGH);
+  } else {
+    digitalWrite(vibrationPin, LOW);
+  }
+}
 
 void setup() {
   // Start serial
@@ -421,6 +447,9 @@ void setup() {
     Serial.println("Failed to initialize humidity temperature sensor!");
     while (1);
   }
+
+  pinMode(buzzerPin, OUTPUT);
+  pinMode(vibrationPin, OUTPUT);
 
   String previous_file = getPreviousFile();
   initOldModel(previous_file);
@@ -514,6 +543,15 @@ void runPrediction(float aX, float aY, float aZ, float gX, float gY, float gZ) {
     return;
   }
 
+  double onTargetPredictValue = tflOutputTensor->data.f[1];
+  if (onTargetPredictValue > on_target_threshold) {
+      buzz(true);
+      vibrate(true);
+  } else {
+      buzz(false);
+      vibrate(false);
+  }
+
   // Loop through the output tensor values from the model
   for (int i = 0; i < NUM_HOTSPOT; i++) {
     Serial.print(HOTSPOT[i]);
@@ -596,32 +634,55 @@ void onBLEFileReceived(uint8_t* file_data, int file_length) {
   // remain untouched until after a following onFileReceived call has completed, and
   // the BLE module retains ownership of it, so you don't need to deallocate it.
   
-  String code = "";
-  uint32_t new_size = 0;
+  // UPDATE REQUEST
+  // xupdaterequestx-all
+  // xupdaterequestx-01/22/2024 - start
+  char value[] = "xupdaterequestx-all";
+  String xupdaterequestx = "";
+  
+  for (uint32_t i=0; i<26; i++) {
+    xupdaterequestx += value[i];
+  }
 
-  for (uint32_t i=0; i<file_length; i++) {
-    uint8_t dataByte = file_data[i];
-    code += (char)dataByte;
-    // 32 = space in ASCII code
-    if (dataByte == 32 || i == file_length-1) {
-      code.trim();
-      if (isNumeric(code)) {
-        file_buffers[new_size] = code.toInt();
-        new_size++;
-      } else {
-        file_name = code;
+  int index = xupdaterequestx.indexOf("xupdaterequestx");
+
+  if (index != -1) {
+    Serial.println("Update is requested");
+    int delimiterIndex = value.indexOf("-");
+    String request = value.substring(delimiterIndex + 1);
+    Serial.println(request);
+  } else {
+    String code = "";
+    uint32_t new_size = 0;
+
+    for (uint32_t i=0; i<file_length; i++) {
+      uint8_t dataByte = file_data[i];
+      code += (char)dataByte;
+      // 32 = space in ASCII code
+      if (dataByte == 32 || i == file_length-1) {
+        code.trim();
+        if (isNumeric(code)) {
+          file_buffers[new_size] = code.toInt();
+          new_size++;
+        } else {
+          file_name = code;
+        }
+        code = "";
       }
-      code = "";
     }
+
+    // Assign 0 to remaining indexes (considered as padding, does not affect the model)
+    for (size_t i=new_size; i<file_maximum_byte_count; i++) {
+      file_buffers[i] = 0;
+    }
+
+    saveModel(file_name, file_buffers);
+    setPreviousFile(file_name);
+    initializeTFL(file_buffers);
   }
 
-  // Assign 0 to remaining indexes (considered as padding, does not affect the model)
-  for (size_t i=new_size; i<file_maximum_byte_count; i++) {
-    file_buffers[i] = 0;
-  }
 
-  saveModel(file_name, file_buffers);
-  initializeTFL(file_buffers);
+  
 
 }
 
