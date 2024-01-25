@@ -9,11 +9,28 @@ class Dashboard extends StatefulWidget {
 }
 
 class _DashboardState extends State<Dashboard> with RestorationMixin {
+  List<DashboardChartData> ydata = [];
+  var rng = Random();
+
+  late TrackballBehavior _trackballBehavior;
+
+  @override
+  void initState() {
+    _trackballBehavior = TrackballBehavior(
+        // Enables the trackball
+        enable: true,
+        tooltipSettings: const InteractiveTooltip(enable: true, color: Colors.red));
+
+    for (int row = 1; row < 30; row++) {
+      ydata.add(DashboardChartData(row, rng.nextInt(50)));
+    }
+    super.initState();
+  }
+
   @override
   String? get restorationId => widget.restorationId;
 
-  final RestorableDateTime _selectedDate =
-      RestorableDateTime(DateTime(2021, 7, 25));
+  final RestorableDateTime _selectedDate = RestorableDateTime(DateTime(2021, 7, 25));
   late final RestorableRouteFuture<DateTime?> _restorableDatePickerRouteFuture =
       RestorableRouteFuture<DateTime?>(
     onComplete: _selectDate,
@@ -47,8 +64,7 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
   @override
   void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
     registerForRestoration(_selectedDate, 'selected_date');
-    registerForRestoration(
-        _restorableDatePickerRouteFuture, 'date_picker_route_future');
+    registerForRestoration(_restorableDatePickerRouteFuture, 'date_picker_route_future');
   }
 
   void _selectDate(DateTime? newSelectedDate) {
@@ -63,121 +79,393 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
     }
   }
 
-  final List<DashboardChartData> chartData = [
-    DashboardChartData('David', 25, const Color.fromRGBO(9, 0, 136, 1)),
-    DashboardChartData('Steve', 38, const Color.fromRGBO(147, 0, 119, 1)),
-    DashboardChartData('Jack', 34, const Color.fromRGBO(228, 0, 124, 1)),
-    DashboardChartData('Others', 52, const Color.fromRGBO(255, 189, 57, 1))
-  ];
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Column(
-          children: [
-            const SizedBox(height: 10),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10.0),
-              child: ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(
-                  'Dashboard',
-                  textAlign: TextAlign.left,
-                  style: GoogleFonts.bebasNeue(fontSize: 30),
-                ),
-                subtitle: Text(
-                  'January',
-                  textAlign: TextAlign.left,
-                  style: GoogleFonts.bebasNeue(fontSize: 18),
-                ),
-                trailing: IconButton(
-                  iconSize: 30,
-                  onPressed: () {
-                    _restorableDatePickerRouteFuture.present();
-                  },
-                  icon: const Icon(Icons.calendar_month_outlined),
+    double cardHeight = 220.0;
+    return Stack(
+      children: <Widget>[
+        Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+                colors: [
+                  Theme.of(context).colorScheme.secondaryContainer,
+                  Theme.of(context).colorScheme.tertiaryContainer,
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                stops: const [0.20, 0.45]),
+          ),
+          height: MediaQuery.of(context).size.height * .40,
+          width: double.infinity,
+          child: Container(
+            margin: const EdgeInsets.all(10.0),
+            child: ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(
+                'Dashboard',
+                textAlign: TextAlign.left,
+                style: GoogleFonts.bebasNeue(fontSize: 30),
+              ),
+              subtitle: Text(
+                'January 2024',
+                textAlign: TextAlign.left,
+                style: GoogleFonts.bebasNeue(fontSize: 20),
+              ),
+              trailing: PopupMenuButton(
+                itemBuilder: (BuildContext context) => <PopupMenuEntry<PopupMenuItem>>[
+                  PopupMenuItem(
+                    child: const Text("View profile"),
+                    onTap: () {
+                      print("View profile");
+                    },
+                  ),
+                  PopupMenuItem(
+                    child: const Text("View as: per month"),
+                    onTap: () {
+                      print("View as: per month");
+                    },
+                  ),
+                  PopupMenuItem(
+                    child: const Text("Update"),
+                    onTap: () {
+                      print("Update");
+                    },
+                  ),
+                ],
+                child: const CircleAvatar(
+                  backgroundImage: AssetImage('images/ekusuuuu-calibaaaaaaaaaaaaa.png'),
                 ),
               ),
             ),
-            const SizedBox(height: 10),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10.0),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                color: Theme.of(context).colorScheme.primary,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          children: [
-                            Text(
-                              'Data1',
-                              textAlign: TextAlign.left,
-                              style: GoogleFonts.bebasNeue(fontSize: 20),
+          ),
+        ),
+        Positioned(
+          top: MediaQuery.of(context).size.height * .24,
+          bottom: 0,
+          left: 0,
+          right: 0,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.background,
+              borderRadius:
+                  const BorderRadius.only(topLeft: Radius.circular(45), topRight: Radius.circular(45)),
+            ),
+            // height: MediaQuery.of(context).size.height,
+          ),
+        ),
+
+        // The card widget with top padding,
+        // incase if you wanted bottom padding to work,
+        // set the `alignment` of container to Alignment.bottomCenter
+        Container(
+          alignment: Alignment.topCenter,
+          padding: EdgeInsets.only(top: MediaQuery.of(context).size.height * .12, right: 20.0, left: 20.0),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  SizedBox(
+                    height: 200.0,
+                    width: MediaQuery.of(context).size.width * 0.86,
+                    child: Card(
+                      shadowColor: Theme.of(context).colorScheme.shadow,
+                      elevation: 5.0,
+                      child: SfCartesianChart(
+                        trackballBehavior: _trackballBehavior,
+                        plotAreaBorderWidth: 0,
+                        primaryXAxis: NumericAxis(
+                          isVisible: false,
+                        ),
+                        primaryYAxis: NumericAxis(
+                          isVisible: false,
+                        ),
+                        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                        series: <ChartSeries>[
+                          // Renders line chart
+                          FastLineSeries<DashboardChartData, int>(
+                              dataSource: ydata,
+                              color: CustomColor.trainingLineColor,
+                              xValueMapper: (DashboardChartData data, _) => data.x,
+                              yValueMapper: (DashboardChartData data, _) => data.y),
+                          // FastLineSeries<ChartData, int>(
+                          //     dataSource: dropdownValue == 'Accuracy' ? valAccuracy : valLoss,
+                          //     color: CustomColor.validationLineColor,
+                          //     xValueMapper: (ChartData data, _) => data.x,
+                          //     yValueMapper: (ChartData data, _) => data.y),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 30),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  SizedBox(
+                    height: cardHeight,
+                    width: MediaQuery.of(context).size.width * 0.4,
+                    child: Card(
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(30)),
+                      ),
+                      color: Theme.of(context).colorScheme.primaryContainer,
+                      shadowColor: Theme.of(context).colorScheme.shadow,
+                      elevation: 5.0,
+                      child: Column(
+                        children: [
+                          Align(
+                            alignment: Alignment.topLeft,
+                            child: Padding(
+                              padding: EdgeInsets.only(top: cardHeight * .05, left: cardHeight * .05),
+                              child: const Icon(
+                                Icons.keyboard_double_arrow_up,
+                                color: Colors.green,
+                                size: 35,
+                              ),
                             ),
-                            Text(
-                              'Data2',
-                              textAlign: TextAlign.left,
-                              style: GoogleFonts.bebasNeue(fontSize: 20),
+                          ),
+                          Expanded(
+                            child: FittedBox(
+                              child: Container(
+                                margin: const EdgeInsets.all(10.0),
+                                child: Text(
+                                  '2.12%',
+                                  textAlign: TextAlign.left,
+                                  style: GoogleFonts.bebasNeue(fontSize: 50),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Text(
+                            'Improvement',
+                            textAlign: TextAlign.left,
+                            style: GoogleFonts.bebasNeue(fontSize: 20),
+                          ),
+                          const SizedBox(height: 20),
+                        ],
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    height: cardHeight,
+                    width: MediaQuery.of(context).size.width * 0.4,
+                    child: Card(
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(30)),
+                      ),
+                      color: Theme.of(context).colorScheme.primaryContainer,
+                      shadowColor: Theme.of(context).colorScheme.shadow,
+                      elevation: 5.0,
+                      child: Column(
+                        children: [
+                          Align(
+                            alignment: Alignment.topLeft,
+                            child: Padding(
+                              padding: EdgeInsets.only(top: cardHeight * .05, left: cardHeight * .05),
+                              child: const Icon(
+                                Icons.line_weight,
+                                size: 35,
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: FittedBox(
+                              child: Container(
+                                margin: const EdgeInsets.all(10.0),
+                                child: Text(
+                                  '15.6',
+                                  textAlign: TextAlign.left,
+                                  style: GoogleFonts.bebasNeue(fontSize: 50),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Text(
+                            'Average Buzz',
+                            textAlign: TextAlign.left,
+                            style: GoogleFonts.bebasNeue(fontSize: 20),
+                          ),
+                          const SizedBox(height: 20),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const Expanded(
+                      child: SizedBox(height: 1),
+                    ),
+                    Container(
+                      margin: const EdgeInsets.only(left: 60, right: 60),
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: Theme.of(context).colorScheme.tertiaryContainer),
+                        onPressed: () {
+                          _restorableDatePickerRouteFuture.present();
+                        },
+                        child: Row(
+                          // mainAxisSize: MainAxisSize.min,
+                          children: <Widget>[
+                            const Icon(
+                              Icons.calendar_month_outlined,
+                              size: 35,
+                            ),
+                            const SizedBox(width: 18),
+                            Expanded(
+                              child: Text(
+                                'Calendar',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.bebasNeue(fontSize: 30),
+                              ),
                             ),
                           ],
                         ),
-                        Container(
-                            width: 150.0,
-                            height: 150.0,
-                            child: SfCircularChart(series: <CircularSeries>[
-                              // Renders doughnut chart
-                              DoughnutSeries<DashboardChartData, String>(
-                                  dataSource: chartData,
-                                  pointColorMapper:
-                                      (DashboardChartData data, _) =>
-                                          data.color,
-                                  xValueMapper: (DashboardChartData data, _) =>
-                                      data.x,
-                                  yValueMapper: (DashboardChartData data, _) =>
-                                      data.y)
-                            ]))
-                      ],
+                      ),
                     ),
-                    const Divider(),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        Text(
-                          'Data3',
-                          textAlign: TextAlign.left,
-                          style: GoogleFonts.bebasNeue(fontSize: 20),
-                        ),
-                        Text(
-                          'Data4',
-                          textAlign: TextAlign.left,
-                          style: GoogleFonts.bebasNeue(fontSize: 20),
-                        ),
-                        Text(
-                          'Data5',
-                          textAlign: TextAlign.left,
-                          style: GoogleFonts.bebasNeue(fontSize: 20),
-                        ),
-                      ],
-                    )
+                    const Expanded(
+                      child: SizedBox(height: 1),
+                    ),
                   ],
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
+      ],
     );
   }
+
+  // @override
+  // Widget build(BuildContext context) => Scaffold(
+  //       appBar: AppBar(
+  //         title: Text('App Title', style: TextStyle(color: Colors.white)),
+  //         backgroundColor: Color.fromARGB(255, 18, 32, 47),
+  //         elevation: 0,
+  //       ),
+  //       body: ClipRRect(
+  //         borderRadius: BorderRadius.only(topLeft: Radius.circular(50), topRight: Radius.circular(50)),
+  //         child: Container(
+  //           color: Colors.white,
+  //           child: Center(
+  //             child: Text(
+  //               'App Content',
+  //             ),
+  //           ),
+  //         ),
+  //       ),
+  //     );
+
+  // @override
+  // Widget build(BuildContext context) {
+  //   return Scaffold(
+  //     appBar: AppBar(),
+  //     body: Center(
+  //       child: Column(
+  //         children: [
+  //           const SizedBox(height: 10),
+  //           Padding(
+  //             padding: const EdgeInsets.symmetric(horizontal: 10.0),
+  //             child: ListTile(
+  //               contentPadding: EdgeInsets.zero,
+  //               title: Text(
+  //                 'Dashboard',
+  //                 textAlign: TextAlign.left,
+  //                 style: GoogleFonts.bebasNeue(fontSize: 30),
+  //               ),
+  //               subtitle: Text(
+  //                 'January',
+  //                 textAlign: TextAlign.left,
+  //                 style: GoogleFonts.bebasNeue(fontSize: 18),
+  //               ),
+  //               trailing: IconButton(
+  //                 iconSize: 30,
+  //                 onPressed: () {
+  //                   _restorableDatePickerRouteFuture.present();
+  //                 },
+  //                 icon: const Icon(Icons.calendar_month_outlined),
+  //               ),
+  //             ),
+  //           ),
+  //           const SizedBox(height: 10),
+  //           Padding(
+  //             padding: const EdgeInsets.symmetric(horizontal: 10.0),
+  //             child: Container(
+  //               padding: const EdgeInsets.symmetric(horizontal: 10.0),
+  //               color: Theme.of(context).colorScheme.primary,
+  //               child: Column(
+  //                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+  //                 children: [
+  //                   Row(
+  //                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //                     children: [
+  //                       Column(
+  //                         children: [
+  //                           Text(
+  //                             'Data1',
+  //                             textAlign: TextAlign.left,
+  //                             style: GoogleFonts.bebasNeue(fontSize: 20),
+  //                           ),
+  //                           Text(
+  //                             'Data2',
+  //                             textAlign: TextAlign.left,
+  //                             style: GoogleFonts.bebasNeue(fontSize: 20),
+  //                           ),
+  //                         ],
+  //                       ),
+  //                       Container(
+  //                           width: 150.0,
+  //                           height: 150.0,
+  //                           child: SfCircularChart(series: <CircularSeries>[
+  //                             // Renders doughnut chart
+  //                             DoughnutSeries<DashboardChartData, String>(
+  //                                 dataSource: chartData,
+  //                                 pointColorMapper: (DashboardChartData data, _) => data.color,
+  //                                 xValueMapper: (DashboardChartData data, _) => data.x,
+  //                                 yValueMapper: (DashboardChartData data, _) => data.y)
+  //                           ]))
+  //                     ],
+  //                   ),
+  //                   const Divider(),
+  //                   Row(
+  //                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+  //                     children: [
+  //                       Text(
+  //                         'Data3',
+  //                         textAlign: TextAlign.left,
+  //                         style: GoogleFonts.bebasNeue(fontSize: 20),
+  //                       ),
+  //                       Text(
+  //                         'Data4',
+  //                         textAlign: TextAlign.left,
+  //                         style: GoogleFonts.bebasNeue(fontSize: 20),
+  //                       ),
+  //                       Text(
+  //                         'Data5',
+  //                         textAlign: TextAlign.left,
+  //                         style: GoogleFonts.bebasNeue(fontSize: 20),
+  //                       ),
+  //                     ],
+  //                   )
+  //                 ],
+  //               ),
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
 }
 
 class DashboardChartData {
-  DashboardChartData(this.x, this.y, this.color);
-  final String x;
-  final double y;
-  final Color color;
+  DashboardChartData(this.x, this.y);
+  final int x;
+  final int y;
 }

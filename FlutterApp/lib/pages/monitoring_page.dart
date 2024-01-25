@@ -436,6 +436,7 @@ class _MonitoringPageState extends State<MonitoringPage> {
     }
 
     return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.background,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

@@ -256,67 +256,59 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       });
     }
 
-    CustomPaint connectAnimation = CustomPaint(
-      painter: MyPainter(
-        firstRippleRadiusAnimation.value,
-        firstRippleOpacityAnimation.value,
-        firstRippleWidthAnimation.value,
-        secondRippleRadiusAnimation.value,
-        secondRippleOpacityAnimation.value,
-        secondRippleWidthAnimation.value,
-        thirdRippleRadiusAnimation.value,
-        thirdRippleOpacityAnimation.value,
-        thirdRippleWidthAnimation.value,
-        centerCircleRadiusAnimation.value,
+    SizedBox connectAnimation = SizedBox(
+      width: 110.0,
+      height: 110.0,
+      child: Container(
+        decoration: const BoxDecoration(
+          shape: BoxShape.circle,
+        ),
+        child: GestureDetector(
+          onTap: () {
+            var rng = Random();
+            print(rng.nextInt(50));
+
+            //     Provider.of<ConnectionProvider>(context, listen: false).toggle(true);
+            //     setState(() {
+            //       isConnecting = true;
+            //     });
+          },
+          child: CustomPaint(
+            painter: MyPainter(
+              firstRippleRadiusAnimation.value,
+              firstRippleOpacityAnimation.value,
+              firstRippleWidthAnimation.value,
+              secondRippleRadiusAnimation.value,
+              secondRippleOpacityAnimation.value,
+              secondRippleWidthAnimation.value,
+              thirdRippleRadiusAnimation.value,
+              thirdRippleOpacityAnimation.value,
+              thirdRippleWidthAnimation.value,
+              centerCircleRadiusAnimation.value,
+              Theme.of(context).colorScheme.tertiaryContainer,
+            ),
+            size: const Size(600.0, 600.0),
+            child: Container(),
+          ),
+        ),
       ),
-      child: Container(),
     );
 
     return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.background,
       body: Center(
-        child: InkWell(
-          splashColor: Colors.transparent,
-          highlightColor: Colors.transparent,
-          onTap: () {
-            Provider.of<ConnectionProvider>(context, listen: false).toggle(true);
-            setState(() {
-              isConnecting = true;
-            });
-          },
-          child: isConnecting ? progressAnimation : connectAnimation,
-          // child: const Text('Hello World'),
-        ),
+        // child: InkWell(
+        //   splashColor: Colors.transparent,
+        //   highlightColor: Colors.transparent,
+        //   onTap: () {
+        //     Provider.of<ConnectionProvider>(context, listen: false).toggle(true);
+        //     setState(() {
+        //       isConnecting = true;
+        //     });
+        //   },
+        child: isConnecting ? progressAnimation : connectAnimation,
+        // ),
       ),
-      // child: Column(
-      //   crossAxisAlignment: CrossAxisAlignment.center,
-      //   mainAxisAlignment: MainAxisAlignment.center,
-      //   children: [
-      //     Padding(
-      //       padding: const EdgeInsets.symmetric(horizontal: 20.0),
-      //       child: ListTile(
-      //         contentPadding: EdgeInsets.zero,
-      //         title: Text(
-      //           'BFRBSys',
-      //           textAlign: TextAlign.center,
-      //           style: GoogleFonts.bebasNeue(fontSize: 50),
-      //         ),
-      //         subtitle: Text(
-      //           'A wrist-worn device and monitoring system for a person with Body-focused Repetitive Behavior',
-      //           textAlign: TextAlign.center,
-      //           style: GoogleFonts.bebasNeue(fontSize: 20),
-      //         ),
-      //       ),
-      //     ),
-      //     const SizedBox(height: 40),
-      //     ElevatedButton(
-      //         onPressed: () {
-      //           Provider.of<ConnectionProvider>(context, listen: false).toggle(true);
-      //         },
-      //         child: Text(isBLEConnected ? 'Connected' : 'Connect')),
-      //     const SizedBox(height: 40),
-      //     Flexible(child: textInfo(info, infoCode)),
-      //   ],
-      // ),
     );
   }
 }
@@ -333,6 +325,8 @@ class MyPainter extends CustomPainter {
   final double thirdRippleStrokeWidth;
   final double centerCircleRadius;
 
+  final Color myColor;
+
   MyPainter(
     this.firstRippleRadius,
     this.firstRippleOpacity,
@@ -344,11 +338,12 @@ class MyPainter extends CustomPainter {
     this.thirdRippleOpacity,
     this.thirdRippleStrokeWidth,
     this.centerCircleRadius,
+    this.myColor,
   );
 
   @override
   void paint(Canvas canvas, Size size) {
-    Color myColor = const Color(0xff653ff4);
+    Paint paint = Paint()..color = myColor;
 
     Paint firstPaint = Paint();
     firstPaint.color = myColor.withOpacity(firstRippleOpacity);

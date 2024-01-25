@@ -33,6 +33,8 @@ abstract class GATTProtocolProfile {
   final String DIST_DATA_UUID = 'bf88b656-3009-4a61-86e0-769c741026c0';
   // final String TEMP_DATA_UUID = 'bf88b656-3010-4a61-86e0-769c741026c0';
 
+  final String FILE_NAME_UUID = 'bf88b656-3011-4a61-86e0-769c741026c0';
+
   /* =========================================================================== */
 
   BluetoothDevice? device;
@@ -138,29 +140,29 @@ class BluetoothBuilder extends GATTProtocolProfile {
             print('Connected to $ERROR_MESSAGE_UUID');
           }
 
-          // // ACC_DATA_UUID : accDataCharacteristic
-          // else if (characteristicUUID == ACC_DATA_UUID) {
-          //   accDataCharacteristic = characteristic;
-          //   await Future.delayed(const Duration(milliseconds: 500));
-          //   await accDataCharacteristic?.setNotifyValue(true);
-          //   print('Connected to $ACC_DATA_UUID');
-          // }
+          // ACC_DATA_UUID : accDataCharacteristic
+          else if (characteristicUUID == ACC_DATA_UUID) {
+            accDataCharacteristic = characteristic;
+            await Future.delayed(const Duration(milliseconds: 500));
+            await accDataCharacteristic?.setNotifyValue(true);
+            print('Connected to $ACC_DATA_UUID');
+          }
 
-          // // GYRO_DATA_UUID : gyroDataCharacteristic
-          // else if (characteristicUUID == GYRO_DATA_UUID) {
-          //   gyroDataCharacteristic = characteristic;
-          //   await Future.delayed(const Duration(milliseconds: 500));
-          //   await gyroDataCharacteristic?.setNotifyValue(true);
-          //   print('Connected to $GYRO_DATA_UUID');
-          // }
+          // GYRO_DATA_UUID : gyroDataCharacteristic
+          else if (characteristicUUID == GYRO_DATA_UUID) {
+            gyroDataCharacteristic = characteristic;
+            await Future.delayed(const Duration(milliseconds: 500));
+            await gyroDataCharacteristic?.setNotifyValue(true);
+            print('Connected to $GYRO_DATA_UUID');
+          }
 
-          // // DIST_DATA_UUID : distDataCharacteristic
-          // else if (characteristicUUID == DIST_DATA_UUID) {
-          //   distDataCharacteristic = characteristic;
-          //   await Future.delayed(const Duration(milliseconds: 500));
-          //   await distDataCharacteristic?.setNotifyValue(true);
-          //   print('Connected to $DIST_DATA_UUID');
-          // }
+          // DIST_DATA_UUID : distDataCharacteristic
+          else if (characteristicUUID == DIST_DATA_UUID) {
+            distDataCharacteristic = characteristic;
+            await Future.delayed(const Duration(milliseconds: 500));
+            await distDataCharacteristic?.setNotifyValue(true);
+            print('Connected to $DIST_DATA_UUID');
+          }
 
           // // TEMP_DATA_UUID : tempDataCharacteristic
           // else if (characteristicUUID == TEMP_DATA_UUID) {
@@ -274,6 +276,10 @@ class BluetoothBuilder extends GATTProtocolProfile {
     }
   }
 
+  void cancelTransfer() async {
+    await commandCharacteristic?.write([2]);
+  }
+
   ///////////////////////////////////
 
   void connect() async {
@@ -321,10 +327,6 @@ class BluetoothBuilder extends GATTProtocolProfile {
     discoverController.add(false);
     device = null;
     isConnected = false;
-  }
-
-  void cancelTransfer() async {
-    await commandCharacteristic?.write([2]);
   }
 
   void transferFile(Uint8List fileContents) async {

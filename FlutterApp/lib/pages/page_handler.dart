@@ -1,5 +1,7 @@
 // ignore_for_file: dead_code
 
+import 'dart:math';
+
 import 'package:bfrbsys/custom_widgets/data_button.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
@@ -45,7 +47,7 @@ class _PageHandlerState extends State<PageHandler> {
   List<Widget>? pages;
   GlobalKey<ScaffoldState>? scaffoldKey;
 
-  int currentPage = 0;
+  int currentPage = 1;
 
   late Future auth;
   late dynamic apiResponse;
@@ -86,23 +88,38 @@ class _PageHandlerState extends State<PageHandler> {
           children: pages!,
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bluetooth),
-            label: 'Connect',
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          border: Border(
+            top: BorderSide(
+              color: Theme.of(context).colorScheme.tertiaryContainer,
+              width: 1.5,
+            ),
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.watch),
-            label: 'Device',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.analytics),
-            label: 'My Data',
-          ),
-        ],
-        currentIndex: currentPage,
-        onTap: _onItemTapped,
+        ),
+        child: BottomNavigationBar(
+          backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+          items: const <BottomNavigationBarItem>[
+            BottomNavigationBarItem(
+              icon: Icon(Icons.dashboard),
+              label: 'Dashboard',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.bluetooth),
+              label: 'Connect',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.watch),
+              label: 'Device',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.analytics),
+              label: 'My Data',
+            ),
+          ],
+          currentIndex: currentPage,
+          onTap: _onItemTapped,
+        ),
       ),
     );
   }

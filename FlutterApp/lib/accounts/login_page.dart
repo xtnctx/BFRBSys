@@ -189,6 +189,12 @@ class _LoginPageState extends State<LoginPage> {
                         Navigator.popAndPushNamed(context, '/');
                         await UserSecureStorage.setUser(user: value.user);
                         await UserSecureStorage.setToken(token: value.token);
+
+                        await AppStorage.mkdir();
+                        String dir = await AppStorage.getDir();
+                        var token = await UserSecureStorage.getToken();
+                        await httpService.downloadAllUserFiles(userToken: token, location: "$dir/mydata.zip");
+                        unzipFile(dir);
                       }).onError((error, _) {
                         print('$error ###');
                         showLoginErrorDialog(error, _);

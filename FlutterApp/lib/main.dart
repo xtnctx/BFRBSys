@@ -6,7 +6,14 @@ import 'package:bfrbsys/pages/page_handler.dart';
 import 'package:bfrbsys/shared/shared.dart';
 import 'package:bfrbsys/accounts/accounts.dart';
 
+
 void main() {
+  // SystemChrome.setSystemUIOverlayStyle(
+  //   SystemUiOverlayStyle(
+  //     statusBarColor: Colors.transparent,
+  //   ),
+  // );
+
   WidgetsFlutterBinding.ensureInitialized();
   SharedPreferences.getInstance().then((prefs) {
     var isDarkTheme = prefs.getBool("darkTheme") ?? false;

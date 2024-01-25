@@ -11,6 +11,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'dart:math';
 import 'dart:typed_data';
+import 'package:archive/archive_io.dart';
 
 part 'colors.dart';
 part 'device_storage.dart';

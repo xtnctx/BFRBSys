@@ -27,6 +27,7 @@ class _SettingsPageState extends State<SettingsPage> {
     int bleMTU = Provider.of<ConnectionProvider>(context, listen: true).mtu;
 
     return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.background,
       body: Center(
         child: Column(
           children: [

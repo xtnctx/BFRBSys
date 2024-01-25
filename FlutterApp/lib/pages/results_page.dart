@@ -36,6 +36,8 @@ class _ResultsPageState extends State<ResultsPage> {
   int infoCode = 0;
   double sendingProgress = 0.0;
 
+  HttpService httpService = HttpService();
+
   final ScrollController _controller = ScrollController();
 
   void refreshModels() {
@@ -53,26 +55,35 @@ class _ResultsPageState extends State<ResultsPage> {
 
   _getListofData() async {
     dir = await AppStorage.getDir();
+
     setState(() {
+      print('sdds');
       List<io.FileSystemEntity> dataFile = io.Directory(dir!).listSync();
+
+      print('$dataFile sssssssssssssss');
 
       List<Map<String, dynamic>> info = [];
       for (var e in dataFile) {
-        List<io.FileSystemEntity> modelFolder = io.Directory(e.path).listSync();
-        List<io.File> fileContents = [];
-        String modelName = e.path.split('/').last;
-        int id = 0;
-        for (var file in modelFolder) {
-          if (file is io.File) {
-            fileContents.add(file);
-            if (file.path.endsWith('.json')) {
-              String jsonEncoded = file.readAsStringSync();
-              Map<String, dynamic> jsonDecoded = json.decode(jsonEncoded);
-              id = jsonDecoded['id'];
+        bool isDir = io.FileSystemEntity.isDirectorySync(e.path);
+
+        if (isDir) {
+          List<io.FileSystemEntity> modelFolder = io.Directory(e.path).listSync();
+          List<io.File> fileContents = [];
+          String modelName = e.path.split('/').last;
+          int id = 0;
+          for (var file in modelFolder) {
+            if (file is io.File) {
+              fileContents.add(file);
+              if (file.path.endsWith('_info.json')) {
+                String jsonEncoded = file.readAsStringSync();
+                Map<String, dynamic> jsonDecoded = json.decode(jsonEncoded);
+                id = jsonDecoded['id'];
+                print(id);
+              }
             }
           }
+          info.add({modelName: fileContents, 'id': id});
         }
-        info.add({modelName: fileContents, 'id': id});
       }
 
       info.sort((b, a) => a["id"].compareTo(b["id"]));
@@ -142,6 +153,7 @@ class _ResultsPageState extends State<ResultsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.background,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -346,8 +358,10 @@ class _ResultsPageState extends State<ResultsPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     IconButton(
-                        onPressed: () {
-                          ble?.cancelTransfer();
+                        onPressed: () async {
+                          // ble?.cancelTransfer();
+                          await io.Directory("$dir/dummy123").delete(recursive: true);
+                          await io.Directory("$dir/dummyxyz").delete(recursive: true);
                         },
                         icon: const Icon(Icons.cancel)),
                     IconButton(

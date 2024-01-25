@@ -55,6 +55,11 @@ class AppStorage {
     return directory.path;
   }
 
+  static Future<void> mkdir() async {
+    String dir = await getDir();
+    await Directory(dir).create(recursive: true);
+  }
+
   static Future<void> writeCsv({required List<List<String>> data, required String filePath}) async {
     File file = await File(filePath).create(recursive: true);
     String csvData = const ListToCsvConverter().convert(data);

@@ -192,9 +192,33 @@ class HttpService {
 
       if (response.statusCode == 200) {
         var bytes = await consolidateHttpClientResponseBytes(response);
-        File file = File(location);
+        File file = await File(location).create(recursive: true);
         await file.writeAsBytes(bytes);
         return 'Prepairing data... ';
+      } else {
+        throw Exception('Error code: ${response.statusCode}');
+      }
+    } catch (_) {
+      throw Exception('Can not fetch url');
+    }
+  }
+
+  Future<String> downloadAllUserFiles({required String userToken, required String location}) async {
+    HttpClient httpClient = HttpClient();
+
+    try {
+      final response = await http.get(
+        Uri.parse("${Env.BASE_URL}/api/user-models/"),
+        headers: {
+          'Content-Type': 'application/x-zip-compressed; charset=UTF-8',
+          'Authorization': 'Token $userToken',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        File file = await File(location).create(recursive: true);
+        await file.writeAsBytes(response.bodyBytes);
+        return 'Download complete. ';
       } else {
         throw Exception('Error code: ${response.statusCode}');
       }
