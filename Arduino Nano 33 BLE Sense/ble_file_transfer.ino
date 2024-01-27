@@ -28,9 +28,13 @@ limitations under the License.
 #include <tensorflow/lite/micro/micro_interpreter.h>
 #include <tensorflow/lite/schema/schema_generated.h>
 
-#include <SD.h>
+#include <SdFat.h>
+#include <ArduinoJson.h>
 
+SdFat sd;
 File modelFile;
+
+bool isConnected = false;
 
 int buzzerPin = 8;
 int buzzTime = 200;
@@ -58,6 +62,7 @@ const char* HOTSPOT[] = {
   "off_target",
   "on_target"
 };
+String previous_file;
 double on_target_threshold = 0.8;
 
 bool isModelInitialized = false;
@@ -391,7 +396,10 @@ void updateBLEFileTransfer() {
     Serial.print("Connected to central: ");
     Serial.println(central.address());
   }
-  was_connected_last = central;  
+  was_connected_last = central;
+
+  isConnected = central.connected();
+
 }
 
 }  // namespace
@@ -424,10 +432,10 @@ void setup() {
   setupBLEFileTransfer();
 
   // SD card setup
-  bool sdBegin = SD.begin(10);
+  bool sdBegin = sd.begin(10);
   while (!sdBegin) {
     Serial.println("Trying to initialize...");
-    sdBegin = SD.begin(10);
+    sdBegin = sd.begin(10);
     delay(500);
   }
   Serial.println("SD Card Initialized.");
@@ -451,7 +459,7 @@ void setup() {
   pinMode(buzzerPin, OUTPUT);
   pinMode(vibrationPin, OUTPUT);
 
-  String previous_file = getPreviousFile();
+  previous_file = getPreviousFile();
   initOldModel(previous_file);
   initializeTFL(file_buffers);
 }
@@ -547,6 +555,7 @@ void runPrediction(float aX, float aY, float aZ, float gX, float gY, float gZ) {
   if (onTargetPredictValue > on_target_threshold) {
       buzz(true);
       vibrate(true);
+      // saveBuzz();
   } else {
       buzz(false);
       vibrate(false);
@@ -554,15 +563,15 @@ void runPrediction(float aX, float aY, float aZ, float gX, float gY, float gZ) {
 
   // Loop through the output tensor values from the model
   for (int i = 0; i < NUM_HOTSPOT; i++) {
-    Serial.print(HOTSPOT[i]);
-    Serial.print(": ");
-    Serial.println(tflOutputTensor->data.f[i], 6);
+    // Serial.print(HOTSPOT[i]);
+    // Serial.print(": ");
+    // Serial.println(tflOutputTensor->data.f[i], 6);
   }
   Serial.println();
 }
 
 String getPreviousFile() {
-  modelFile = SD.open("info.h");
+  modelFile = sd.open("info.h");
   String file = "";
     if (modelFile) {
       while (modelFile.available()) {
@@ -575,20 +584,20 @@ String getPreviousFile() {
 }
 
 void setPreviousFile(String file_name) {
-  modelFile = SD.open("info.h", FILE_WRITE | O_TRUNC);
+  modelFile = sd.open("info.h", FILE_WRITE | O_TRUNC);
   if (modelFile) modelFile.print(file_name); 
   modelFile.close();
 }
 
 void saveModel(String file_name, uint8_t* model) {
-  modelFile = SD.open(file_name + ".h", FILE_WRITE);
+  modelFile = sd.open(file_name + ".h", FILE_WRITE);
   if (modelFile) modelFile.print((char*)model); 
   modelFile.close();
 }
 
 void initOldModel(String fileName) {
-  if (SD.exists(fileName)) {
-    modelFile = SD.open(fileName);
+  if (sd.exists(fileName)) {
+    modelFile = sd.open(fileName);
   } else {
     return;
   }
@@ -629,6 +638,56 @@ void initOldModel(String fileName) {
   }
 }
 
+void saveBuzz(String targetDatetime, String filename) {
+  // String targetDatetime = "02/25/2024";
+  JsonDocument jsonDocument;
+  File dashboardFile = sd.open(filename + ".json", FILE_READ);
+
+  if (dashboardFile) {
+    DeserializationError error = deserializeJson(jsonDocument, dashboardFile);
+    dashboardFile.close();
+    if (error) {
+      Serial.println("Failed to read JSON file");
+      return;
+    }
+  } else {
+    Serial.println("Error opening JSON file");
+    return;
+  }
+
+  dashboardFile = sd.open(filename + ".json", FILE_WRITE | O_TRUNC);
+  if (dashboardFile) {
+    // Check if the datetime already exists in the "data" array
+    bool datetimeExists = false;
+
+    // Iterate through the "data" array
+    JsonArray dataArray = jsonDocument["data"];
+    for (JsonObject obj : dataArray) {
+      String datetime = obj["datetime"];
+      if (datetime.equals(targetDatetime)) {
+        // Datetime exists, increment the "buzz" value
+        obj["buzz"] = obj["buzz"].as<int>() + 1;
+        serializeJson(jsonDocument, dashboardFile);
+        dashboardFile.close();
+        datetimeExists = true;
+        break;
+      }
+    }
+
+    // If the datetime does not exist, add a new object
+    if (!datetimeExists) {
+      JsonObject newObj = jsonDocument["data"].createNestedObject();
+      newObj["datetime"] = targetDatetime;
+      newObj["buzz"] = 1;
+      serializeJson(jsonDocument, dashboardFile);
+      dashboardFile.close();
+    }
+  } else {
+    Serial.println("Error opening JSON file");
+    return;
+  }
+}
+
 void onBLEFileReceived(uint8_t* file_data, int file_length) {
   // Do something here with the file data that you've received. The memory itself will
   // remain untouched until after a following onFileReceived call has completed, and
@@ -637,20 +696,27 @@ void onBLEFileReceived(uint8_t* file_data, int file_length) {
   // UPDATE REQUEST
   // xupdaterequestx-all
   // xupdaterequestx-01/22/2024 - start
-  char value[] = "xupdaterequestx-all";
+  String value = "xupdaterequestx-all"; // this must be file_data
   String xupdaterequestx = "";
   
   for (uint32_t i=0; i<26; i++) {
-    xupdaterequestx += value[i];
+    uint8_t dataByte = file_data[i];
+    if (dataByte == 0) {
+      break;
+    } else {
+      xupdaterequestx += (char)dataByte;
+    }
   }
-
+  Serial.println(xupdaterequestx);
   int index = xupdaterequestx.indexOf("xupdaterequestx");
 
   if (index != -1) {
     Serial.println("Update is requested");
-    int delimiterIndex = value.indexOf("-");
-    String request = value.substring(delimiterIndex + 1);
+    int delimiterIndex = xupdaterequestx.indexOf("-");
+    String request = xupdaterequestx.substring(delimiterIndex + 1);
     Serial.println(request);
+    initOldModel(previous_file);
+    initializeTFL(file_buffers);
   } else {
     String code = "";
     uint32_t new_size = 0;
@@ -692,41 +758,45 @@ void onBLEFileReceived(uint8_t* file_data, int file_length) {
 
 void loop() {
   updateBLEFileTransfer();
-  
-  float aX, aY, aZ, gX, gY, gZ;
-  float temperature = HTS.readTemperature();
-  
-  if (IMU.accelerationAvailable() && IMU.gyroscopeAvailable()) {
-    IMU.readAcceleration(aX, aY, aZ);
-    char accReadings[data_size_count];
-    IMU_read(aX, aY, aZ, accReadings);
-    accelerometer_characteristic.writeValue(accReadings);
+  Serial.println(isConnected);
+  // isConnected = central.connected();
+  if (isConnected) {
+    float aX, aY, aZ, gX, gY, gZ;
+    float temperature = HTS.readTemperature();
+    
+    if (IMU.accelerationAvailable() && IMU.gyroscopeAvailable()) {
+      IMU.readAcceleration(aX, aY, aZ);
+      char accReadings[data_size_count];
+      IMU_read(aX, aY, aZ, accReadings);
+      accelerometer_characteristic.writeValue(accReadings);
 
-    IMU.readGyroscope(gX, gY, gZ);
-    char gyroReadings[data_size_count];
-    IMU_read(gX, gY, gZ, gyroReadings);
-    gyroscope_characteristic.writeValue(gyroReadings);
+      IMU.readGyroscope(gX, gY, gZ);
+      char gyroReadings[data_size_count];
+      IMU_read(gX, gY, gZ, gyroReadings);
+      gyroscope_characteristic.writeValue(gyroReadings);
 
-    delay(100); // adds 0.1s for the webBLE to keep up - ( for smooth plotting )
+      delay(100); // adds 0.1s for the webBLE to keep up - ( for smooth plotting )
+    }
+
+    if (APDS.proximityAvailable()) {
+      // read the proximity
+      // - 0   => close
+      // - 255 => far
+      // - -1  => error
+      int32_t proximity = APDS.readProximity();
+
+      distance_characteristic.writeValue(proximity);
+
+  //    Serial.println(proximity);
+    }
+    // runPrediction(aX, aY, aZ, gX, gY, gZ);
+    if (isModelInitialized) runPrediction(aX, aY, aZ, gX, gY, gZ);
+
+
+  //  Serial.print("Temperature = ");
+  //  Serial.print(temperature);
+  //  Serial.println(" °C");
   }
-
-  if (APDS.proximityAvailable()) {
-    // read the proximity
-    // - 0   => close
-    // - 255 => far
-    // - -1  => error
-    int32_t proximity = APDS.readProximity();
-
-    distance_characteristic.writeValue(proximity);
-
-//    Serial.println(proximity);
-  }
-  // runPrediction(aX, aY, aZ, gX, gY, gZ);
-  if (isModelInitialized) runPrediction(aX, aY, aZ, gX, gY, gZ);
-
-
-//  Serial.print("Temperature = ");
-//  Serial.print(temperature);
-//  Serial.println(" °C");
+  
 
 }
