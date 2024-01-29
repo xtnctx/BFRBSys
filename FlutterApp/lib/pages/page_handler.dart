@@ -126,7 +126,7 @@ class _PageHandlerState extends State<PageHandler> {
 
   @override
   Widget build(BuildContext context) {
-    return _allowUserWidget();
+    // return _allowUserWidget();
     try {
       // New user or device
       if (apiResponse == false) {

@@ -243,16 +243,21 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   CircularProgressIndicator progressAnimation = const CircularProgressIndicator();
-
+  bool isConnected = false; // flag to run once
   @override
   Widget build(BuildContext context) {
     List infoMsg = Provider.of<CallbackProvider>(context, listen: true).infoMsg;
     bool isBLEConnected = Provider.of<ConnectionProvider>(context, listen: true).isConnected;
     msg(infoMsg.first, infoMsg.last);
 
-    if (isBLEConnected) {
+    if (isBLEConnected && !isConnected) {
       setState(() {
         isConnecting = false;
+        isConnected = true;
+      });
+    } else if (!isBLEConnected && isConnected) {
+      setState(() {
+        isConnected = false;
       });
     }
 
@@ -265,13 +270,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         ),
         child: GestureDetector(
           onTap: () {
-            var rng = Random();
-            print(rng.nextInt(50));
+            // var rng = Random();
+            // print(rng.nextInt(50));
 
-            //     Provider.of<ConnectionProvider>(context, listen: false).toggle(true);
-            //     setState(() {
-            //       isConnecting = true;
-            //     });
+            Provider.of<ConnectionProvider>(context, listen: false).toggle(true);
+            setState(() {
+              isConnecting = true;
+            });
           },
           child: CustomPaint(
             painter: MyPainter(
