@@ -121,6 +121,9 @@ BLECharacteristic gyroscope_characteristic(FILE_TRANSFER_UUID("3008"), BLERead |
 BLECharacteristic distance_characteristic(FILE_TRANSFER_UUID("3009"), BLERead | BLENotify, data_size_count);
 // BLECharacteristic temperature_characteristic(FILE_TRANSFER_UUID("3010"), BLERead | BLENotify, data_size_count);
 
+BLECharacteristic file_update_characteristic(FILE_TRANSFER_UUID("3011"), BLERead | BLENotify, file_block_byte_count);
+
+
 
 
 // Internal globals used for transferring the file.
@@ -165,9 +168,14 @@ void notifyError(const String& error_message) {
   error_message_characteristic.writeValue(error_message_buffer, error_message_byte_count);
 }
 
-void notifySuccess() {
+void notifySuccess(bool send) {
   constexpr int32_t success_status_code = 0;
-  transfer_status_characteristic.writeValue(success_status_code);
+  constexpr int32_t without_message_status_code = 3;
+  if (send) {
+    transfer_status_characteristic.writeValue(success_status_code);
+  } else {
+    transfer_status_characteristic.writeValue(without_message_status_code);
+  }
 }
 
 void notifyInProgress() {
@@ -223,10 +231,14 @@ void onFileTransferComplete() {
   in_progress_file_buffer = nullptr;
   in_progress_bytes_received = 0;
   in_progress_bytes_expected = 0;
+  
 
   onBLEFileReceived(finished_file_buffer, finished_file_buffer_byte_count);
 
-  notifySuccess();
+  notifySuccess(true);
+  
+
+  
 }
 
 void onFileBlockWritten(BLEDevice central, BLECharacteristic characteristic) {  
@@ -285,6 +297,8 @@ void startFileTransfer() {
     notifyError("File transfer command received while previous transfer is still in progress");
     return;
   }
+  delay(1000);
+  isModelInitialized = false;
 
   int32_t file_length_value; 
   file_length_characteristic.readValue(file_length_value);
@@ -296,8 +310,10 @@ void startFileTransfer() {
        String(" bytes but request is ") + String(file_length_value) + String(" bytes"));
     return;
   }
-
+  
   file_checksum_characteristic.readValue(in_progress_checksum);
+  Serial.print("in_progress_checksum = ");
+  Serial.println(in_progress_checksum);
 
   int in_progress_file_buffer_index;
   if (finished_file_buffer_index == 0) {
@@ -382,6 +398,9 @@ void setupBLEFileTransfer() {
   service.addCharacteristic(accelerometer_characteristic);
   service.addCharacteristic(gyroscope_characteristic);
   service.addCharacteristic(distance_characteristic);
+  
+  service.addCharacteristic(file_update_characteristic);
+
 
   // Start up the service itself.
   BLE.addService(service);
@@ -460,8 +479,6 @@ void setup() {
   pinMode(vibrationPin, OUTPUT);
 
   previous_file = getPreviousFile();
-  initOldModel(previous_file);
-  initializeTFL(file_buffers);
 }
 
 char *dtostrf (double val, signed char width, unsigned char prec, char *sout) {
@@ -567,7 +584,7 @@ void runPrediction(float aX, float aY, float aZ, float gX, float gY, float gZ) {
     // Serial.print(": ");
     // Serial.println(tflOutputTensor->data.f[i], 6);
   }
-  Serial.println();
+  // Serial.println();
 }
 
 String getPreviousFile() {
@@ -688,6 +705,81 @@ void saveBuzz(String targetDatetime, String filename) {
   }
 }
 
+// Function to send data in chunks
+void writeUpdatedChunks(const String& data) {
+  int dataSize = data.length();
+  int chunkSize = 64;
+  
+  for (int i = 0; i < dataSize; i += chunkSize) {
+    String chunk = data.substring(i, min(i + chunkSize, dataSize));
+    const char* chunkCStr = chunk.c_str();
+    file_update_characteristic.writeValue(chunkCStr);
+    Serial.print("Data to send: ");
+    Serial.println(chunk);
+    delay(100);  // Adjust delay as needed based on your requirements
+  }
+}
+
+void sendData(String filename) {
+  File dataFile = sd.open(filename + ".json");
+  JsonDocument jsonDoc;
+  DeserializationError error = deserializeJson(jsonDoc, dataFile);
+  // Check for parsing errors
+  if (error) {
+    Serial.print(F("JSON parsing failed: "));
+    Serial.println(error.c_str());
+  } else {
+    // Get the last two "data" array from the JSON document
+    JsonArray data = jsonDoc["data"];
+    JsonDocument newObj;
+    int idx = 1;
+    for (int i=data.size()-1; i>=data.size()-2; i--) {
+      JsonObject obj = data[i];
+      const char* datetime = obj["datetime"];
+      int buzz = obj["buzz"].as<int>();
+      newObj[idx]["datetime"] = datetime;
+      newObj[idx]["buzz"] = buzz;
+      idx--;
+    }
+
+    
+    // Send the string through BLE
+    String dataContents;
+    serializeJson(newObj, dataContents);
+    writeUpdatedChunks(dataContents);
+    dataFile.close();
+  }
+}
+
+void sendAllData(String filename) {
+  const int bufferSize = 64;
+  char buffer[bufferSize];
+  
+  File dataFile = sd.open(filename + ".json");
+  if (dataFile) {
+    bool isReading = true;
+    while (isReading) {
+      int bytesRead = dataFile.read(buffer, bufferSize);
+      if (bytesRead > 0) {
+        String dataChunk = "";
+        for (int i = 0; i < bytesRead; i++) {
+          dataChunk += (char)buffer[i];
+        }
+        const char* chunkCStr = dataChunk.c_str();
+        file_update_characteristic.writeValue(chunkCStr);
+        delay(100);
+      } else {
+        isReading = false;
+        dataFile.close();
+      }
+    }
+
+  } else {
+    return;
+  }
+}
+
+
 void onBLEFileReceived(uint8_t* file_data, int file_length) {
   // Do something here with the file data that you've received. The memory itself will
   // remain untouched until after a following onFileReceived call has completed, and
@@ -699,7 +791,7 @@ void onBLEFileReceived(uint8_t* file_data, int file_length) {
   String value = "xupdaterequestx-all"; // this must be file_data
   String xupdaterequestx = "";
   
-  for (uint32_t i=0; i<26; i++) {
+  for (uint32_t i=0; i<30; i++) {
     uint8_t dataByte = file_data[i];
     if (dataByte == 0) {
       break;
@@ -707,16 +799,41 @@ void onBLEFileReceived(uint8_t* file_data, int file_length) {
       xupdaterequestx += (char)dataByte;
     }
   }
-  Serial.println(xupdaterequestx);
-  int index = xupdaterequestx.indexOf("xupdaterequestx");
 
+  String requests[3];
+  int index = xupdaterequestx.indexOf("xupdaterequestx");
   if (index != -1) {
-    Serial.println("Update is requested");
-    int delimiterIndex = xupdaterequestx.indexOf("-");
-    String request = xupdaterequestx.substring(delimiterIndex + 1);
-    Serial.println(request);
+    // Parse code to "requests"
+    String code = "";
+    int arraySize  = 0;
+    for (int i=0; i<xupdaterequestx.length(); i++) {
+      char currentChar = xupdaterequestx.charAt(i);
+      if (currentChar != '-') {
+        code += xupdaterequestx.charAt(i);
+      } else {
+        if (arraySize < sizeof(requests) / sizeof(requests[0])) {
+          requests[arraySize] = code;
+          arraySize++;
+          code = "";
+        } else {
+          Serial.println("Array is full, cannot add more items.");
+        }
+      }
+   
+    }
+
+    // Send dashboard data using BLE
+    if (requests[2].equals("all")) {
+      sendAllData(requests[1]);
+    } else if (requests[2].equals("last")) {
+      sendData(requests[1]);
+    }
+    // notifySuccess(false);
+
+    // Initialize TFL after successful connection
     initOldModel(previous_file);
     initializeTFL(file_buffers);
+
   } else {
     String code = "";
     uint32_t new_size = 0;
@@ -742,13 +859,12 @@ void onBLEFileReceived(uint8_t* file_data, int file_length) {
       file_buffers[i] = 0;
     }
 
+    
+    // notifySuccess(true);
     saveModel(file_name, file_buffers);
     setPreviousFile(file_name);
     initializeTFL(file_buffers);
   }
-
-
-  
 
 }
 
@@ -758,45 +874,39 @@ void onBLEFileReceived(uint8_t* file_data, int file_length) {
 
 void loop() {
   updateBLEFileTransfer();
-  Serial.println(isConnected);
   // isConnected = central.connected();
-  if (isConnected) {
-    float aX, aY, aZ, gX, gY, gZ;
-    float temperature = HTS.readTemperature();
+
+  float aX, aY, aZ, gX, gY, gZ;
+  float temperature = HTS.readTemperature();
+  
+  if (IMU.accelerationAvailable() && IMU.gyroscopeAvailable()) {
+    IMU.readAcceleration(aX, aY, aZ);
+    char accReadings[data_size_count];
+    IMU_read(aX, aY, aZ, accReadings);
     
-    if (IMU.accelerationAvailable() && IMU.gyroscopeAvailable()) {
-      IMU.readAcceleration(aX, aY, aZ);
-      char accReadings[data_size_count];
-      IMU_read(aX, aY, aZ, accReadings);
+
+    IMU.readGyroscope(gX, gY, gZ);
+    char gyroReadings[data_size_count];
+    IMU_read(gX, gY, gZ, gyroReadings);
+
+    if (isConnected) {
       accelerometer_characteristic.writeValue(accReadings);
-
-      IMU.readGyroscope(gX, gY, gZ);
-      char gyroReadings[data_size_count];
-      IMU_read(gX, gY, gZ, gyroReadings);
       gyroscope_characteristic.writeValue(gyroReadings);
-
-      delay(100); // adds 0.1s for the webBLE to keep up - ( for smooth plotting )
     }
 
-    if (APDS.proximityAvailable()) {
-      // read the proximity
-      // - 0   => close
-      // - 255 => far
-      // - -1  => error
-      int32_t proximity = APDS.readProximity();
-
-      distance_characteristic.writeValue(proximity);
-
-  //    Serial.println(proximity);
-    }
-    // runPrediction(aX, aY, aZ, gX, gY, gZ);
-    if (isModelInitialized) runPrediction(aX, aY, aZ, gX, gY, gZ);
-
-
-  //  Serial.print("Temperature = ");
-  //  Serial.print(temperature);
-  //  Serial.println(" °C");
+    delay(100); // adds 0.1s for the webBLE to keep up - ( for smooth plotting )
   }
+
+  // runPrediction(aX, aY, aZ, gX, gY, gZ);
+  if (isModelInitialized) {
+    runPrediction(aX, aY, aZ, gX, gY, gZ);
+  }
+
+
+//  Serial.print("Temperature = ");
+//  Serial.print(temperature);
+//  Serial.println(" °C");
+  
   
 
 }
