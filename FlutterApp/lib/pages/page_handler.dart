@@ -58,7 +58,7 @@ class _PageHandlerState extends State<PageHandler> {
     scaffoldKey = widget.scaffoldKey;
 
     pages = [
-      const Dashboard(),
+      Dashboard(ble: ble),
       HomePage(ble: ble),
       MonitoringPage(ble: ble),
       ResultsPage(ble: ble),
