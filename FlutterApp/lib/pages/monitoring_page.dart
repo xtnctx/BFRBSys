@@ -81,7 +81,6 @@ class _MonitoringPageState extends State<MonitoringPage> {
 
   void setConnected(fromContext, bool value) {
     Provider.of<ConnectionProvider>(fromContext, listen: false).setConnected = value;
-    print('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA: $ble');
   }
 
   bool connectionValue(fromContext) {
@@ -91,6 +90,9 @@ class _MonitoringPageState extends State<MonitoringPage> {
   // StreamSubscription? subscription;
   StreamSubscription? subscription;
   StreamSubscription? deviceState;
+  StreamSubscription? readStream;
+  StreamSubscription? updateStream;
+  StreamSubscription? callbackControllerStream;
 
   @override
   void initState() {
@@ -103,7 +105,7 @@ class _MonitoringPageState extends State<MonitoringPage> {
   }
 
   void listenCallback() {
-    ble!.callbackController.stream.asBroadcastStream().listen((List value) {
+    callbackControllerStream = ble!.callbackController.stream.asBroadcastStream().listen((List value) {
       // value = [String callbackMessage, double sendingProgress ,int statusCode]
       msg(value.first, value.last);
       Provider.of<CallbackProvider>(context, listen: false).inform(value.first, value.last);
@@ -126,7 +128,7 @@ class _MonitoringPageState extends State<MonitoringPage> {
   /* ------------------------------------------------- */
   // EVENT LISTENERS
   void _readData(BluetoothCharacteristic? characteristic) {
-    characteristic!.onValueReceived.listen((value) {
+    readStream = characteristic!.onValueReceived.listen((value) {
       List<int> readData = List.from(value);
       String parsedData = String.fromCharCodes(readData);
 
@@ -143,11 +145,11 @@ class _MonitoringPageState extends State<MonitoringPage> {
   }
 
   void _readUpdateData(BluetoothCharacteristic? characteristic) {
-    characteristic!.onValueReceived.listen((value) {
+    updateStream = characteristic!.onValueReceived.listen((value) {
       List<int> readData = List.from(value);
       String parsedData = String.fromCharCodes(readData);
       if (readData.isNotEmpty && readData != []) {
-        print(parsedData);
+        ble!.dashboardData += parsedData;
       }
     });
   }
@@ -339,8 +341,18 @@ class _MonitoringPageState extends State<MonitoringPage> {
     timer!.cancel();
     setState(() {
       setConnected(context, false);
+      subscription!.cancel();
+      deviceState!.cancel();
+      readStream!.cancel();
+      updateStream!.cancel();
+      callbackControllerStream!.cancel();
+      timer!.cancel();
+
       subscription = null;
       deviceState = null;
+      readStream = null;
+      updateStream = null;
+      callbackControllerStream = null;
       timer = null;
     });
   }
