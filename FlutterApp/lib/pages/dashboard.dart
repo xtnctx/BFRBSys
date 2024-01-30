@@ -1,8 +1,9 @@
 part of 'page_handler.dart';
 
 class Dashboard extends StatefulWidget {
-  const Dashboard({super.key, this.restorationId});
   final String? restorationId;
+  final BluetoothBuilder? ble;
+  const Dashboard({super.key, this.restorationId, this.ble});
 
   @override
   State<Dashboard> createState() => _DashboardState();
@@ -10,6 +11,9 @@ class Dashboard extends StatefulWidget {
 
 class _DashboardState extends State<Dashboard> with RestorationMixin {
   List<DashboardChartData> ydata = [];
+  BluetoothBuilder? ble;
+  StreamSubscription? isReceivingControllerStream;
+
   var rng = Random();
 
   late TrackballBehavior _trackballBehavior;
@@ -24,7 +28,16 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
     for (int row = 1; row < 30; row++) {
       ydata.add(DashboardChartData(row, rng.nextInt(50)));
     }
+    ble = widget.ble;
+    listenReceiving();
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    isReceivingControllerStream!.cancel();
+    isReceivingControllerStream = null;
+    super.dispose();
   }
 
   @override
@@ -79,8 +92,38 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
     }
   }
 
+  void listenReceiving() {
+    isReceivingControllerStream = ble!.isReceivingController.stream.asBroadcastStream().listen((bool value) {
+      // value = [String callbackMessage, double sendingProgress ,int statusCode]
+      Provider.of<ConnectionProvider>(context, listen: false).setReceiving = value;
+    });
+  }
+
+  void requestUpdateAll() async {
+    if (ble != null && ble!.isConnected && !ble!.isFileTransferInProgress) {
+      setState(() {
+        ble!.dashboardData = "";
+        ble!.isReceivingController.add(true);
+      });
+      var user = await UserSecureStorage.getUser();
+      String username = user['username'];
+
+      // Get current date
+      DateTime currentDate = DateTime.now();
+      String formattedMonth = currentDate.month.toString().padLeft(2, '0');
+      String formattedDay = currentDate.day.toString().padLeft(2, '0');
+      String formattedDate = "${currentDate.year}$formattedMonth$formattedDay";
+
+      var fileContents = utf8.encode('xupdaterequestx-$username-all-$formattedDate-') as Uint8List;
+      print("fileContents length is ${fileContents.length}");
+      ble?.transferFile(fileContents);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    bool isReceiving = Provider.of<ConnectionProvider>(context, listen: true).isReceiving;
+
     double cardHeight = 220.0;
     return Stack(
       children: <Widget>[
@@ -111,31 +154,39 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
                 textAlign: TextAlign.left,
                 style: GoogleFonts.bebasNeue(fontSize: 20),
               ),
-              trailing: PopupMenuButton(
-                itemBuilder: (BuildContext context) => <PopupMenuEntry<PopupMenuItem>>[
-                  PopupMenuItem(
-                    child: const Text("View profile"),
-                    onTap: () {
-                      print("View profile");
-                    },
-                  ),
-                  PopupMenuItem(
-                    child: const Text("View as: per month"),
-                    onTap: () {
-                      print("View as: per month");
-                    },
-                  ),
-                  PopupMenuItem(
-                    child: const Text("Update"),
-                    onTap: () {
-                      print("Update");
-                    },
-                  ),
-                ],
-                child: const CircleAvatar(
-                  backgroundImage: AssetImage('images/ekusuuuu-calibaaaaaaaaaaaaa.png'),
-                ),
-              ),
+              trailing: isReceiving
+                  ? const CircularProgressIndicator()
+                  : PopupMenuButton(
+                      itemBuilder: (BuildContext context) => <PopupMenuEntry<PopupMenuItem>>[
+                        PopupMenuItem(
+                          child: const Text("View profile"),
+                          onTap: () {
+                            print("View profile");
+                          },
+                        ),
+                        PopupMenuItem(
+                          child: const Text("View as: per month"),
+                          onTap: () {
+                            print("View as: per month");
+                          },
+                        ),
+                        PopupMenuItem(
+                          child: const Text("Update"),
+                          onTap: () {
+                            requestUpdateAll();
+                          },
+                        ),
+                        PopupMenuItem(
+                          child: const Text("Refresh"),
+                          onTap: () {
+                            print(ble!.dashboardData);
+                          },
+                        ),
+                      ],
+                      child: const CircleAvatar(
+                        backgroundImage: AssetImage('images/ekusuuuu-calibaaaaaaaaaaaaa.png'),
+                      ),
+                    ),
             ),
           ),
         ),
