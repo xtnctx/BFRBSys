@@ -11,8 +11,11 @@ class Dashboard extends StatefulWidget {
 
 class _DashboardState extends State<Dashboard> with RestorationMixin {
   List<DashboardChartData> ydata = [];
+  List<List<DashboardChartData>> weeksYData = [];
   BluetoothBuilder? ble;
   StreamSubscription? isReceivingControllerStream;
+  String plotOption = "weeks";
+  int weekIndex = 0;
 
   var rng = Random();
 
@@ -25,11 +28,19 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
         enable: true,
         tooltipSettings: const InteractiveTooltip(enable: true, color: Colors.red));
 
-    for (int row = 1; row < 30; row++) {
-      ydata.add(DashboardChartData(row, rng.nextInt(50)));
-    }
+    // for (int row = 1; row < 30; row++) {
+    //   ydata.add(DashboardChartData(row, rng.nextInt(50)));
+    // }
+    /// TODO: Try with more data (3 months)
     ble = widget.ble;
     listenReceiving();
+    // Get current date
+    // DateTime currentDate = DateTime.now();
+    // String formattedMonth = currentDate.month.toString().padLeft(2, '0');
+    // String formattedDay = currentDate.day.toString().padLeft(2, '0');
+    // String formattedDate = "${currentDate.year}$formattedMonth$formattedDay";
+    // updateDashboard(int.parse(formattedDate), plotOption);
+    updateDashboard(20240110, plotOption);
     super.initState();
   }
 
@@ -86,7 +97,7 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
         _selectedDate.value = newSelectedDate;
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(
-              'Selected: ${_selectedDate.value.day}/${_selectedDate.value.month}/${_selectedDate.value.year}'),
+              'Selected: ${_selectedDate.value.year}${_selectedDate.value.month}${_selectedDate.value.day}'),
         ));
       });
     }
@@ -99,7 +110,7 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
     });
   }
 
-  void requestUpdateAll() async {
+  void requestUpdate(String request) async {
     if (ble != null && ble!.isConnected && !ble!.isFileTransferInProgress) {
       setState(() {
         ble!.dashboardData = "";
@@ -114,9 +125,78 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
       String formattedDay = currentDate.day.toString().padLeft(2, '0');
       String formattedDate = "${currentDate.year}$formattedMonth$formattedDay";
 
-      var fileContents = utf8.encode('xupdaterequestx-$username-all-$formattedDate-') as Uint8List;
+      var fileContents = utf8.encode('xupdaterequestx-$username-$request-$formattedDate-') as Uint8List;
       print("fileContents length is ${fileContents.length}");
       ble?.transferFile(fileContents);
+    }
+  }
+
+  List<List<DashboardChartData>> monthToPerWeek(List<DashboardChartData> data) {
+    List<List<DashboardChartData>> perWeek = [];
+    List week = [];
+
+    for (var val in data) {
+      week.add(val);
+      if (week.length == 7 || val == data.last) {
+        perWeek.add(List.from(week));
+        week.clear();
+      }
+    }
+
+    if (perWeek.last.length < 4) {
+      List y = perWeek.removeLast();
+      for (var val in y) {
+        perWeek.last.add(val);
+      }
+      return perWeek;
+    }
+    return perWeek;
+  }
+
+  void updateDashboard(int selectedDate, String plotOption) async {
+    String dir = await AppStorage.getDir();
+    List<io.FileSystemEntity> dataFile = io.Directory(dir).listSync();
+    String fileRead = io.File("$dir/ryan.json").readAsStringSync();
+    Map<String, dynamic> jsonData = json.decode(fileRead);
+    List jsonDataList = jsonData["data"];
+    List<Map<String, dynamic>> dataList = jsonDataList.cast<Map<String, dynamic>>();
+
+    int selectedMonth = selectedDate ~/ 100;
+
+    if (plotOption == 'weeks') {
+      setState(() {
+        List<DashboardChartData> monthData = [];
+
+        for (Map<String, dynamic> item in dataList) {
+          int datetime = int.parse(item["datetime"]);
+          int yearMonth = datetime ~/ 100;
+          int day = datetime % 100;
+          if (selectedMonth == yearMonth) {
+            DashboardChartData chartData = DashboardChartData(day, item["buzz"]);
+            monthData.add(chartData);
+          }
+        }
+
+        weeksYData = monthToPerWeek(monthData);
+        for (int i = 0; i < weeksYData.length; i++) {
+          for (int j = 0; j < weeksYData[i].length; j++) {
+            print('Element at index ($i, $j): ${weeksYData[i][j]}');
+          }
+        }
+      });
+    } else if (plotOption == 'month') {
+      setState(() {
+        ydata.clear();
+        for (Map<String, dynamic> item in dataList) {
+          int datetime = int.parse(item["datetime"]);
+          int yearMonth = datetime ~/ 100;
+          int day = datetime % 100;
+          if (selectedMonth == yearMonth) {
+            DashboardChartData chartData = DashboardChartData(day, item["buzz"]);
+            ydata.add(chartData);
+          }
+        }
+      });
     }
   }
 
@@ -173,13 +253,13 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
                         PopupMenuItem(
                           child: const Text("Update"),
                           onTap: () {
-                            requestUpdateAll();
+                            requestUpdate("all");
                           },
                         ),
                         PopupMenuItem(
                           child: const Text("Refresh"),
                           onTap: () {
-                            print(ble!.dashboardData);
+                            updateDashboard(20240110, plotOption);
                           },
                         ),
                       ],
@@ -219,32 +299,59 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
                   SizedBox(
                     height: 200.0,
                     width: MediaQuery.of(context).size.width * 0.86,
-                    child: Card(
-                      shadowColor: Theme.of(context).colorScheme.shadow,
-                      elevation: 5.0,
-                      child: SfCartesianChart(
-                        trackballBehavior: _trackballBehavior,
-                        plotAreaBorderWidth: 0,
-                        primaryXAxis: NumericAxis(
-                          isVisible: false,
+                    child: GestureDetector(
+                      onHorizontalDragEnd: plotOption == 'weeks'
+                          ? (DragEndDetails details) {
+                              if (details.primaryVelocity! > 0) {
+                                // Swiped to the right
+                                if (weekIndex > 0) {
+                                  setState(() {
+                                    weekIndex -= 1;
+                                  });
+                                }
+                                print("weekIndex: $weekIndex");
+                                print("weeksYData.length - 1: ${weeksYData.length - 1}");
+                              } else if (details.primaryVelocity! < 0) {
+                                // Swiped to the left
+                                // weeksYData.length = 5
+                                if (weekIndex < weeksYData.length - 1) {
+                                  setState(() {
+                                    weekIndex += 1;
+                                  });
+                                }
+                                print("weekIndex: $weekIndex");
+                                print("weeksYData.length - 1: ${weeksYData.length - 1}");
+                                print(weeksYData);
+                              }
+                            }
+                          : null,
+                      child: Card(
+                        shadowColor: Theme.of(context).colorScheme.shadow,
+                        elevation: 5.0,
+                        child: SfCartesianChart(
+                          trackballBehavior: _trackballBehavior,
+                          plotAreaBorderWidth: 0,
+                          primaryXAxis: NumericAxis(
+                            isVisible: true,
+                          ),
+                          primaryYAxis: NumericAxis(
+                            isVisible: false,
+                          ),
+                          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                          series: <ChartSeries>[
+                            // Renders line chart
+                            FastLineSeries<DashboardChartData, int>(
+                                dataSource: plotOption == 'month' ? ydata : weeksYData[weekIndex],
+                                color: CustomColor.trainingLineColor,
+                                xValueMapper: (DashboardChartData data, _) => data.x,
+                                yValueMapper: (DashboardChartData data, _) => data.y),
+                            // FastLineSeries<ChartData, int>(
+                            //     dataSource: dropdownValue == 'Accuracy' ? valAccuracy : valLoss,
+                            //     color: CustomColor.validationLineColor,
+                            //     xValueMapper: (ChartData data, _) => data.x,
+                            //     yValueMapper: (ChartData data, _) => data.y),
+                          ],
                         ),
-                        primaryYAxis: NumericAxis(
-                          isVisible: false,
-                        ),
-                        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                        series: <ChartSeries>[
-                          // Renders line chart
-                          FastLineSeries<DashboardChartData, int>(
-                              dataSource: ydata,
-                              color: CustomColor.trainingLineColor,
-                              xValueMapper: (DashboardChartData data, _) => data.x,
-                              yValueMapper: (DashboardChartData data, _) => data.y),
-                          // FastLineSeries<ChartData, int>(
-                          //     dataSource: dropdownValue == 'Accuracy' ? valAccuracy : valLoss,
-                          //     color: CustomColor.validationLineColor,
-                          //     xValueMapper: (ChartData data, _) => data.x,
-                          //     yValueMapper: (ChartData data, _) => data.y),
-                        ],
                       ),
                     ),
                   ),
