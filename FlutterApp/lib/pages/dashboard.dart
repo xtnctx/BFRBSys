@@ -12,14 +12,30 @@ class Dashboard extends StatefulWidget {
 class _DashboardState extends State<Dashboard> with RestorationMixin {
   List<DashboardChartData> ydata = [];
   List<List<DashboardChartData>> weeksYData = [];
+  List<int> buzzValues = [];
+  double meanImprovement = 0.0;
   BluetoothBuilder? ble;
   StreamSubscription? isReceivingControllerStream;
   String plotOption = "weeks";
   int weekIndex = 0;
-
+  int userSelectedDate = 0;
   var rng = Random();
 
   late TrackballBehavior _trackballBehavior;
+  List<String> monthNames = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December'
+  ];
 
   @override
   void initState() {
@@ -34,14 +50,26 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
     /// TODO: Try with more data (3 months)
     ble = widget.ble;
     listenReceiving();
-    // Get current date
-    // DateTime currentDate = DateTime.now();
-    // String formattedMonth = currentDate.month.toString().padLeft(2, '0');
-    // String formattedDay = currentDate.day.toString().padLeft(2, '0');
-    // String formattedDate = "${currentDate.year}$formattedMonth$formattedDay";
-    // updateDashboard(int.parse(formattedDate), plotOption);
-    updateDashboard(20240110, plotOption);
+    userSelectedDate = getDateInt(DateTime.now());
+    callUpdateDashboard(userSelectedDate, plotOption);
     super.initState();
+  }
+
+  int getDateInt(dynamic input) {
+    if (input.runtimeType == DateTime) {
+      String formattedMonth = input.month.toString().padLeft(2, '0');
+      String formattedDay = input.day.toString().padLeft(2, '0');
+      String formattedDate = "${input.year}$formattedMonth$formattedDay";
+      return int.parse(formattedDate);
+    } else if (input.runtimeType == String) {
+      return int.parse(input);
+    } else {
+      return -1;
+    }
+  }
+
+  void callUpdateDashboard(int date, String plotOption) async {
+    await updateDashboard(date, plotOption);
   }
 
   @override
@@ -54,7 +82,7 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
   @override
   String? get restorationId => widget.restorationId;
 
-  final RestorableDateTime _selectedDate = RestorableDateTime(DateTime(2021, 7, 25));
+  final RestorableDateTime _selectedDate = RestorableDateTime(DateTime.now());
   late final RestorableRouteFuture<DateTime?> _restorableDatePickerRouteFuture =
       RestorableRouteFuture<DateTime?>(
     onComplete: _selectDate,
@@ -78,8 +106,8 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
           restorationId: 'date_picker_dialog',
           initialEntryMode: DatePickerEntryMode.calendarOnly,
           initialDate: DateTime.fromMillisecondsSinceEpoch(arguments! as int),
-          firstDate: DateTime(2021),
-          lastDate: DateTime(2022),
+          firstDate: DateTime(2024),
+          lastDate: DateTime(2100),
         );
       },
     );
@@ -91,14 +119,26 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
     registerForRestoration(_restorableDatePickerRouteFuture, 'date_picker_route_future');
   }
 
-  void _selectDate(DateTime? newSelectedDate) {
+  void _selectDate(DateTime? newSelectedDate) async {
     if (newSelectedDate != null) {
+      _selectedDate.value = newSelectedDate;
+      int year = _selectedDate.value.year;
+      String month = _selectedDate.value.month.toString().padLeft(2, '0');
+      String day = _selectedDate.value.day.toString().padLeft(2, '0');
+      String formattedDate = '$year$month$day';
+      userSelectedDate = getDateInt(formattedDate);
+
+      bool val = await updateDashboard(userSelectedDate, plotOption);
       setState(() {
-        _selectedDate.value = newSelectedDate;
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(
-              'Selected: ${_selectedDate.value.year}${_selectedDate.value.month}${_selectedDate.value.day}'),
-        ));
+        if (val) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Selected: $formattedDate'),
+          ));
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Empty data.'),
+          ));
+        }
       });
     }
   }
@@ -153,37 +193,50 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
     return perWeek;
   }
 
-  void updateDashboard(int selectedDate, String plotOption) async {
+  Future<bool> updateDashboard(int selectedDate, String plotOption) async {
     String dir = await AppStorage.getDir();
     List<io.FileSystemEntity> dataFile = io.Directory(dir).listSync();
-    String fileRead = io.File("$dir/ryan.json").readAsStringSync();
+    // String fileRead = io.File("$dir/ryan.json").readAsStringSync();
+
     Map<String, dynamic> jsonData = json.decode(fileRead);
     List jsonDataList = jsonData["data"];
     List<Map<String, dynamic>> dataList = jsonDataList.cast<Map<String, dynamic>>();
 
     int selectedMonth = selectedDate ~/ 100;
+    int selectedDay = selectedDate % 100;
 
     if (plotOption == 'weeks') {
-      setState(() {
-        List<DashboardChartData> monthData = [];
+      List<DashboardChartData> monthData = [];
 
-        for (Map<String, dynamic> item in dataList) {
-          int datetime = int.parse(item["datetime"]);
-          int yearMonth = datetime ~/ 100;
-          int day = datetime % 100;
-          if (selectedMonth == yearMonth) {
-            DashboardChartData chartData = DashboardChartData(day, item["buzz"]);
-            monthData.add(chartData);
-          }
+      for (Map<String, dynamic> item in dataList) {
+        int datetime = int.parse(item["datetime"]);
+        int yearMonth = datetime ~/ 100;
+        int day = datetime % 100;
+        if (selectedMonth == yearMonth) {
+          DashboardChartData chartData = DashboardChartData(day, item["buzz"]);
+          monthData.add(chartData);
         }
-
-        weeksYData = monthToPerWeek(monthData);
+      }
+      if (monthData.isNotEmpty) {
+        setState(() {
+          weeksYData.clear();
+          weeksYData = monthToPerWeek(monthData);
+        });
+        // find date in selected month
         for (int i = 0; i < weeksYData.length; i++) {
           for (int j = 0; j < weeksYData[i].length; j++) {
-            print('Element at index ($i, $j): ${weeksYData[i][j]}');
+            if (weeksYData[i][j].x == selectedDay) {
+              setState(() {
+                weekIndex = i;
+              });
+              break;
+            }
           }
         }
-      });
+        return true;
+      } else {
+        return false;
+      }
     } else if (plotOption == 'month') {
       setState(() {
         ydata.clear();
@@ -196,8 +249,16 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
             ydata.add(chartData);
           }
         }
+        buzzValues.clear();
+        buzzValues = ydata.map((data) => data.y).toList();
       });
+      if (ydata.isNotEmpty) {
+        return true;
+      } else {
+        return false;
+      }
     }
+    return false;
   }
 
   @override
@@ -230,7 +291,9 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
                 style: GoogleFonts.bebasNeue(fontSize: 30),
               ),
               subtitle: Text(
-                'January 2024',
+                plotOption == 'month'
+                    ? '${monthNames[_selectedDate.value.month - 1]} ${_selectedDate.value.year}'
+                    : '${monthNames[_selectedDate.value.month - 1]} ${_selectedDate.value.year} - week ${weekIndex + 1}',
                 textAlign: TextAlign.left,
                 style: GoogleFonts.bebasNeue(fontSize: 20),
               ),
@@ -245,9 +308,16 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
                           },
                         ),
                         PopupMenuItem(
-                          child: const Text("View as: per month"),
-                          onTap: () {
-                            print("View as: per month");
+                          child: Text("View as: ${plotOption == 'month' ? 'weeks' : 'month'}"),
+                          onTap: () async {
+                            setState(() {
+                              if (plotOption == 'month') {
+                                plotOption = 'weeks';
+                              } else if (plotOption == 'weeks') {
+                                plotOption = 'month';
+                              }
+                            });
+                            await updateDashboard(userSelectedDate, plotOption);
                           },
                         ),
                         PopupMenuItem(
@@ -307,16 +377,26 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
                                 if (weekIndex > 0) {
                                   setState(() {
                                     weekIndex -= 1;
+                                    buzzValues.clear();
+                                    print("weekIndex: $weekIndex");
+                                    buzzValues = weeksYData[weekIndex].map((data) => data.y).toList();
+                                    List<double> improvements = calculateImprovement(buzzValues);
+                                    meanImprovement = calculateMean(improvements);
+                                    print(meanImprovement);
                                   });
                                 }
-                                print("weekIndex: $weekIndex");
-                                print("weeksYData.length - 1: ${weeksYData.length - 1}");
                               } else if (details.primaryVelocity! < 0) {
                                 // Swiped to the left
                                 // weeksYData.length = 5
                                 if (weekIndex < weeksYData.length - 1) {
                                   setState(() {
                                     weekIndex += 1;
+                                    buzzValues.clear();
+                                    print("weekIndex: $weekIndex");
+                                    buzzValues = weeksYData[weekIndex].map((data) => data.y).toList();
+                                    List<double> improvements = calculateImprovement(buzzValues);
+                                    meanImprovement = calculateMean(improvements);
+                                    print(meanImprovement);
                                   });
                                 }
                                 print("weekIndex: $weekIndex");
@@ -332,7 +412,7 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
                           trackballBehavior: _trackballBehavior,
                           plotAreaBorderWidth: 0,
                           primaryXAxis: NumericAxis(
-                            isVisible: true,
+                            isVisible: false,
                           ),
                           primaryYAxis: NumericAxis(
                             isVisible: false,
@@ -389,7 +469,7 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
                               child: Container(
                                 margin: const EdgeInsets.all(10.0),
                                 child: Text(
-                                  '2.12%',
+                                  meanImprovement.toStringAsFixed(2),
                                   textAlign: TextAlign.left,
                                   style: GoogleFonts.bebasNeue(fontSize: 50),
                                 ),
