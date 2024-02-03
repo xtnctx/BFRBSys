@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:bfrbsys/pages/page_handler.dart';
+import 'package:bfrbsys/pages/page_manager.dart';
 import 'package:bfrbsys/shared/shared.dart';
 import 'package:bfrbsys/accounts/accounts.dart';
-
 
 void main() {
   // SystemChrome.setSystemUIOverlayStyle(
@@ -41,11 +40,11 @@ class App extends StatelessWidget {
           title: 'Bfrbsys',
           debugShowCheckedModeBanner: false,
           theme: themeProvider.getTheme,
+          initialRoute: '/',
           routes: {
             '/': (context) => PageHandler(),
-            '/login': (context) => const LoginPage(
-                  msg: 'Enter your credentials to proceed',
-                ),
+            '/accounts': (context) => const Accounts(msg: 'Enter your credentials to proceed'),
+            '/profile': (context) => const ProfilePage(),
           },
         );
       },
