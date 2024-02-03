@@ -1,4 +1,4 @@
-part of 'page_handler.dart';
+part of 'page_manager.dart';
 
 class ProfilePage extends StatefulWidget {
   final Icon navBarIcon = const Icon(Icons.person_outlined);
@@ -37,12 +37,25 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          color: Theme.of(context).colorScheme.secondaryContainer,
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+      ),
       backgroundColor: Theme.of(context).colorScheme.background,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            const CircleAvatar(
+              backgroundImage: AssetImage('images/ekusuuuu-calibaaaaaaaaaaaaa.png'),
+              radius: 80,
+            ),
             Text(
               username ?? 'loading...',
               textAlign: TextAlign.center,
@@ -53,9 +66,9 @@ class _ProfilePageState extends State<ProfilePage> {
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 18),
             ),
-            const SizedBox(height: 50),
+            const SizedBox(height: 150),
 
-            // From logout API
+            // // From logout API
             // FutureBuilder<Logout>(
             //   future: _futureLogout,
             //   builder: (context, snapshot) {
@@ -74,12 +87,15 @@ class _ProfilePageState extends State<ProfilePage> {
             //   },
             // ),
             ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.tertiaryContainer,
+              ),
               onPressed: () {
                 _futureLogout = httpService.postLogout(userToken: token ?? '');
 
                 _futureLogout!.then((value) {
                   if (value.http204Message != null) {
-                    Navigator.popAndPushNamed(context, '/login');
+                    Navigator.popAndPushNamed(context, '/accounts');
                   }
                 });
               },
