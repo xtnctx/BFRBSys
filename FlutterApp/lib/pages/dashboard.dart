@@ -1,4 +1,4 @@
-part of 'page_handler.dart';
+part of 'page_manager.dart';
 
 class Dashboard extends StatefulWidget {
   final String? restorationId;
@@ -13,6 +13,7 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
   List<DashboardChartData> ydata = [];
   List<List<DashboardChartData>> weeksYData = [];
   List<int> buzzValues = [];
+  double buzzMean = 0.0;
   double meanImprovement = 0.0;
   BluetoothBuilder? ble;
   StreamSubscription? isReceivingControllerStream;
@@ -233,6 +234,7 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
             }
           }
         }
+        updateImprovementAndAverage();
         return true;
       } else {
         return false;
@@ -249,8 +251,16 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
             ydata.add(chartData);
           }
         }
+
+        // Improvement
         buzzValues.clear();
         buzzValues = ydata.map((data) => data.y).toList();
+        List<double> improvements = calculateImprovement(buzzValues);
+        meanImprovement = calculateMean(improvements);
+
+        // Average Buzz
+        List<double> buzzValuesDouble = buzzValues.map((intNumber) => intNumber.toDouble()).toList();
+        buzzMean = calculateMean(buzzValuesDouble);
       });
       if (ydata.isNotEmpty) {
         return true;
@@ -259,6 +269,37 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
       }
     }
     return false;
+  }
+
+  void updateImprovementAndAverage() {
+    // Improvement
+    buzzValues.clear();
+    buzzValues = weeksYData[weekIndex].map((data) => data.y).toList();
+    List<double> improvements = calculateImprovement(buzzValues);
+    meanImprovement = calculateMean(improvements);
+
+    // Average Buzz
+    List<double> buzzValuesDouble = buzzValues.map((intNumber) => intNumber.toDouble()).toList();
+    buzzMean = calculateMean(buzzValuesDouble);
+  }
+
+  Widget getIconBasedOnNumber(double number) {
+    return number < 0
+        ? const Icon(
+            Icons.keyboard_double_arrow_down,
+            color: Color.fromARGB(255, 193, 59, 49),
+            size: 35,
+          )
+        : number > 0
+            ? const Icon(
+                Icons.keyboard_double_arrow_up,
+                color: Color.fromARGB(255, 42, 163, 50),
+                size: 35,
+              )
+            : const Icon(
+                Icons.drag_handle,
+                size: 35,
+              );
   }
 
   @override
@@ -300,12 +341,10 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
               trailing: isReceiving
                   ? const CircularProgressIndicator()
                   : PopupMenuButton(
-                      itemBuilder: (BuildContext context) => <PopupMenuEntry<PopupMenuItem>>[
-                        PopupMenuItem(
-                          child: const Text("View profile"),
-                          onTap: () {
-                            print("View profile");
-                          },
+                      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                        const PopupMenuItem<String>(
+                          value: 'profile',
+                          child: Text("View profile"),
                         ),
                         PopupMenuItem(
                           child: Text("View as: ${plotOption == 'month' ? 'weeks' : 'month'}"),
@@ -328,14 +367,20 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
                         ),
                         PopupMenuItem(
                           child: const Text("Refresh"),
-                          onTap: () {
-                            updateDashboard(20240110, plotOption);
+                          onTap: () async {
+                            await updateDashboard(userSelectedDate, plotOption);
                           },
                         ),
                       ],
                       child: const CircleAvatar(
                         backgroundImage: AssetImage('images/ekusuuuu-calibaaaaaaaaaaaaa.png'),
                       ),
+                      onSelected: (String value) {
+                        if (value == 'profile') {
+                          Navigator.pushNamed(context, '/profile');
+                        }
+                        // Handle other menu items if needed
+                      },
                     ),
             ),
           ),
@@ -377,12 +422,7 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
                                 if (weekIndex > 0) {
                                   setState(() {
                                     weekIndex -= 1;
-                                    buzzValues.clear();
-                                    print("weekIndex: $weekIndex");
-                                    buzzValues = weeksYData[weekIndex].map((data) => data.y).toList();
-                                    List<double> improvements = calculateImprovement(buzzValues);
-                                    meanImprovement = calculateMean(improvements);
-                                    print(meanImprovement);
+                                    updateImprovementAndAverage();
                                   });
                                 }
                               } else if (details.primaryVelocity! < 0) {
@@ -391,17 +431,9 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
                                 if (weekIndex < weeksYData.length - 1) {
                                   setState(() {
                                     weekIndex += 1;
-                                    buzzValues.clear();
-                                    print("weekIndex: $weekIndex");
-                                    buzzValues = weeksYData[weekIndex].map((data) => data.y).toList();
-                                    List<double> improvements = calculateImprovement(buzzValues);
-                                    meanImprovement = calculateMean(improvements);
-                                    print(meanImprovement);
+                                    updateImprovementAndAverage();
                                   });
                                 }
-                                print("weekIndex: $weekIndex");
-                                print("weeksYData.length - 1: ${weeksYData.length - 1}");
-                                print(weeksYData);
                               }
                             }
                           : null,
@@ -457,11 +489,7 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
                             alignment: Alignment.topLeft,
                             child: Padding(
                               padding: EdgeInsets.only(top: cardHeight * .05, left: cardHeight * .05),
-                              child: const Icon(
-                                Icons.keyboard_double_arrow_up,
-                                color: Colors.green,
-                                size: 35,
-                              ),
+                              child: getIconBasedOnNumber(meanImprovement),
                             ),
                           ),
                           Expanded(
@@ -469,8 +497,8 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
                               child: Container(
                                 margin: const EdgeInsets.all(10.0),
                                 child: Text(
-                                  meanImprovement.toStringAsFixed(2),
-                                  textAlign: TextAlign.left,
+                                  '${meanImprovement.toStringAsFixed(2)}%',
+                                  textAlign: TextAlign.center,
                                   style: GoogleFonts.bebasNeue(fontSize: 50),
                                 ),
                               ),
@@ -513,8 +541,8 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
                               child: Container(
                                 margin: const EdgeInsets.all(10.0),
                                 child: Text(
-                                  '15.6',
-                                  textAlign: TextAlign.left,
+                                  buzzMean.toStringAsFixed(2),
+                                  textAlign: TextAlign.center,
                                   style: GoogleFonts.bebasNeue(fontSize: 50),
                                 ),
                               ),
@@ -544,7 +572,8 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
                       margin: const EdgeInsets.only(left: 60, right: 60),
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(context).colorScheme.tertiaryContainer),
+                          backgroundColor: Theme.of(context).colorScheme.tertiaryContainer,
+                        ),
                         onPressed: () {
                           _restorableDatePickerRouteFuture.present();
                         },
