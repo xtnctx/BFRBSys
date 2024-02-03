@@ -1,6 +1,6 @@
 // ignore_for_file: avoid_print, non_constant_identifier_names
 
-part of 'page_handler.dart';
+part of 'page_manager.dart';
 
 class MonitoringPage extends StatefulWidget {
   final Icon navBarIcon = const Icon(Icons.monitor_heart_outlined);

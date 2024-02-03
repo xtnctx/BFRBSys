@@ -1,4 +1,4 @@
-part of 'page_handler.dart';
+part of 'page_manager.dart';
 
 class HomePage extends StatefulWidget {
   final Icon navBarIcon = const Icon(Icons.home_outlined);
