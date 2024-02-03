@@ -1,6 +1,7 @@
 import 'package:bfrbsys/api/http/http_service.dart';
 import 'package:bfrbsys/api/models.dart';
 import 'package:flutter/material.dart';
+import 'package:bfrbsys/custom_widgets/tooltip.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -38,5 +39,48 @@ extension on String {
     if (!containsDigit) return 'Should contain at least one digit';
     if (!containsSpecialChar) return 'Should contain at least one special character';
     return null;
+  }
+}
+
+class Accounts extends StatefulWidget {
+  final String msg;
+  const Accounts({super.key, required this.msg});
+
+  @override
+  State<Accounts> createState() => _AccountsState();
+}
+
+class _AccountsState extends State<Accounts> {
+  int currentPage = 0;
+  String msg = '';
+
+  @override
+  void initState() {
+    msg = widget.msg;
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        body: SafeArea(
+      child: IndexedStack(
+        index: currentPage,
+        children: [
+          LoginPage(
+              msg: msg,
+              onButtonPressed: () {
+                setState(() {
+                  currentPage = 1;
+                });
+              }),
+          RegisterPage(onButtonPressed: () {
+            setState(() {
+              currentPage = 0;
+            });
+          }),
+        ],
+      ),
+    ));
   }
 }
