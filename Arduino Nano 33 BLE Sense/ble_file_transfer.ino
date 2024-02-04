@@ -40,6 +40,7 @@ int buzzerPin = 8;
 int buzzTime = 200;
 
 int vibrationPin = 6;
+String currentDate = "";
 
 // global variables used for TensorFlow Lite (Micro)
 // pull in all the TFLM ops, you can remove this line and
@@ -63,6 +64,7 @@ const char* HOTSPOT[] = {
   "on_target"
 };
 String previous_file;
+String currentUser = "";
 double on_target_threshold = 0.8;
 
 bool isModelInitialized = false;
@@ -168,6 +170,8 @@ void notifyError(const String& error_message) {
   error_message_characteristic.writeValue(error_message_buffer, error_message_byte_count);
 }
 
+// [send == true] : notifies app for model received 
+// [send == false] : notifies app for dashboard update received 
 void notifySuccess(bool send) {
   constexpr int32_t success_status_code = 0;
   constexpr int32_t without_message_status_code = 3;
@@ -234,11 +238,6 @@ void onFileTransferComplete() {
   
 
   onBLEFileReceived(finished_file_buffer, finished_file_buffer_byte_count);
-
-  notifySuccess(true);
-  
-
-  
 }
 
 void onFileBlockWritten(BLEDevice central, BLECharacteristic characteristic) {  
@@ -572,7 +571,8 @@ void runPrediction(float aX, float aY, float aZ, float gX, float gY, float gZ) {
   if (onTargetPredictValue > on_target_threshold) {
       buzz(true);
       vibrate(true);
-      // saveBuzz();
+      saveBuzz(currentDate, currentUser);
+      delay(1000);
   } else {
       buzz(false);
       vibrate(false);
@@ -785,12 +785,14 @@ void onBLEFileReceived(uint8_t* file_data, int file_length) {
   // remain untouched until after a following onFileReceived call has completed, and
   // the BLE module retains ownership of it, so you don't need to deallocate it.
   
+  // xupdaterequestx-<currentUser>-<request>-<currentDate>-
+  // 
   // UPDATE REQUEST
-  // xupdaterequestx-all
-  // xupdaterequestx-01/22/2024 - start
-  String value = "xupdaterequestx-all"; // this must be file_data
+  // all
+  //  - sends all dashboard data
+  // last
+  //  - sends the last two data (yesterday & today)
   String xupdaterequestx = "";
-  
   for (uint32_t i=0; i<30; i++) {
     uint8_t dataByte = file_data[i];
     if (dataByte == 0) {
@@ -800,10 +802,10 @@ void onBLEFileReceived(uint8_t* file_data, int file_length) {
     }
   }
 
-  String requests[3];
   int index = xupdaterequestx.indexOf("xupdaterequestx");
   if (index != -1) {
     // Parse code to "requests"
+    String requests[4];
     String code = "";
     int arraySize  = 0;
     for (int i=0; i<xupdaterequestx.length(); i++) {
@@ -822,17 +824,21 @@ void onBLEFileReceived(uint8_t* file_data, int file_length) {
    
     }
 
+    currentUser = requests[1];
+    currentDate = requests[3];
     // Send dashboard data using BLE
     if (requests[2].equals("all")) {
-      sendAllData(requests[1]);
+      sendAllData(currentUser);
     } else if (requests[2].equals("last")) {
-      sendData(requests[1]);
+      sendData(currentUser);
     }
-    // notifySuccess(false);
 
     // Initialize TFL after successful connection
     initOldModel(previous_file);
     initializeTFL(file_buffers);
+    delay(100);
+    notifySuccess(false);
+    
 
   } else {
     String code = "";
@@ -860,10 +866,11 @@ void onBLEFileReceived(uint8_t* file_data, int file_length) {
     }
 
     
-    // notifySuccess(true);
     saveModel(file_name, file_buffers);
     setPreviousFile(file_name);
     initializeTFL(file_buffers);
+    delay(100);
+    notifySuccess(true);
   }
 
 }
