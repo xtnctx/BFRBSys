@@ -13,13 +13,14 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
   List<DashboardChartData> ydata = [];
   List<List<DashboardChartData>> weeksYData = [];
   List<int> buzzValues = [];
-  double buzzMean = 0.0;
-  double meanImprovement = 0.0;
+  double? buzzMean = 0.0;
+  double? meanImprovement = 0.0;
   BluetoothBuilder? ble;
   StreamSubscription? isReceivingControllerStream;
   String plotOption = "weeks";
   int weekIndex = 0;
   int userSelectedDate = 0;
+  bool hasData = false;
   var rng = Random();
 
   late TrackballBehavior _trackballBehavior;
@@ -41,18 +42,45 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
   @override
   void initState() {
     _trackballBehavior = TrackballBehavior(
-        // Enables the trackball
-        enable: true,
-        tooltipSettings: const InteractiveTooltip(enable: true, color: Colors.red));
+      // Enables the trackball
+      enable: true,
+      // tooltipSettings: const InteractiveTooltip(enable: true, color: Colors.red),
+      builder: (BuildContext context, TrackballDetails trackballDetails) {
+        return Container(
+          height: 50,
+          width: 150,
+          decoration: BoxDecoration(
+            color: Color.fromRGBO(0, 8, 22, 0.75),
+            borderRadius: BorderRadius.all(Radius.circular(6.0)),
+          ),
+          child: Row(
+            children: [
+              Center(
+                  child: Container(
+                      padding: EdgeInsets.only(top: 11, left: 7),
+                      height: 40,
+                      width: 100,
+                      child: Text(
+                          plotOption == 'month'
+                              ? '${monthNames[_selectedDate.value.month - 1]} ${trackballDetails.point!.x.toString()} : Buzz: ${trackballDetails.point!.y.toString()}'
+                              : 'Buzz: ${trackballDetails.point!.y.toString()}',
+                          style: TextStyle(fontSize: 13, color: Color.fromRGBO(255, 255, 255, 1)))))
+            ],
+          ),
+        );
+      },
+    );
 
-    // for (int row = 1; row < 30; row++) {
-    //   ydata.add(DashboardChartData(row, rng.nextInt(50)));
-    // }
-    /// TODO: Try with more data (3 months)
     ble = widget.ble;
     listenReceiving();
     userSelectedDate = getDateInt(DateTime.now());
     callUpdateDashboard(userSelectedDate, plotOption);
+    double x = DateTime(
+      int.parse(userSelectedDate.toString().substring(0, 4)),
+      int.parse(userSelectedDate.toString().substring(4, 6)) + 1,
+      0,
+    ).day.toDouble();
+    print('x: $hasData');
     super.initState();
   }
 
@@ -70,7 +98,10 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
   }
 
   void callUpdateDashboard(int date, String plotOption) async {
-    await updateDashboard(date, plotOption);
+    bool val = await updateDashboard(date, plotOption);
+    setState(() {
+      hasData = val;
+    });
   }
 
   @override
@@ -131,9 +162,10 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
 
       bool val = await updateDashboard(userSelectedDate, plotOption);
       setState(() {
+        hasData = val;
         if (val) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Selected: $formattedDate'),
+            content: Text('Selected: $month/$day/$year'),
           ));
         } else {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -194,6 +226,22 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
     return perWeek;
   }
 
+  void generateNullYs() {
+    double maxMonthDay = DateTime(_selectedDate.value.year, _selectedDate.value.month + 1, 0).day.toDouble();
+
+    List<DashboardChartData> nullYValues = [];
+    for (int day = 0; day < maxMonthDay; day++) {
+      DashboardChartData chartData = DashboardChartData(day + 1, null);
+      nullYValues.add(chartData);
+    }
+    setState(() {
+      weeksYData.clear();
+      weeksYData = monthToPerWeek(nullYValues);
+      buzzMean = null;
+      meanImprovement = null;
+    });
+  }
+
   Future<bool> updateDashboard(int selectedDate, String plotOption) async {
     String dir = await AppStorage.getDir();
     List<io.FileSystemEntity> dataFile = io.Directory(dir).listSync();
@@ -220,7 +268,6 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
       }
       if (monthData.isNotEmpty) {
         setState(() {
-          weeksYData.clear();
           weeksYData = monthToPerWeek(monthData);
         });
         // find date in selected month
@@ -237,6 +284,7 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
         updateImprovementAndAverage();
         return true;
       } else {
+        generateNullYs();
         return false;
       }
     } else if (plotOption == 'month') {
@@ -254,7 +302,7 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
 
         // Improvement
         buzzValues.clear();
-        buzzValues = ydata.map((data) => data.y).toList();
+        buzzValues = ydata.map((data) => data.y!).toList();
         List<double> improvements = calculateImprovement(buzzValues);
         meanImprovement = calculateMean(improvements);
 
@@ -265,7 +313,10 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
       if (ydata.isNotEmpty) {
         return true;
       } else {
-        return false;
+        setState(() {
+          buzzMean = null;
+          meanImprovement = null;
+        });
       }
     }
     return false;
@@ -274,7 +325,7 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
   void updateImprovementAndAverage() {
     // Improvement
     buzzValues.clear();
-    buzzValues = weeksYData[weekIndex].map((data) => data.y).toList();
+    buzzValues = weeksYData[weekIndex].map((data) => data.y!).toList();
     List<double> improvements = calculateImprovement(buzzValues);
     meanImprovement = calculateMean(improvements);
 
@@ -283,30 +334,40 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
     buzzMean = calculateMean(buzzValuesDouble);
   }
 
-  Widget getIconBasedOnNumber(double number) {
+  Widget getIconBasedOnNumber(double? number) {
+    if (number == null) {
+      return const Icon(Icons.drag_handle, size: 35);
+    }
     return number < 0
-        ? const Icon(
-            Icons.keyboard_double_arrow_down,
-            color: Color.fromARGB(255, 193, 59, 49),
-            size: 35,
-          )
+        ? const Icon(Icons.keyboard_double_arrow_down, color: Color.fromARGB(255, 193, 59, 49), size: 35)
         : number > 0
-            ? const Icon(
-                Icons.keyboard_double_arrow_up,
-                color: Color.fromARGB(255, 42, 163, 50),
-                size: 35,
-              )
-            : const Icon(
-                Icons.drag_handle,
-                size: 35,
-              );
+            ? const Icon(Icons.keyboard_double_arrow_up, color: Color.fromARGB(255, 42, 163, 50), size: 35)
+            : const Icon(Icons.drag_handle, size: 35);
+  }
+
+  int getPlotOptionValue(String plotOption, int maxMonthDay) {
+    if (plotOption == 'weeks') {
+      return 1;
+    } else if (plotOption == 'month') {
+      if (maxMonthDay == 28) {
+        return 3;
+      } else if (maxMonthDay == 29) {
+        return 4;
+      } else if (maxMonthDay == 30) {
+        return 5;
+      } else if (maxMonthDay == 31) {
+        return 5;
+      }
+    }
+    return 0;
   }
 
   @override
   Widget build(BuildContext context) {
     bool isReceiving = Provider.of<ConnectionProvider>(context, listen: true).isReceiving;
-
+    double maxMonthDay = DateTime(_selectedDate.value.year, _selectedDate.value.month + 1, 0).day.toDouble();
     double cardHeight = 220.0;
+
     return Stack(
       children: <Widget>[
         Container(
@@ -356,7 +417,10 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
                                 plotOption = 'month';
                               }
                             });
-                            await updateDashboard(userSelectedDate, plotOption);
+                            bool val = await updateDashboard(userSelectedDate, plotOption);
+                            setState(() {
+                              hasData = val;
+                            });
                           },
                         ),
                         PopupMenuItem(
@@ -368,7 +432,10 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
                         PopupMenuItem(
                           child: const Text("Refresh"),
                           onTap: () async {
-                            await updateDashboard(userSelectedDate, plotOption);
+                            bool val = await updateDashboard(userSelectedDate, plotOption);
+                            setState(() {
+                              hasData = val;
+                            });
                           },
                         ),
                       ],
@@ -415,7 +482,7 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
                     height: 200.0,
                     width: MediaQuery.of(context).size.width * 0.86,
                     child: GestureDetector(
-                      onHorizontalDragEnd: plotOption == 'weeks'
+                      onHorizontalDragEnd: plotOption == 'weeks' && hasData
                           ? (DragEndDetails details) {
                               if (details.primaryVelocity! > 0) {
                                 // Swiped to the right
@@ -444,7 +511,10 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
                           trackballBehavior: _trackballBehavior,
                           plotAreaBorderWidth: 0,
                           primaryXAxis: NumericAxis(
-                            isVisible: false,
+                            isVisible: true,
+                            interval: getPlotOptionValue(plotOption, maxMonthDay.toInt()).toDouble(),
+                            labelStyle: GoogleFonts.bebasNeue(fontSize: 12),
+                            maximum: plotOption == 'month' ? maxMonthDay : null,
                           ),
                           primaryYAxis: NumericAxis(
                             isVisible: false,
@@ -452,11 +522,12 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
                           backgroundColor: Theme.of(context).colorScheme.primaryContainer,
                           series: <ChartSeries>[
                             // Renders line chart
-                            FastLineSeries<DashboardChartData, int>(
-                                dataSource: plotOption == 'month' ? ydata : weeksYData[weekIndex],
-                                color: CustomColor.trainingLineColor,
-                                xValueMapper: (DashboardChartData data, _) => data.x,
-                                yValueMapper: (DashboardChartData data, _) => data.y),
+                            AreaSeries<DashboardChartData, int>(
+                              dataSource: plotOption == 'month' ? ydata : weeksYData[weekIndex],
+                              color: Theme.of(context).colorScheme.primary,
+                              xValueMapper: (DashboardChartData data, _) => data.x,
+                              yValueMapper: (DashboardChartData data, _) => data.y,
+                            ),
                             // FastLineSeries<ChartData, int>(
                             //     dataSource: dropdownValue == 'Accuracy' ? valAccuracy : valLoss,
                             //     color: CustomColor.validationLineColor,
@@ -497,7 +568,7 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
                               child: Container(
                                 margin: const EdgeInsets.all(10.0),
                                 child: Text(
-                                  '${meanImprovement.toStringAsFixed(2)}%',
+                                  meanImprovement != null ? '${meanImprovement!.toStringAsFixed(2)}%' : '--',
                                   textAlign: TextAlign.center,
                                   style: GoogleFonts.bebasNeue(fontSize: 50),
                                 ),
@@ -541,7 +612,7 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
                               child: Container(
                                 margin: const EdgeInsets.all(10.0),
                                 child: Text(
-                                  buzzMean.toStringAsFixed(2),
+                                  buzzMean != null ? buzzMean!.toStringAsFixed(2) : '--',
                                   textAlign: TextAlign.center,
                                   style: GoogleFonts.bebasNeue(fontSize: 50),
                                 ),
@@ -734,5 +805,5 @@ class _DashboardState extends State<Dashboard> with RestorationMixin {
 class DashboardChartData {
   DashboardChartData(this.x, this.y);
   final int x;
-  final int y;
+  final int? y;
 }
