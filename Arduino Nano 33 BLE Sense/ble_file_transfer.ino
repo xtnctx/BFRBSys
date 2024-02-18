@@ -20,8 +20,8 @@ limitations under the License.
 
 #include <ArduinoBLE.h>
 #include <Arduino_LSM9DS1.h>
-#include <Arduino_APDS9960.h>
-#include <Arduino_HTS221.h>
+#include "Adafruit_VL53L0X.h"
+#include <Adafruit_MLX90614.h>
 
 #include <TensorFlowLite.h>
 #include <tensorflow/lite/micro/all_ops_resolver.h>
@@ -33,14 +33,17 @@ limitations under the License.
 
 SdFat sd;
 File modelFile;
+Adafruit_VL53L0X lox = Adafruit_VL53L0X();
+Adafruit_MLX90614 mlx = Adafruit_MLX90614();
 
 bool isConnected = false;
+bool isBLEBusy = false;
 
 int buzzerPin = 8;
-int buzzTime = 200;
-
+int buzzTime = 200; // buzzer frequency
+unsigned long buzzStartTime = 0;
+const unsigned long buzzDuration = 5000; // buzz and vibrate for 5 seconds
 int vibrationPin = 6;
-String currentDate = "";
 
 // global variables used for TensorFlow Lite (Micro)
 // pull in all the TFLM ops, you can remove this line and
@@ -64,6 +67,7 @@ const char* HOTSPOT[] = {
   "on_target"
 };
 String previous_file;
+String currentDate = "";
 String currentUser = "";
 double on_target_threshold = 0.8;
 
@@ -120,10 +124,9 @@ BLECharacteristic error_message_characteristic(FILE_TRANSFER_UUID("3006"), BLERe
 constexpr int32_t data_size_count = 32;
 BLECharacteristic accelerometer_characteristic(FILE_TRANSFER_UUID("3007"), BLERead | BLENotify, data_size_count);
 BLECharacteristic gyroscope_characteristic(FILE_TRANSFER_UUID("3008"), BLERead | BLENotify, data_size_count);
-BLECharacteristic distance_characteristic(FILE_TRANSFER_UUID("3009"), BLERead | BLENotify, data_size_count);
-// BLECharacteristic temperature_characteristic(FILE_TRANSFER_UUID("3010"), BLERead | BLENotify, data_size_count);
+BLECharacteristic distance_temperature_characteristic(FILE_TRANSFER_UUID("3009"), BLERead | BLENotify, data_size_count);
 
-BLECharacteristic file_update_characteristic(FILE_TRANSFER_UUID("3011"), BLERead | BLENotify, file_block_byte_count);
+BLECharacteristic file_update_characteristic(FILE_TRANSFER_UUID("3010"), BLERead | BLENotify, file_block_byte_count);
 
 
 
@@ -238,14 +241,16 @@ void onFileTransferComplete() {
   
 
   onBLEFileReceived(finished_file_buffer, finished_file_buffer_byte_count);
+  isBLEBusy = false;
 }
 
 void onFileBlockWritten(BLEDevice central, BLECharacteristic characteristic) {  
   if (in_progress_file_buffer == nullptr) {
     notifyError("File block sent while no valid command is active");
+    isBLEBusy = false;
     return;
   }
-  
+  isBLEBusy = true;
   const int32_t file_block_length = characteristic.valueLength();
   if (file_block_length > file_block_byte_count) {
     notifyError(String("Too many bytes in block: Expected ") + String(file_block_byte_count) + 
@@ -296,8 +301,6 @@ void startFileTransfer() {
     notifyError("File transfer command received while previous transfer is still in progress");
     return;
   }
-  delay(1000);
-  isModelInitialized = false;
 
   int32_t file_length_value; 
   file_length_characteristic.readValue(file_length_value);
@@ -396,7 +399,7 @@ void setupBLEFileTransfer() {
 
   service.addCharacteristic(accelerometer_characteristic);
   service.addCharacteristic(gyroscope_characteristic);
-  service.addCharacteristic(distance_characteristic);
+  service.addCharacteristic(distance_temperature_characteristic);
   
   service.addCharacteristic(file_update_characteristic);
 
@@ -408,6 +411,7 @@ void setupBLEFileTransfer() {
 
 // Called in your loop function to handle BLE housekeeping.
 void updateBLEFileTransfer() {
+  BLE.poll();
   BLEDevice central = BLE.central(); 
   static bool was_connected_last = false;  
   if (central && !was_connected_last) {
@@ -415,29 +419,25 @@ void updateBLEFileTransfer() {
     Serial.println(central.address());
   }
   was_connected_last = central;
-
   isConnected = central.connected();
-
 }
 
 }  // namespace
 
-void buzz(bool enable) {
+void buzzVibrate(bool enable) {
   if (enable) {
-    digitalWrite(buzzerPin, HIGH);
-    delayMicroseconds(buzzTime);
-    digitalWrite(buzzerPin, LOW);
-    delayMicroseconds(buzzTime);
-  } else {
-    digitalWrite(buzzerPin, LOW);
-  }
-  
-}
-
-void vibrate(bool enable) {
-  if (enable) {
+    buzzStartTime = millis();
     digitalWrite(vibrationPin, HIGH);
+    while (millis() - buzzStartTime < buzzDuration) {
+      digitalWrite(buzzerPin, HIGH);
+      delayMicroseconds(buzzTime);
+      digitalWrite(buzzerPin, LOW);
+      delayMicroseconds(buzzTime);
+    }
+    digitalWrite(buzzerPin, LOW);
+    digitalWrite(vibrationPin, LOW);
   } else {
+    digitalWrite(buzzerPin, LOW);
     digitalWrite(vibrationPin, LOW);
   }
 }
@@ -459,20 +459,38 @@ void setup() {
   Serial.println("SD Card Initialized.");
 
   // LSM9DS1 setup
-  if (!IMU.begin()) {
-    Serial.println("Failed to initialize IMU!");
-    while (1);
+  bool imuInit = IMU.begin();
+  while (!imuInit) {
+    Serial.println("Failed to initialize IMU, retrying...");
+    imuInit = IMU.begin();
+    delay(500);
   }
+  Serial.println("LSM9DS1 successfully initialized.");
 
-  if (!APDS.begin()) {
-    Serial.println("Error initializing APDS-9960 sensor!");
-    while (1);
-  }
 
-  if (!HTS.begin()) {
-    Serial.println("Failed to initialize humidity temperature sensor!");
-    while (1);
+  // VL53L0X setup
+  Serial.println("Adafruit VL53L0X test.");
+  bool loxInit = lox.begin();
+  while (!loxInit) {
+    Serial.println("Failed to boot VL53L0X, retrying...");
+    loxInit = lox.begin();
+    delay(500);
   }
+  Serial.println(F("VL53L0X API Continuous Ranging example\n\n"));
+  lox.startRangeContinuous();
+  Serial.println("Adafruit VL53L0X successfully initialized.");
+
+  // MLX90614 setup
+  Serial.println("Adafruit MLX90614 test.");
+  bool mlxInit = mlx.begin();
+  while (!mlxInit) {
+    Serial.println("Failed to boot MLX90614, retrying...");
+    mlxInit = mlx.begin();
+    delay(500);
+  }
+  Serial.println("Adafruit MLX90614 successfully initialized.");
+  Serial.print("Emissivity = "); Serial.println(mlx.readEmissivity());
+
 
   pinMode(buzzerPin, OUTPUT);
   pinMode(vibrationPin, OUTPUT);
@@ -548,7 +566,9 @@ void initializeTFL(uint8_t model[]){
   isModelInitialized = true;
 }
 
-void runPrediction(float aX, float aY, float aZ, float gX, float gY, float gZ) {
+// void runClassification(float aX, float aY, float aZ, float gX, float gY, float gZ, uint16_t dist, double temp) {
+// return null if one of the parameters is nan or null
+void runClassification(float aX, float aY, float aZ, float gX, float gY, float gZ) {
   // normalize the IMU data between 0 to 1 and store in the model's
   // input tensor
   tflInputTensor->data.f[0] = (aX + 4.0) / 8.0;
@@ -569,22 +589,20 @@ void runPrediction(float aX, float aY, float aZ, float gX, float gY, float gZ) {
 
   double onTargetPredictValue = tflOutputTensor->data.f[1];
   if (onTargetPredictValue > on_target_threshold) {
-      buzz(true);
-      vibrate(true);
-      saveBuzz(currentDate, currentUser);
+      buzzVibrate(true);
+      // saveBuzz(currentDate, currentUser);
       delay(1000);
   } else {
-      buzz(false);
-      vibrate(false);
+      buzzVibrate(false);
   }
 
   // Loop through the output tensor values from the model
   for (int i = 0; i < NUM_HOTSPOT; i++) {
-    // Serial.print(HOTSPOT[i]);
-    // Serial.print(": ");
-    // Serial.println(tflOutputTensor->data.f[i], 6);
+    Serial.print(HOTSPOT[i]);
+    Serial.print(": ");
+    Serial.println(tflOutputTensor->data.f[i], 6);
   }
-  // Serial.println();
+  Serial.println();
 }
 
 String getPreviousFile() {
@@ -714,10 +732,12 @@ void writeUpdatedChunks(const String& data) {
     String chunk = data.substring(i, min(i + chunkSize, dataSize));
     const char* chunkCStr = chunk.c_str();
     file_update_characteristic.writeValue(chunkCStr);
+    isBLEBusy = true;
     Serial.print("Data to send: ");
     Serial.println(chunk);
     delay(100);  // Adjust delay as needed based on your requirements
   }
+  isBLEBusy = false;
 }
 
 void sendData(String filename) {
@@ -767,13 +787,14 @@ void sendAllData(String filename) {
         }
         const char* chunkCStr = dataChunk.c_str();
         file_update_characteristic.writeValue(chunkCStr);
+        isBLEBusy = true;
         delay(100);
       } else {
         isReading = false;
         dataFile.close();
       }
     }
-
+    isBLEBusy = false;
   } else {
     return;
   }
@@ -793,7 +814,7 @@ void onBLEFileReceived(uint8_t* file_data, int file_length) {
   // last
   //  - sends the last two data (yesterday & today)
   String xupdaterequestx = "";
-  for (uint32_t i=0; i<30; i++) {
+  for (uint32_t i=0; i<50; i++) {
     uint8_t dataByte = file_data[i];
     if (dataByte == 0) {
       break;
@@ -865,55 +886,55 @@ void onBLEFileReceived(uint8_t* file_data, int file_length) {
       file_buffers[i] = 0;
     }
 
-    
     saveModel(file_name, file_buffers);
     setPreviousFile(file_name);
     initializeTFL(file_buffers);
     delay(100);
     notifySuccess(true);
   }
-
 }
 
-
-
-
-
 void loop() {
-  updateBLEFileTransfer();
-  // isConnected = central.connected();
+  updateBLEFileTransfer(); // Keep the BLE service open
+  if (isBLEBusy) return;
 
+  // Accelerometer & Gyroscope read values
   float aX, aY, aZ, gX, gY, gZ;
-  float temperature = HTS.readTemperature();
-  
-  if (IMU.accelerationAvailable() && IMU.gyroscopeAvailable()) {
+  if (IMU.accelerationAvailable() && IMU.gyroscopeAvailable() && lox.isRangeComplete()) {
     IMU.readAcceleration(aX, aY, aZ);
     char accReadings[data_size_count];
     IMU_read(aX, aY, aZ, accReadings);
     
-
     IMU.readGyroscope(gX, gY, gZ);
     char gyroReadings[data_size_count];
     IMU_read(gX, gY, gZ, gyroReadings);
 
-    if (isConnected) {
-      accelerometer_characteristic.writeValue(accReadings);
-      gyroscope_characteristic.writeValue(gyroReadings);
+    // VL53L0X & MLX90614 read values
+    uint16_t lox_read = lox.readRange();
+    double mlx_read = mlx.readObjectTempC();
+    Serial.print("Distance in mm: ");
+    Serial.println(lox_read);
+    Serial.print("*C\tObject = "); Serial.print(mlx_read); Serial.println("*C");
+    
+    // Check if sensor readings are valid
+    if (!isnan(lox_read) && !isnan(mlx_read)) {
+      String distance = String(lox_read);
+      String temperature = String(mlx_read);
+
+      if (isConnected) {
+        String distance_temperature = distance + "," + temperature;
+        const char* distance_temperature_cstr = distance_temperature.c_str();
+        distance_temperature_characteristic.writeValue(distance_temperature_cstr);
+        accelerometer_characteristic.writeValue(accReadings);
+        gyroscope_characteristic.writeValue(gyroReadings);
+      }
+      delay(100); // adds 0.1s for the mobile app to keep up - ( for smooth plotting )
     }
-
-    delay(100); // adds 0.1s for the webBLE to keep up - ( for smooth plotting )
   }
 
-  // runPrediction(aX, aY, aZ, gX, gY, gZ);
-  if (isModelInitialized) {
-    runPrediction(aX, aY, aZ, gX, gY, gZ);
+  // TFLite classification
+  if (isModelInitialized && !currentDate.equals("") && !currentUser.equals("")) {
+    runClassification(aX, aY, aZ, gX, gY, gZ);
   }
-
-
-//  Serial.print("Temperature = ");
-//  Serial.print(temperature);
-//  Serial.println(" °C");
-  
-  
-
+  delay(10);
 }
