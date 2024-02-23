@@ -38,15 +38,14 @@ class _MonitoringPageState extends State<MonitoringPage> {
   ChartSeriesController? gyAxisController;
   ChartSeriesController? gzAxisController;
 
-  double temperature = 0.0; //
-  double distance = 0.0;
+  int distance = 0;
+  double temperature = 0.0;
 
   String? onTargetText;
   String? offTargetText;
 
   String? accData;
   String? gyroData;
-  String? distData;
 
   NeuralNetworkRequestBuild buildClass = NeuralNetworkRequestBuild();
   final TextEditingController _textController = TextEditingController();
@@ -137,8 +136,12 @@ class _MonitoringPageState extends State<MonitoringPage> {
           accData = parsedData;
         } else if (characteristic.uuid.toString() == ble!.GYRO_DATA_UUID) {
           gyroData = parsedData;
-        } else if (characteristic.uuid.toString() == ble!.DIST_DATA_UUID) {
-          distData = parsedData;
+        } else if (characteristic.uuid.toString() == ble!.DIST_TEMP_DATA_UUID) {
+          setState(() {
+            List<double> parsedDistTemp = dataParse(parsedData);
+            distance = parsedDistTemp[0].toInt();
+            temperature = parsedDistTemp[1];
+          });
         }
       }
     });
@@ -309,7 +312,7 @@ class _MonitoringPageState extends State<MonitoringPage> {
       if (value) {
         _readData(ble!.accDataCharacteristic);
         _readData(ble!.gyroDataCharacteristic);
-        _readData(ble!.distDataCharacteristic);
+        _readData(ble!.distTempDataCharacteristic);
         _readUpdateData(ble!.fileUpdateCharacteristic);
         timer = Timer.periodic(const Duration(milliseconds: 100), _updateDataSource);
 
@@ -372,8 +375,8 @@ class _MonitoringPageState extends State<MonitoringPage> {
 
   // Continously updating the data source based on timer
   void _updateDataSource(Timer timer) {
-    List<double> acc = imuParse(accData!);
-    List<double> gyro = imuParse(gyroData!);
+    List<double> acc = dataParse(accData!);
+    List<double> gyro = dataParse(gyroData!);
     chartAccData!.add(_ChartData(count, acc[0], acc[1], acc[2]));
     chartGyroData!.add(_ChartData(count, gyro[0], gyro[1], gyro[2]));
 
@@ -403,16 +406,16 @@ class _MonitoringPageState extends State<MonitoringPage> {
   }
 
   bool isCapturing = false;
-  _captureData(BuildContext context, int sender) {
+  void _captureData(BuildContext context, int sender) {
     //
     setState(() {
       isCapturing = true;
     });
     //
-    int n = 1;
-    onCaptureTimer = Timer.periodic(const Duration(seconds: 1), (Timer timer) {
-      List<double> acc = imuParse(accData!);
-      List<double> gyro = imuParse(gyroData!);
+    int n = 300; // 300/200ms per data = takes 60 seconds
+    onCaptureTimer = Timer.periodic(const Duration(milliseconds: 200), (Timer timer) {
+      List<double> acc = dataParse(accData!);
+      List<double> gyro = dataParse(gyroData!);
 
       List<String> captured = [
         // Accelerometer
@@ -441,7 +444,7 @@ class _MonitoringPageState extends State<MonitoringPage> {
         }
       });
 
-      if (n == 5) {
+      if (n == 1) {
         timer.cancel();
         setState(() {
           isCapturing = false;
@@ -452,7 +455,7 @@ class _MonitoringPageState extends State<MonitoringPage> {
           }
         });
       }
-      n += 1;
+      n -= 1;
     });
   }
 
@@ -585,25 +588,30 @@ class _MonitoringPageState extends State<MonitoringPage> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     )),
-                onPressed: !isBuildingModel
+                onPressed: !isBuildingModel && !isCapturing
                     ? () {
-                        // openBuildForm();
+                        print('building...');
+                        print(onData.length);
+                        print(offData.length);
+                        openBuildForm();
 
-                        // final snackBar = SnackBar(
-                        //   content: const Text('Build success, ready to send!'),
-                        //   action: SnackBarAction(
-                        //     label: 'Okay',
-                        //     onPressed: () {
-                        //       // Some code to undo the change.
-                        //     },
-                        //   ),
-                        // );
+                        final snackBar = SnackBar(
+                          content: const Text('Build success, ready to send!'),
+                          action: SnackBarAction(
+                            label: 'Okay',
+                            onPressed: () {
+                              // Some code to undo the change.
+                            },
+                          ),
+                        );
 
-                        // // Find the ScaffoldMessenger in the widget tree
-                        // // and use it to show a SnackBar.
-                        // ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                        // Find the ScaffoldMessenger in the widget tree
+                        // and use it to show a SnackBar.
+                        ScaffoldMessenger.of(context).showSnackBar(snackBar);
                       }
-                    : () {},
+                    : () {
+                        print('please wait');
+                      },
                 child: const Text('BUILD'),
               ),
             ),
