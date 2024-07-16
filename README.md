@@ -3,7 +3,7 @@
 [![Build Status](https://img.shields.io/badge/Build-passing-brightgreen.svg)](https://github.com/xtnctx/bfrbsys/blob/main/FlutterApp/android/build.gradle)
 [![Platform](https://img.shields.io/badge/Platform-Android-green.svg)](https://github.com/xtnctx/bfrbsys/blob/main/FlutterApp/android/app/src/main/AndroidManifest.xml)
 [![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)](https://github.com/xtnctx/bfrbsys/releases/tag/v2.1.0)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Repo Size](https://img.shields.io/github/repo-size/xtnctx/bfrbsys)](https://github.com/xtnctx/bfrbsys/tags#:~:text=b0ad94f-,zip,-tar.gz)
 [![Docs](https://img.shields.io/badge/Docs-available-brightgreen.svg)](https://github.com/xtnctx/bfrbsys/tree/main/Docs)
 
