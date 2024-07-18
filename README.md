@@ -78,4 +78,4 @@ The purpose of this [app](https://github.com/xtnctx/bfrbsys/tree/main/FlutterApp
 ## Documents 📄
 - [Title proposal](https://github.com/xtnctx/bfrbsys/blob/main/Docs/Capsule_Bahillo-Dalanon.pdf)
 - [Outline](https://github.com/xtnctx/bfrbsys/blob/main/Docs/outline.pdf)
-- [Manuscript](https://github.com/xtnctx/bfrbsys/blob/main/Docs/Development%20of%20Microcontroller-Based%20Wearable%20Device%20with%20Monitoring%20System%20for%20Body-Focused%20Repetitive%20Behavior.pdf)
+- [Request for manuscript](christopherbahillo@gmail.com)
