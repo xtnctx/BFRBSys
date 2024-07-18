@@ -78,4 +78,4 @@ The purpose of this [app](https://github.com/xtnctx/bfrbsys/tree/main/FlutterApp
 ## Documents 📄
 - [Title proposal](https://github.com/xtnctx/bfrbsys/blob/main/Docs/Capsule_Bahillo-Dalanon.pdf)
 - [Outline](https://github.com/xtnctx/bfrbsys/blob/main/Docs/outline.pdf)
-- [Request for manuscript](christopherbahillo@gmail.com)
+- [Request for manuscript](mailto:christopherbahillo@gmail.com)
