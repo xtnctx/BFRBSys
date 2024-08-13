@@ -1,1 +1,1 @@
-### [Email me for manuscript](mailto:christopherbahillo@gmail.com)
+### [Email me for documents](mailto:christopherbahillo@gmail.com)
