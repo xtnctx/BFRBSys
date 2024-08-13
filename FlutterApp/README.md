@@ -1,7 +1,7 @@
 
-# The app:
+# BFRBSys App
 
-### Purpose of this app is to get input values from the wearable and train it using the Feedforward Neural Network on the web then sends the machine learning model file contents through BLE. User can also see their improvements weekly or monthly.
+A monitoring system application for a person with body-focused repetitive behavior. Monitors the anticipating activities such as hair pulling, skin picking, and nail biting. Shows a trend analysis over a period of weeks and months. It is a full stack application connected to the server doing machine learning operations.
 
 ![accounts_signin](https://github.com/xtnctx/bfrbsys/assets/67821138/bb8fe9c3-35ce-4f69-b390-69aa2773a8d9)
 ![accounts_signup](https://github.com/xtnctx/bfrbsys/assets/67821138/bec47f0a-8aef-4e5f-a738-24d8944da7aa)
