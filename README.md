@@ -73,7 +73,3 @@ The purpose of this [app](https://github.com/xtnctx/bfrbsys/tree/main/FlutterApp
 <p align="center">
     <img src="https://github.com/user-attachments/assets/570126fd-c0bc-474d-8f4c-320b08da19b1">
 </p>
-
-------------
-## Documents 📄
-- Email me for documents -> christopherbahillo@gmail.com
